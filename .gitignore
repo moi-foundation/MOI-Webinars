@@ -1,0 +1,21 @@
+node_modules/
+
+.env
+.env.local
+**/.env
+**/.env.local
+
+*.log
+npm-debug.log*
+
+.DS_Store
+Thumbs.db
+
+.vscode/
+.idea/
+
+# Session 1 — Coco build artifacts (intermediate; *.json manifests ARE checked in)
+session-1/**/*.yaml
+session-1/**/.coco/
+session-1/**/build/
+session-1/**/.cocolab/

@@ -1,0 +1,12 @@
+{
+  "name": "moi-webinar-s1",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MOI developer webinar S1 — live demo repo (Flipper, ContextFlipper, SDK).",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "js-moi-sdk": "0.7.0-rc15",
+    "yaml": "^2.9.0"
+  }
+}

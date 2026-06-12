@@ -1,0 +1,20 @@
+// Flipper — shared-state version.
+// All callers share one `values` map keyed by Identifier.
+// This is the version we deploy first; slide 10 upgrades it to ContextFlipper.
+
+coco Flipper
+
+state logic:
+    values Map[Identifier]Bool
+
+endpoint deploy Init():
+    mutate values <- Flipper.Logic.values:
+        values[Sender] = true
+
+endpoint dynamic Flip():
+    mutate values <- Flipper.Logic.values:
+        values[Sender] = !values[Sender]
+
+endpoint static Mode() -> (value Bool):
+    observe values <- Flipper.Logic.values:
+        value = values[Sender]

@@ -1,0 +1,133 @@
+{
+  "syntax": 1,
+  "engine": {
+    "kind": "PISA",
+    "flags": [],
+    "version": "0.5.0"
+  },
+  "kind": "logic",
+  "elements": [
+    {
+      "ptr": 0,
+      "kind": "state",
+      "data": {
+        "mode": "actor",
+        "fields": [
+          {
+            "slot": 0,
+            "label": "value",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "ptr": 1,
+      "deps": [
+        0
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "Init",
+        "mode": "dynamic",
+        "kind": "enlist",
+        "accepts": [],
+        "returns": [],
+        "executes": {
+          "bin": [
+            132,
+            0,
+            145,
+            1,
+            0,
+            0,
+            42,
+            2,
+            1,
+            98,
+            2,
+            2,
+            155,
+            1,
+            2,
+            159,
+            1
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 2,
+      "deps": [
+        0
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "Flip",
+        "mode": "dynamic",
+        "kind": "invoke",
+        "accepts": [],
+        "returns": [],
+        "executes": {
+          "bin": [
+            132,
+            0,
+            145,
+            1,
+            0,
+            0,
+            156,
+            2,
+            1,
+            98,
+            2,
+            2,
+            155,
+            1,
+            2,
+            159,
+            1
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 3,
+      "deps": [
+        0
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "Mode",
+        "mode": "static",
+        "kind": "invoke",
+        "accepts": [],
+        "returns": [
+          {
+            "slot": 0,
+            "label": "value",
+            "type": "bool"
+          }
+        ],
+        "executes": {
+          "bin": [
+            132,
+            0,
+            145,
+            1,
+            0,
+            0,
+            5,
+            1,
+            0,
+            158,
+            1
+          ]
+        },
+        "catches": []
+      }
+    }
+  ]
+}

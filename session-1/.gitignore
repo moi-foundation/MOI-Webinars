@@ -1,0 +1,10 @@
+.env
+node_modules/
+
+# Coco build artifacts (intermediate; *.json manifests ARE checked in)
+*.yaml
+**/.coco/
+**/build/
+
+# CocoLab local state
+.cocolab/

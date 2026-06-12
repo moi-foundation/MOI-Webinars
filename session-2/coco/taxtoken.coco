@@ -1,0 +1,26 @@
+// TaxToken — fungible with fee-on-transfer: route tax_bps of every
+// Transfer to the treasury, send the remainder to the beneficiary.
+
+coco asset TaxToken
+
+state logic:
+    treasury Identifier
+    tax_bps U64
+
+endpoint deploy Init(treasury_addr Identifier, bps U64, initial_supply U256):
+    mutate treasury_addr -> TaxToken.Logic.treasury
+    mutate bps           -> TaxToken.Logic.tax_bps
+
+    asset.Mint(token_id: 0, beneficiary: treasury_addr, amount: initial_supply)
+
+endpoint dynamic Transfer(beneficiary Identifier, amount U256):
+    memory treasury Identifier
+    memory bps U64
+    observe treasury <- TaxToken.Logic.treasury
+    observe bps      <- TaxToken.Logic.tax_bps
+
+    memory tax = (amount * U256(bps)) / U256(10000)
+    memory net = amount - tax
+
+    asset.Transfer(token_id: 0, beneficiary: treasury,    amount: tax)
+    asset.Transfer(token_id: 0, beneficiary: beneficiary, amount: net)

@@ -1,0 +1,144 @@
+{
+  "syntax": 1,
+  "engine": {
+    "kind": "PISA",
+    "flags": [],
+    "version": "0.5.0"
+  },
+  "kind": "logic",
+  "elements": [
+    {
+      "ptr": 0,
+      "kind": "typedef",
+      "data": "map[identifier]bool"
+    },
+    {
+      "ptr": 1,
+      "kind": "state",
+      "data": {
+        "mode": "logic",
+        "fields": [
+          {
+            "slot": 0,
+            "label": "values",
+            "type": "map[identifier]bool"
+          }
+        ]
+      }
+    },
+    {
+      "ptr": 2,
+      "deps": [
+        1
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "Init",
+        "mode": "dynamic",
+        "kind": "deploy",
+        "accepts": [],
+        "returns": [],
+        "executes": {
+          "bin": [
+            144,
+            0,
+            0,
+            42,
+            1,
+            1,
+            98,
+            1,
+            1,
+            132,
+            2,
+            89,
+            0,
+            2,
+            1,
+            159,
+            0
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 3,
+      "deps": [
+        1
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "Flip",
+        "mode": "dynamic",
+        "kind": "invoke",
+        "accepts": [],
+        "returns": [],
+        "executes": {
+          "bin": [
+            144,
+            0,
+            0,
+            132,
+            1,
+            88,
+            1,
+            0,
+            1,
+            98,
+            1,
+            1,
+            132,
+            2,
+            89,
+            0,
+            2,
+            1,
+            159,
+            0
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 4,
+      "deps": [
+        1
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "Mode",
+        "mode": "static",
+        "kind": "invoke",
+        "accepts": [],
+        "returns": [
+          {
+            "slot": 0,
+            "label": "value",
+            "type": "bool"
+          }
+        ],
+        "executes": {
+          "bin": [
+            144,
+            0,
+            0,
+            132,
+            1,
+            88,
+            1,
+            0,
+            1,
+            5,
+            1,
+            0,
+            158,
+            0
+          ]
+        },
+        "catches": []
+      }
+    }
+  ]
+}

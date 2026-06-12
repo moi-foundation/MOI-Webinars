@@ -1,0 +1,11 @@
+{
+  "name": "moi-webinar-s2",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MOI Builders Webinar Session 2 — native assets (MAS0) live demo",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "js-moi-sdk": "0.7.0-rc15"
+  }
+}

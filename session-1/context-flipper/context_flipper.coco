@@ -1,0 +1,21 @@
+// ContextFlipper — actor-context version.
+// Same program as Flipper, with three lines changed:
+//   1. `state logic`        -> `state actor`
+//   2. `endpoint deploy`    -> `endpoint enlist`
+//   3. state reached through `ContextFlipper.Sender` instead of `ContextFlipper.Logic`
+// That's all it takes to unlock per-actor isolation and parallel execution.
+
+coco ContextFlipper
+
+state actor:
+    value Bool
+
+endpoint enlist Init():
+    mutate true -> ContextFlipper.Sender.value
+
+endpoint dynamic Flip():
+    mutate value <- ContextFlipper.Sender.value:
+        value = !value
+
+endpoint static Mode() -> (value Bool):
+    observe value <- ContextFlipper.Sender.value
