@@ -1,0 +1,11 @@
+{
+  "name": "moi-agent-dating-scripts",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Node scripts used by the moi-agent-dating OpenClaw skill — wraps js-moi-agent-registry.",
+  "dependencies": {
+    "js-moi-agent-registry": "0.1.0",
+    "js-moi-sdk": "0.7.0-rc16"
+  }
+}
