@@ -4,7 +4,7 @@ OpenClaw skill + Node scripts for MOI devnet agent registry: **register**, **dis
 
 **Webinar slides:** [`MOI_Webinar_S3.pdf`](./MOI_Webinar_S3.pdf)
 
-**OpenClaw is required for the bounty.** Submissions must come from an OpenClaw chat session that invoked the skill — not from running scripts directly in a terminal.
+**OpenClaw is required for both bounty tracks.** Submissions must come from an OpenClaw chat session that invoked the skill — not from running scripts directly in a terminal.
 
 ```
 session-3/
@@ -30,13 +30,24 @@ session-3/
 
 ## Install
 
+From your clone of this repo:
+
 ```bash
-openclaw skills install /path/to/MOI-Webinars/session-3/moi-agent-dating
+cd /path/to/MOI-Webinars/session-3
+
+# Single-profile install (skip if you're doing the Jack & Jill two-profile demo below)
+openclaw skills install ./moi-agent-dating
+
+# For the Jack & Jill demo, install into each profile instead:
+openclaw --profile jack skills install ./moi-agent-dating
+openclaw --profile jill skills install ./moi-agent-dating
 
 cd moi-agent-dating/scripts
 npm install
 cp .env.example .env            # MOI_MNEMONIC + UPLOADER_URL=http://localhost:7777
 ```
+
+> `openclaw.json` is JSON5 — unquoted keys, trailing commas, and `//` comments are all fine.
 
 Confirm the skill is ready:
 
@@ -55,6 +66,7 @@ Set env in your profile's `openclaw.json` under **`env.vars`**:
       UPLOADER_URL: "http://localhost:7777",
       AGENT_NAME: "Jack",                    // or "Jill" / "My Agent"
       AGENT_URL: "http://localhost:3940",    // or :3941 for Jill
+      MOI_DERIVATION_PATH: "m/44'/6174'/7020'/0/0",  // optional, this is the default
     },
   },
 }
@@ -62,7 +74,7 @@ Set env in your profile's `openclaw.json` under **`env.vars`**:
 
 Also set `MOI_MNEMONIC` under `skills.entries.moi-agent-dating.env` if your OpenClaw version uses that for the ✓ Ready gate.
 
-Config file location: `~/.openclaw/openclaw.json` (default profile) or `~/.openclaw-<profile>/openclaw.json` (e.g. `~/.openclaw-jack/openclaw.json`). These live **outside the repo** — never commit them.
+Config file location: `~/.openclaw/openclaw.json` (default profile) or `~/.openclaw-<profile>/openclaw.json` (e.g. `~/.openclaw-jack/openclaw.json`). These live **outside the repo** — never commit them. For the Jack & Jill demo, edit **both** `~/.openclaw-jack/openclaw.json` and `~/.openclaw-jill/openclaw.json`, giving each its own `AGENT_NAME` / `AGENT_URL`. They can share a `MOI_MNEMONIC` — each registration still gets a unique `agent_id`.
 
 ### OpenAI API key
 
@@ -122,19 +134,14 @@ Start background services (uploader + message inboxes), then chat:
 cd moi-agent-dating/scripts && ./start-demo.sh
 ```
 
-Two profiles (Jack & Jill) — optional but matches the webinar:
-
-```bash
-openclaw --profile jack skills install /path/to/MOI-Webinars/session-3/moi-agent-dating
-openclaw --profile jill skills install /path/to/MOI-Webinars/session-3/moi-agent-dating
-```
+Open two terminal panes — one for Jack, one for Jill — and run `openclaw --profile jack chat` / `openclaw --profile jill chat` (profiles installed in the [Install](#install) step above):
 
 | Pane | Prompt |
 | --- | --- |
 | Jack | `please register me on the MOI agent registry` |
 | Jill | `register me on the MOI registry too` |
-| Jack | `who else is on the registry?` |
-| Jack | `say hi to agent_<JILL_ID>` |
+| Jack | `who else is on the registry?` → discover reply lists each `agent_id`; copy Jill's |
+| Jack | `say hi to agent_<JILL_ID>` (paste the ID from the previous step) |
 
 Discover + say-hi are recommended for the full demo.
 
@@ -170,7 +177,7 @@ One successful OpenClaw registration that assigns an **`agent_id`** (e.g. `agent
 
 1. OpenClaw reply shows `Agent Created: ✓ Success` and an `agent_id`
 2. Optional CLI check: `node discover.mjs` from `moi-agent-dating/scripts`
-3. Explorer: search your `agent_id` on <https://agents.moi.technology> (may lag a few minutes)
+3. Explorers: [Voyage](https://voyage.moi.technology) is for the **interaction / tx hash**; [agents.moi.technology](https://agents.moi.technology) is for the **agent_id**. Both may lag a few minutes.
 
 ### Bounty 2 — Open bounty: best useful agent (500 MOI)
 
@@ -182,7 +189,7 @@ Build and register a **genuinely useful** on-chain agent — not a hello-world s
 2. **On-chain registration** on MOI devnet (`agent_id`, status **ACTIVE**)
 3. A public **repo or demo link** so judges can try it
 
-OpenClaw is still the expected path for registration (same skill + setup as above), but the bar here is utility and polish — not just completing the webinar prompts.
+Registration must still go through OpenClaw (same skill + setup as above); the bar here is utility and polish on top of that — not just completing the webinar prompts.
 
 #### Submit on Discord
 
