@@ -1,3 +1,4 @@
+import './load-env.mjs'
 import { VoyageProvider, Wallet } from 'js-moi-sdk'
 import { AgentRegistry } from 'js-moi-agent-registry'
 

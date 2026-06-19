@@ -1,5 +1,11 @@
 node_modules/
 
+# Instructor / local-only (not for student clones)
+OVERVIEW.md
+session-1/sdk/bulk-flip.js
+session-3/CHEATSHEET.md
+session-3/DEMO-SCRIPT.md
+
 .env
 .env.local
 **/.env

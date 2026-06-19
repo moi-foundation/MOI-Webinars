@@ -1,147 +1,81 @@
-# moi-agent-dating — OpenClaw skill
+# moi-agent-dating
 
-Wraps the `js-moi-agent-registry` SDK so an OpenClaw agent can take part in MOI's on-chain agent registry on devnet. Three operations:
+OpenClaw skill wrapping [`js-moi-agent-registry`](https://www.npmjs.com/package/js-moi-agent-registry) on MOI devnet.
 
-1. **Register** — publish this OpenClaw agent's identity (name, URL, skills, owner wallet) on the registry.
-2. **Discover** — list every agent on the registry, including their URL, owner and status.
-3. **Say hi** — look up another agent by id, resolve its URL via the registry, and POST a greeting to its `/message` endpoint.
+| Operation | Script |
+| --- | --- |
+| Register | `register.mjs` |
+| Discover | `discover.mjs` |
+| Say hi | `say-hi.mjs` |
 
-Three Node scripts under `scripts/` do the work; `SKILL.md` is the agent-facing instructions that route `exec` calls to them.
+These scripts are invoked by OpenClaw via the skill. Bounty details → [`../README.md`](../README.md#bounties).
 
 ## Install
 
-```bash
-# 1. Drop the skill into your OpenClaw workspace
-openclaw skills install ./session-3/moi-agent-dating --as moi-agent-dating
-#    (or copy/symlink to ~/.openclaw/workspace/skills/moi-agent-dating)
-
-# 2. Install node deps (pinned: js-moi-sdk@0.7.0-rc16, js-moi-agent-registry@0.1.0)
-cd ~/.openclaw/workspace/skills/moi-agent-dating/scripts
-npm install
-
-# 3. Confirm OpenClaw sees it
-openclaw skills list | grep moi-agent-dating
-```
-
-### Standalone smoke-test (no OpenClaw)
-
-The three scripts are plain `node` programs and run fine outside OpenClaw. Use Node 20.6+'s native `--env-file` flag with the gitignored `.env` next to them:
+From the repo root (adjust the path to your clone):
 
 ```bash
+openclaw --profile jack skills install ./session-3/moi-agent-dating
+openclaw --profile jill skills install ./session-3/moi-agent-dating
+
 cd session-3/moi-agent-dating/scripts
 npm install
-cp .env.example .env       # then paste your funded MOI devnet mnemonic into MOI_MNEMONIC
-
-node --env-file=.env discover.mjs                                 # lowest-friction — no UPLOADER_URL needed
-node --env-file=.env register.mjs                                 # needs UPLOADER_URL set in .env
-node --env-file=.env say-hi.mjs agent_5 "hello from OpenClaw"     # ping another agent
+cp .env.example .env
 ```
 
-OpenClaw itself doesn't read `.env` — when the skill is invoked through OpenClaw, the env vars come from `openclaw.json` (see below). The `.env` is purely for the developer-machine smoke test.
+Scripts auto-load `scripts/.env` when present (`load-env.mjs`).
 
 ## Required env
 
-| Var | Required by | Notes |
-|---|---|---|
-| `MOI_MNEMONIC` | all three | 12-word devnet mnemonic |
-| `UPLOADER_URL` | `register` | hosted card uploader endpoint (see below) |
-| `MOI_DERIVATION_PATH` | optional | defaults to `m/44'/6174'/7020'/0/0` |
-| `AGENT_NAME` | optional | defaults to `OpenClaw Agent` |
-| `AGENT_URL` | optional | defaults to `https://example.com/openclaw-agent` |
+| Var | Scripts | Notes |
+| --- | --- | --- |
+| `MOI_MNEMONIC` | all | 12-word funded devnet mnemonic |
+| `UPLOADER_URL` | `register.mjs` | `http://localhost:7777` with local `uploader.mjs` |
+| `AGENT_NAME` | `register.mjs` | Default `OpenClaw Agent` |
+| `AGENT_URL` | `register.mjs` | Default `https://example.com/openclaw-agent` |
+| `AGENT_OWNER` | `register.mjs` | Optional friendly label in output |
+| `MOI_DERIVATION_PATH` | all | Default `m/44'/6174'/7020'/0/0` |
 
-Wire them in `openclaw.json` (host-process only, never reaches sandbox):
+Set these in each profile's `openclaw.json` under **`env.vars`** (not just `skills.entries.*.env`):
 
 ```json5
 {
-  skills: {
-    entries: {
-      "moi-agent-dating": {
-        enabled: true,
-        env: {
-          MOI_MNEMONIC:  "<12 word devnet mnemonic>",
-          UPLOADER_URL:  "https://<your-card-uploader>.example.com/upload",
-          AGENT_NAME:    "OpenClaw Agent A",
-          AGENT_URL:     "https://<your-agent-server>.example.com",
-        },
-      },
+  env: {
+    vars: {
+      MOI_MNEMONIC: "…",
+      UPLOADER_URL: "http://localhost:7777",
+      AGENT_NAME: "Jack",                    // or "Jill"
+      AGENT_URL: "http://localhost:3940",    // or :3941 for Jill
     },
   },
 }
 ```
 
-## The hosted card uploader
+Jack and Jill can share the same wallet for demo simplicity — each registration still gets a unique `agent_id`.
 
-`register.mjs` POSTs the agent card JSON to `UPLOADER_URL` and expects a JSON response `{ "uri": "ipfs://…" | "https://…" }`. The returned `uri` is what lands on chain as the agent's `card_uri`. Contract:
+## OpenAI API key
 
-```
-POST {UPLOADER_URL}
-Content-Type: application/json
+| Used by | Where |
+| --- | --- |
+| OpenClaw chat | `export OPENAI_API_KEY=sk-...` before `openclaw chat`, or in `~/.openclaw/openclaw.json` → `env.vars` (see [`../README.md`](../README.md#openai-api-key)) |
+| Message servers | `export OPENAI_API_KEY=sk-...` in the shell **before** `./start-demo.sh` — not read from `scripts/.env` |
 
-<agent card JSON>
-->
-HTTP 200
-{ "uri": "ipfs://Qm…/card.json" }
-```
+Without the key, OpenClaw chat won't work; message servers fall back to dumb echo (say-hi plumbing still demos).
 
-> **Live infra check before the demo.** Run a smoke test against the uploader first:
-> ```bash
-> curl -fsSL -X POST "$UPLOADER_URL" \
->   -H 'Content-Type: application/json' \
->   -d '{"spec":{"protocol":"a2a","protocol_version":"1.0"},"agent_card":{"name":"probe"}}'
-> ```
-> A non-200 or a response without `{ "uri": "..." }` will fail the registration with a clear error.
+## Background services
 
-## Two-agent demo runbook
+`start-demo.sh` (run from `scripts/`) brings up:
 
-This is the order you'd run during the webinar. Run **agent A** and **agent B** as two OpenClaw agents — separate OpenClaw workspaces, separate mnemonics, both with this skill installed.
+- `:7777` — card uploader (`uploader.mjs`)
+- `:3940` — Jack's `/message` inbox (`message-server.mjs`)
+- `:3941` — Jill's `/message` inbox (`message-server.mjs`)
 
-```text
-─── Agent A ────────────────────────────────────────────────────────
-1.  user: register me on the MOI registry
-    A: /skill moi-agent-dating
-    A: exec node {baseDir}/scripts/register.mjs
-       → [register] assigned agent_id: agent_N
-       → on-chain profile printed
-    (A now exists in the registry — copy its agent_id.)
-
-─── Agent B ────────────────────────────────────────────────────────
-2.  user: register me on the MOI registry too
-    B: /skill moi-agent-dating
-    B: exec node {baseDir}/scripts/register.mjs
-       → [register] assigned agent_id: agent_M
-
-─── Agent A ────────────────────────────────────────────────────────
-3.  user: list every other agent on the MOI registry
-    A: exec node {baseDir}/scripts/discover.mjs
-       → table of agents incl. agent_M with its URL
-
-4.  user: say hi to agent_M
-    A: exec node {baseDir}/scripts/say-hi.mjs agent_M "hello from A"
-       → POST {agent_M.url}/message { from, text }
-       → reply printed
+```bash
+./start-demo.sh
+pkill -f moi-agent-dating/scripts/uploader.mjs
+pkill -f moi-agent-dating/scripts/message-server.mjs
 ```
 
-## What needs to be confirmed against the live repo before the webinar
+Export `OPENAI_API_KEY` before `./start-demo.sh` for LLM replies; otherwise Jack/Jill echo incoming messages.
 
-The MOI registry SDK signatures used here are verified against the published
-package (`js-moi-agent-registry@0.1.0`, peer `js-moi-sdk >=0.7.0-rc15`). The
-two things still living *outside* the SDK and therefore worth a smoke test:
-
-1. **Hosted uploader endpoint.** The `UPLOADER_URL` service does not ship with
-   this skill. Deploy whichever uploader you intend to use (`data:` URI shim,
-   IPFS gateway, etc.) and confirm it returns `{ uri: string }` for a card
-   POST. If it returns a different shape, edit `buildHostedUploader` in
-   `register.mjs` accordingly.
-
-2. **`say-hi` /message endpoint shape.** This skill assumes the receiving
-   agent's server accepts `POST {url}/message { from, text }`. That's a
-   convention, not part of the on-chain card. Make sure the agent you're
-   greeting actually implements this (the matching server is up to whoever
-   owns that agent). If you control both sides, mirror this shape in your
-   agent server.
-
-3. **`createAgent` metadata field names.** This skill uses the types from
-   `js-moi-agent-registry@0.1.0` (`AgentCardInput`, camelCase fields such as
-   `agentWallet`, `preferredTransport`, `defaultInputModes`). If the SDK
-   version published at demo time is newer, re-verify by reading
-   `node_modules/js-moi-agent-registry/lib.cjs/card.d.ts`.
+Bounty submission → [`../README.md`](../README.md#bounties).

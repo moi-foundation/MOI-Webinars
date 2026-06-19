@@ -45,8 +45,10 @@ const server = http.createServer(async (req, res) => {
   res.end(JSON.stringify({ uri }))
 })
 
-server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[uploader] listening on http://127.0.0.1:${PORT}`)
+// Bind to both IPv4 and IPv6 loopback so Node 18+ `fetch('http://localhost:...')`
+// reaches it whether DNS resolves localhost to 127.0.0.1 or ::1.
+server.listen(PORT, '::', () => {
+  console.log(`[uploader] listening on http://localhost:${PORT} (dual-stack ::)`)
   console.log(`[uploader] set in .env:  UPLOADER_URL=http://localhost:${PORT}`)
   console.log(`[uploader] Ctrl+C to stop`)
 })

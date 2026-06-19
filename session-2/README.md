@@ -1,6 +1,6 @@
-# MOI Webinar — Session 2: Native Assets (MAS0)
+# Session 2 — Native Assets (MAS0 + TaxToken)
 
-Live-demo repo for the MOI Builders **Session 2** webinar. Two demos:
+Live-demo repo for **MOI Builders Session 2**. Two demos:
 
 1. **Vanilla MAS0 native asset** — create + mint in one script.
 2. **Custom TaxToken** — fee-on-transfer asset built in [cocolang](https://docs.moi.technology/).
@@ -8,13 +8,12 @@ Live-demo repo for the MOI Builders **Session 2** webinar. Two demos:
 ## Install
 
 1. **Node.js 20+** — <https://nodejs.org>
-2. **Coco toolchain (cocolang)** — see <https://cocolang.dev/docs/install>. Only needed if you want to recompile `coco/taxtoken.coco`; the compiled `taxtoken.json` is already checked in. Verify with `coco version`.
-3. **`js-moi-sdk` + deps** — pinned in `package.json`. Run once inside `session-2/`:
+2. **Coco toolchain (cocolang)** — <https://cocolang.dev/docs/install>. Only needed to recompile `coco/taxtoken.coco`; `taxtoken.json` is already checked in.
+3. **Dependencies** — run once inside `session-2/`:
    ```bash
    npm install
    ```
-   Installs `js-moi-sdk` and `dotenv`. We only use `npm` to fetch dependencies — every demo below runs with plain `node`.
-4. **Wallet** — copy the env template and paste your funded devnet mnemonic:
+4. **Wallet**:
    ```bash
    cp .env.example .env
    # edit MOI_MNEMONIC
@@ -22,7 +21,7 @@ Live-demo repo for the MOI Builders **Session 2** webinar. Two demos:
 
 ## Demos
 
-Run from the repo root (`session-2/`) so `dotenv` picks up `.env`.
+Run from `session-2/` so `dotenv` picks up `.env`.
 
 ### Demo 1 — Native MAS0 asset
 
@@ -36,41 +35,56 @@ node sdk/asset.js
 
 Deploys the cocolang `TaxToken` logic. Treasury collects 5% of every transfer.
 
-If you've edited `coco/taxtoken.coco`, rebuild the manifest first (otherwise skip — `taxtoken.json` is committed):
+If you've edited `coco/taxtoken.coco`, rebuild first (otherwise skip):
 
 ```bash
 cd coco && coco compile && coco manifest convert taxtoken.yaml -f json -o taxtoken.json && cd ..
-```
-
-Then deploy:
-
-```bash
 node sdk/tax-deploy.js
 ```
 
-Save the printed `Asset ID` as `TAX_ASSET_ID` in your `.env` if you want to interact with it from follow-up scripts.
+Save the printed Asset ID as `TAX_ASSET_ID` in `.env` for follow-up scripts.
 
-## Submit your assets (token bounty)
+## Bounty — MOI Builders II: Native Assets
 
-Once both demos have landed on devnet, drop your asset IDs into the **MOI Builders II — Native Assets** form:
+Complete both demos on MOI **devnet**, then submit your on-chain asset IDs.
+
+| Demo | Command | What to capture |
+| --- | --- | --- |
+| **Demo 1 — MAS0** | `node sdk/asset.js` | **MAS0 Asset ID** (printed at the end) |
+| **Demo 2 — TaxToken** | `node sdk/tax-deploy.js` | **MASX Asset ID** (printed at the end) |
+
+### Submit
+
+Drop your results into the **MOI Builders II — Native Assets** form:
 
 **<https://forms.gle/NNK58E3vAyF6EYw9A>**
 
-The form takes four fields:
+| Form field | Where to get it |
+| --- | --- |
+| **Email** | Your contact email |
+| **Wallet Address** | Printed when the script runs, or visible on <https://voyage.moi.technology> |
+| **MAS0 Asset ID (Demo 1)** | Output of `node sdk/asset.js` |
+| **MASX Asset ID (Demo 2)** | Output of `node sdk/tax-deploy.js` |
 
-1. **Email**
-2. **Wallet Address** — the address you deployed from
-3. **MAS0 Asset ID (Demo 1)** — printed by `node sdk/asset.js`
-4. **MASX Asset ID (Demo 2)** — printed by `node sdk/tax-deploy.js`
+Paste each Asset ID exactly as printed (including the `0x` prefix if shown).
+
+### Verify
+
+Open <https://voyage.moi.technology>, search your wallet address, and confirm both asset-creation interactions landed before submitting.
+
+### Troubleshooting
+
+| Symptom | Fix |
+| --- | --- |
+| `MOI_MNEMONIC is not set` | Create `.env` from `.env.example` |
+| `account not found` | Fund the wallet via the faucet; try `MOI_DERIVATION_PATH=m/44'/6174'/0'/0/0` in `.env` |
+| TaxToken deploy fails after editing `.coco` | Recompile: `cd coco && coco compile && coco manifest convert taxtoken.yaml -f json -o taxtoken.json` |
 
 ## Repo layout
 
 ```
 coco/                 cocolang source + compiled manifest
-  coco.nut            module manifest
-  taxtoken.coco       TaxToken logic source
-  taxtoken.json       compiled manifest (consumed by sdk/tax-deploy.js)
-sdk/                  js-moi-sdk demo scripts
+sdk/
   asset.js            Demo 1 — native MAS0 asset
   tax-deploy.js       Demo 2 — deploy TaxToken
 ```
@@ -78,4 +92,4 @@ sdk/                  js-moi-sdk demo scripts
 ## Notes
 
 - `balanceOf` is read-only — call it with `.call()`, not `.send()` ([docs](https://js-moi-sdk.docs.moi.technology/interactions.html)).
-- The webinar uses the MOI **devnet** via `VoyageProvider('devnet')`.
+- All demos use MOI **devnet** via `VoyageProvider('devnet')`.

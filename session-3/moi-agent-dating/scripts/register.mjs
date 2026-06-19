@@ -1,3 +1,4 @@
+import './load-env.mjs'
 import { VoyageProvider, Wallet } from 'js-moi-sdk'
 import { AgentRegistry } from 'js-moi-agent-registry'
 
@@ -36,6 +37,53 @@ function buildHostedUploader(uploaderUrl) {
   }
 }
 
+function shortHex(hex, head = 6, tail = 8) {
+  const s = hex.startsWith('0x') ? hex.slice(2) : hex
+  if (s.length <= head + tail) return `0x${s}`
+  return `0x${s.slice(0, head)}…${s.slice(-tail)}`
+}
+
+function truncateUri(uri, max = 48) {
+  if (uri.length <= max) return uri
+  return `${uri.slice(0, max)}…`
+}
+
+function printResult({ agentId, agentName, agentUrl, ownerAddress, profile, registrySize }) {
+  const ownerLabel = process.env.AGENT_OWNER?.trim() || shortHex(ownerAddress)
+
+  console.log('')
+  console.log('────────────────────────────────────────')
+  console.log('  Agent Created:  ✓ Success')
+  console.log('────────────────────────────────────────')
+  console.log(`  Agent ID       ${agentId}`)
+  console.log(`  Name           ${agentName}`)
+  console.log(`  URL            ${agentUrl}`)
+  console.log(`  Status         ${profile.status}`)
+  console.log(`  Owner          ${ownerLabel}`)
+  console.log(`  Wallet         ${shortHex(profile.agent_wallet)}`)
+  console.log(`  Network        MOI devnet`)
+  console.log(`  Registry size  ${registrySize} agents`)
+  console.log(`  Card URI       ${truncateUri(profile.card_uri)}`)
+  console.log('────────────────────────────────────────')
+  console.log('')
+
+  if (process.env.VERBOSE === '1') {
+    console.log('Full on-chain profile:')
+    console.log(JSON.stringify({
+      agent_id: profile.agent_id,
+      owner: profile.owner,
+      agent_wallet: profile.agent_wallet,
+      status: profile.status,
+      url: profile.url,
+      card_uri: profile.card_uri,
+      score: profile.score.toString(),
+      created_at: profile.created_at.toString(),
+      updated_at: profile.updated_at.toString(),
+    }, null, 2))
+    console.log('')
+  }
+}
+
 async function main() {
   const mnemonic = envRequired('MOI_MNEMONIC')
   const uploaderUrl = envRequired('UPLOADER_URL')
@@ -54,11 +102,7 @@ async function main() {
   })
 
   const totalBefore = await registry.getAgentCount()
-  console.log(`[register] registry currently holds ${totalBefore} agents on devnet`)
-  console.log(`[register] owner wallet : ${ownerAddress}`)
-  console.log(`[register] agent name   : ${agentName}`)
-  console.log(`[register] agent url    : ${agentUrl}`)
-  console.log(`[register] uploader     : ${uploaderUrl}`)
+  console.log(`Registering on MOI devnet… (${totalBefore} agents on registry)`)
 
   const agentId = await registry.createAgent(
     { protocol: 'a2a', protocolVersion: '1.0' },
@@ -85,25 +129,13 @@ async function main() {
     },
   )
 
-  console.log(`[register] assigned agent_id: ${agentId}`)
-
   const { profile, found } = await registry.getAgentProfile(agentId)
   if (!found || !profile) {
     throw new Error(`registration succeeded but profile read-back returned not-found for ${agentId}`)
   }
 
-  console.log(`[register] on-chain profile:`)
-  console.log(JSON.stringify({
-    agent_id: profile.agent_id,
-    owner: profile.owner,
-    agent_wallet: profile.agent_wallet,
-    status: profile.status,
-    url: profile.url,
-    card_uri: profile.card_uri,
-    score: profile.score.toString(),
-    created_at: profile.created_at.toString(),
-    updated_at: profile.updated_at.toString(),
-  }, null, 2))
+  const registrySize = await registry.getAgentCount()
+  printResult({ agentId, agentName, agentUrl, ownerAddress, profile, registrySize })
 }
 
 try {
