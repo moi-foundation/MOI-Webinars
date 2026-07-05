@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Session 4 — Native Swap</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="header">
+        <p class="eyebrow">MOI Builders · Session 4</p>
+        <h1>Account-to-Account Swap</h1>
+        <p class="subtitle">TKA ↔ TKB · Lock for counterparty → Claim · no pool, no deposit</p>
+      </header>
+
+      <main id="login-card" class="swap-card">
+        <div class="rate-line">Log in with your wallet's <strong>mnemonic</strong> — it never leaves the browser</div>
+
+        <div class="field-row">
+          <label for="mnemonic">Wallet mnemonic <span class="hint">(devnet-only wallet)</span></label>
+          <textarea id="mnemonic" class="mnemonic" rows="3" spellcheck="false"
+            placeholder="twelve word mnemonic phrase from your Voyage wallet…"></textarea>
+        </div>
+
+        <div class="actions">
+          <button type="button" id="btn-connect" class="btn primary">Connect wallet</button>
+        </div>
+
+        <p id="login-status" class="status">Paste a mnemonic to derive your wallet and connect to devnet.</p>
+      </main>
+
+      <div id="wallet-bar" class="wallet-bar" hidden>
+        <span class="wallet-label">Connected</span>
+        <code id="active-address" class="address"></code>
+        <button type="button" id="btn-disconnect" class="toggle">Disconnect</button>
+      </div>
+
+      <main id="swap-card" class="swap-card" hidden>
+        <div class="rate-line">Fixed rate: <strong>1 TKA = 0.9 TKB</strong></div>
+
+        <div class="field-row">
+          <label for="send-amount">You send</label>
+          <div class="input-group">
+            <input id="send-amount" type="number" min="1" value="100" />
+            <span id="send-symbol" class="asset-tag">TKA</span>
+          </div>
+        </div>
+
+        <div class="flip-row">
+          <button type="button" id="btn-flip" class="toggle" title="Flip direction">⇅ Flip</button>
+        </div>
+
+        <div class="field-row receive">
+          <label>You receive</label>
+          <div class="receive-display">
+            <span id="receive-amount">90</span>
+            <span id="receive-symbol" class="asset-tag muted">TKB</span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <label for="counterparty">Counterparty</label>
+          <input id="counterparty" type="text" class="mono" spellcheck="false" placeholder="0x… recipient address" />
+        </div>
+
+        <div class="balances">
+          <h2>Your balances</h2>
+          <div class="balance-grid">
+            <div class="balance-block">
+              <h3>TKA</h3>
+              <dl>
+                <div><dt>Balance</dt><dd id="bal-tka">—</dd></div>
+              </dl>
+            </div>
+            <div class="balance-block">
+              <h3>TKB</h3>
+              <dl>
+                <div><dt>Balance</dt><dd id="bal-tkb">—</dd></div>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        <p id="claim-hint" class="hint claim-hint"></p>
+
+        <div class="actions">
+          <button type="button" id="btn-lock" class="btn primary">Lock</button>
+          <button type="button" id="btn-claim" class="btn secondary" disabled>Claim</button>
+          <button type="button" id="btn-refresh" class="btn ghost">Refresh balances</button>
+        </div>
+
+        <p id="status" class="status"></p>
+      </main>
+
+      <footer class="footer">
+        <p>Devnet only · verify on <a href="https://voyage.moi.technology" target="_blank" rel="noreferrer">Voyage</a></p>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
