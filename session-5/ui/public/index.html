@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NFT Demo</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main>
+    <h1>NFT Mint → Transfer</h1>
+    <p class="subtitle">Voyage devnet · js-moi-sdk</p>
+    <p id="status" class="status">Loading…</p>
+
+    <section class="card">
+      <h2>1. Mint</h2>
+      <p>Create the NFT collection and mint token #0 to your wallet.</p>
+      <button id="mint-btn" type="button">Mint NFT</button>
+    </section>
+
+    <section class="card">
+      <h2>2. Transfer</h2>
+      <p>Paste a recipient address that exists on devnet.</p>
+      <input
+        id="recipient"
+        type="text"
+        placeholder="0x… (64 hex chars)"
+        spellcheck="false"
+        autocomplete="off"
+      />
+      <button id="transfer-btn" type="button" disabled>Transfer NFT</button>
+    </section>
+
+    <section id="log-panel" class="card log hidden">
+      <h2>Output</h2>
+      <pre id="log"></pre>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

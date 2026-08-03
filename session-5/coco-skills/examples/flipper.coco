@@ -1,0 +1,57 @@
+// Flipper — simplest possible Coco logic
+// Two versions: logic-state (simple but sequential) and actor-state (parallel)
+
+// ═══════════════════════════════════════════════════════════════
+// VERSION 1: Logic-state Flipper (simple, but blocks parallelism)
+// All users share one boolean — only one can flip at a time.
+// ═══════════════════════════════════════════════════════════════
+
+coco Flipper
+
+state logic:
+    value Bool
+
+endpoint deploy Seed(initial Bool):
+    mutate initial -> Flipper.Logic.value
+
+endpoint dynamic Flip():
+    mutate value <- Flipper.Logic.value:
+        value = !value
+
+endpoint static Mode() -> (value Bool):
+    observe value <- Flipper.Logic.value
+
+// ═══════════════════════════════════════════════════════════════
+// VERSION 2: Context-Flipper (RECOMMENDED — participant-centric)
+// Each user has their own boolean — millions can flip in parallel.
+// ═══════════════════════════════════════════════════════════════
+//
+// coco ContextFlipper
+//
+// state actor:
+//     value Bool
+//
+// endpoint enlist Seed(initial Bool):
+//     mutate initial -> ContextFlipper.Sender.value
+//
+// endpoint dynamic Flip():
+//     mutate value <- ContextFlipper.Sender.value:
+//         value = !value
+//
+// endpoint static Mode() -> (value Bool):
+//     observe value <- ContextFlipper.Sender.value
+//
+// Why is this better?
+// - Logic-state Flipper: 1M users flipping = sequential, each waits for lock
+// - Context-Flipper: 1M users flipping = parallel, no lock needed
+// - Always prefer state actor for per-user data!
+
+// Inline tests:
+// < deploy TEST.Seed(initial: true)
+// >
+// < invoke TEST.Mode()
+// > value: true
+// < invoke TEST.Flip()
+// >
+// < invoke TEST.Mode()
+// > value: false

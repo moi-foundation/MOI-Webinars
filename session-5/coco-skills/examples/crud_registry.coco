@@ -1,0 +1,81 @@
+// CrudRegistry — CRUD pattern with classes, maps, and events
+// Demonstrates: classes, events, maps, for loops, gather/disperse,
+//               f-strings, arrays, haskey, remove
+
+coco CrudRegistry
+
+class Record:
+    field name String
+    field value U64
+    field active Bool
+
+event RecordEvent:
+    topic operation String
+    field record_name String
+    field actor Identifier
+
+state actor:
+    records Map[String]Record
+    record_count U64
+
+endpoint enlist Register():
+    mutate U64(0) -> CrudRegistry.Sender.record_count
+
+// Create a new record
+endpoint dynamic Create(record_name String, value U64):
+    mutate records <- CrudRegistry.Sender.records:
+        if records[record_name]?:
+            throw f"Record '{record_name}' already exists"
+        disperse records[record_name] <- Record{
+            name: record_name,
+            value: value,
+            active: true,
+        }
+    mutate count <- CrudRegistry.Sender.record_count:
+        count += 1
+    emit RecordEvent{operation: "CREATE", record_name: record_name, actor: Sender}
+
+// Read a record
+endpoint GetRecord(actor_id Identifier, record_name String) -> (record Record):
+    observe records <- CrudRegistry.Actor(actor_id).records:
+        if !records[record_name]?:
+            throw f"Record '{record_name}' not found"
+        gather record <- records[record_name]
+
+// Update a record's value
+endpoint dynamic Update(record_name String, new_value U64):
+    mutate records <- CrudRegistry.Sender.records:
+        if !records[record_name]?:
+            throw f"Record '{record_name}' not found"
+        records[record_name].value = new_value
+    emit RecordEvent{operation: "UPDATE", record_name: record_name, actor: Sender}
+
+// Deactivate a record
+endpoint dynamic Deactivate(record_name String):
+    mutate records <- CrudRegistry.Sender.records:
+        if !records[record_name]?:
+            throw f"Record '{record_name}' not found"
+        records[record_name].active = false
+    emit RecordEvent{operation: "DEACTIVATE", record_name: record_name, actor: Sender}
+
+// Delete a record
+endpoint dynamic Delete(record_name String):
+    mutate records <- CrudRegistry.Sender.records:
+        if !records[record_name]?:
+            throw f"Record '{record_name}' not found"
+        remove records[record_name]
+    mutate count <- CrudRegistry.Sender.record_count:
+        count -= 1
+    emit RecordEvent{operation: "DELETE", record_name: record_name, actor: Sender}
+
+// List all record names
+endpoint ListRecords(actor_id Identifier) -> (names []String):
+    observe records <- CrudRegistry.Actor(actor_id).records:
+        memory keys []String
+        for key, _ in records:
+            append key -> keys
+        names = keys
+
+// Get record count
+endpoint GetCount(actor_id Identifier) -> (count U64):
+    observe count <- CrudRegistry.Actor(actor_id).record_count

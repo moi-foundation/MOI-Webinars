@@ -1,0 +1,7 @@
+node_modules/
+.env
+.env.local
+sdk/deployment.json
+
+# Regenerate with: cd coco && coco compile
+coco/*.yaml

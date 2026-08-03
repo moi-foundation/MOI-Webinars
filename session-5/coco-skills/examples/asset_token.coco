@@ -1,0 +1,68 @@
+// AssetToken — minimal MAS0-style fungible asset logic
+// Demonstrates: coco asset, asset engine methods, conditional events,
+//               dynamic qualifier for mint/burn
+
+coco asset AssetToken
+
+event AssetEvent:
+    topic operation String
+    field operator Identifier
+    field benefactor Identifier
+    field beneficiary Identifier
+    field amount U256
+
+// --- Transfers (no dynamic needed — asset engine handles state) ---
+
+endpoint Transfer(beneficiary Identifier, amount U256):
+    if asset.EnableEvents():
+        emit AssetEvent{operation: "Transfer", operator: Sender,
+            benefactor: Sender, beneficiary: beneficiary, amount: amount}
+    asset.Transfer(token_id: 0, beneficiary, amount)
+
+// --- Minting & Burning (dynamic — modifies circulating supply) ---
+
+endpoint dynamic Mint(beneficiary Identifier, amount U256):
+    if asset.EnableEvents():
+        emit AssetEvent{operation: "Mint", operator: Sender,
+            beneficiary: beneficiary, amount: amount}
+    asset.Mint(token_id: 0, beneficiary, amount)
+
+endpoint dynamic Burn(amount U256):
+    if asset.EnableEvents():
+        emit AssetEvent{operation: "Burn", operator: Sender,
+            benefactor: Sender, amount: amount}
+    asset.Burn(token_id: 0, amount)
+
+// --- Approvals ---
+
+endpoint Approve(beneficiary Identifier, amount U256, expires_at U64):
+    asset.Approve(token_id: 0, beneficiary, amount, expires_at)
+
+endpoint Revoke(beneficiary Identifier):
+    asset.Revoke(token_id: 0, beneficiary)
+
+// --- Queries ---
+
+endpoint Symbol() -> (symbol String):
+    symbol = asset.Symbol()
+
+endpoint BalanceOf(address Identifier) -> (balance U256):
+    balance = asset.BalanceOf(token_id: 0, address)
+
+endpoint Creator() -> (creator Identifier):
+    creator = asset.Creator()
+
+endpoint CirculatingSupply() -> (circulating_supply U256):
+    circulating_supply = asset.CirculatingSupply()
+
+// Cocolab test:
+//   compile AssetToken from manifest(asset_token.yaml)
+//   register alice
+//   register bob
+//   set default.sender alice
+//   create AssetToken(symbol: "TKN", decimals: 18, manager: alice,
+//       max_supply: 1000000, enable_events: true) as alice
+//   invoke AssetToken.Mint(beneficiary: alice, amount: 1000) as alice
+//   invoke AssetToken.Transfer(beneficiary: bob, amount: 100) as alice
+//   invoke AssetToken.BalanceOf(address: alice)     → balance: 900
+//   invoke AssetToken.BalanceOf(address: bob)       → balance: 100

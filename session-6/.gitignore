@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.squad.json
+*.selftest.json
+
+.DS_Store
+
+# Regenerate with: cd budget-logic && coco compile
+budget-logic/*.yaml

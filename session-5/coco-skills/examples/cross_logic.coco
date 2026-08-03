@@ -1,0 +1,43 @@
+// CrossLogic — calling another deployed logic via interfaces
+// Demonstrates: interface definition, cross-logic state reading,
+//               cross-logic endpoint calls, return capture
+
+coco CrossLogic
+
+class Info:
+    field name String
+    field version U64
+
+// Interface to an external "Registry" logic
+interface Registry:
+    state logic:
+        info Info
+    endpoint:
+        GetInfo() -> (info Info)
+        dynamic UpdateVersion(new_version U64)
+
+state logic:
+    registry_id Identifier
+
+// Store the registry logic's address
+endpoint deploy Init(registry_id Identifier):
+    mutate registry_id -> CrossLogic.Logic.registry_id
+
+// Read external logic's state directly via observe
+endpoint ReadRegistryState() -> (info Info):
+    observe reg_id <- CrossLogic.Logic.registry_id
+    memory reg = Registry(reg_id)
+    observe i <- reg.Logic.info:
+        gather info <- i
+
+// Call external logic's endpoint and capture result
+endpoint CallRegistryEndpoint() -> (info Info):
+    observe reg_id <- CrossLogic.Logic.registry_id
+    memory reg = Registry(reg_id)
+    info = (info) <- reg.GetInfo()
+
+// Call external logic's dynamic endpoint
+endpoint dynamic BumpVersion(new_version U64):
+    observe reg_id <- CrossLogic.Logic.registry_id
+    memory reg = Registry(reg_id)
+    reg.UpdateVersion(new_version: new_version)

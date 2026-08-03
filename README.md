@@ -10,14 +10,16 @@ Hands-on repos for the **MOI Builders** webinar series. Each session is a self-c
 | 2 | Native Assets — MAS0 + fee-on-transfer TaxToken **(bounty)** | [`session-2/`](./session-2) |
 | 3 | On-chain Agent Registry × OpenClaw **(bounty)** | [`session-3/`](./session-3) |
 | 4 | Account-to-account native swap — MAS0 Lockup + Release (CLI + UI) **(bounty)** | [`session-4/`](./session-4) |
+| 5 | NFT Marketplace — MAS1 mint + transfer (CLI + UI) | [`session-5/`](./session-5) |
+| 6 | Context inheritance — one wallet, many agents with on-chain budgets | [`session-6/`](./session-6) |
 
 ## Quick start
 
 ```bash
 git clone https://github.com/moi-foundation/MOI-Webinars.git
-cd MOI-Webinars/session-1   # or session-2, session-3, session-4
+cd MOI-Webinars/session-1   # or session-2, session-3, session-4, session-5, session-6
 
-npm install                 # sessions 1–2, 4
+npm install                 # sessions 1–2, 4–5
 cp .env.example .env        # paste funded devnet MOI_MNEMONIC
 # follow that session's README.md
 ```
@@ -25,6 +27,10 @@ cp .env.example .env        # paste funded devnet MOI_MNEMONIC
 Session 3 installs deps inside `session-3/moi-agent-dating/scripts/` and requires OpenClaw — see [`session-3/README.md`](./session-3/README.md) and the [Session 3 slides](./session-3/MOI_Webinar_S3.pdf).
 
 Session 4 needs **two** funded devnet wallets (`VITE_ALICE_MNEMONIC` / `VITE_BOB_MNEMONIC`) and a one-time `npm run setup` — see [`session-4/README.md`](./session-4/README.md).
+
+Session 5 needs a funded devnet wallet and `cd ui && npm install` before `npm run dev` — see [`session-5/README.md`](./session-5/README.md).
+
+Session 6 needs a funded devnet wallet and an `ANTHROPIC_API_KEY` for the real-agent `run` command (scripted `spend` works without it) — see [`session-6/README.md`](./session-6/README.md).
 
 ## Prerequisites
 

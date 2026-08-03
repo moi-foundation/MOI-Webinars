@@ -1,0 +1,66 @@
+// TokenLedger — basic token with logic + actor state
+// Demonstrates: state logic/actor, deploy, enlist, dynamic endpoints,
+//               mutate/observe, maps, throw, actor access
+
+coco TokenLedger
+
+// Logic state: only shared config (sequential access, requires lock)
+state logic:
+    name String
+    total_supply U256
+
+// Actor state: per-user data (parallel execution — preferred!)
+state actor:
+    balance U256
+
+// Initialize the token (runs once at deployment)
+endpoint deploy Init(name String):
+    mutate name -> TokenLedger.Logic.name
+    mutate U256(0) -> TokenLedger.Logic.total_supply
+
+// Register a new actor (runs once per user)
+endpoint enlist Register():
+    mutate U256(0) -> TokenLedger.Sender.balance
+
+// Mint tokens to the sender
+endpoint dynamic Mint(amount U256):
+    mutate supply <- TokenLedger.Logic.total_supply:
+        supply += amount
+    mutate balance <- TokenLedger.Sender.balance:
+        balance += amount
+
+// Transfer tokens from sender to another actor
+endpoint dynamic Transfer(to Identifier, amount U256):
+    mutate sender_bal <- TokenLedger.Sender.balance:
+        if sender_bal < amount:
+            throw f"Insufficient balance: {sender_bal} < {amount}"
+        sender_bal -= amount
+    mutate to_bal <- TokenLedger.Actor(to).balance:
+        to_bal += amount
+
+// Read any actor's balance
+endpoint GetBalance(account Identifier) -> (balance U256):
+    observe balance <- TokenLedger.Actor(account).balance
+
+// Read the token name
+endpoint GetName() -> (name String):
+    observe name <- TokenLedger.Logic.name
+
+// Read total supply
+endpoint GetSupply() -> (supply U256):
+    observe supply <- TokenLedger.Logic.total_supply
+
+// Cocolab test (run `coco compile` first to produce token_ledger.yaml;
+// always load via `from manifest(<file>)` — bare `compile TokenLedger`
+// and `from coco(...)` are not reliable):
+//   compile TokenLedger from manifest(token_ledger.yaml)
+//   register alice
+//   register bob
+//   set default.sender alice
+//   deploy TokenLedger.Init(name: "MyToken") as alice
+//   enlist TokenLedger.Register() as alice
+//   enlist TokenLedger.Register() as bob
+//   invoke TokenLedger.Mint(amount: 1000) as alice
+//   invoke TokenLedger.Transfer(to: bob, amount: 100) as alice
+//   invoke TokenLedger.GetBalance(account: alice)    → balance: 900
+//   invoke TokenLedger.GetBalance(account: bob)      → balance: 100

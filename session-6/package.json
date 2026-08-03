@@ -1,0 +1,19 @@
+{
+  "name": "moi-webinars-session-6",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A squad of AI agents, each with its own inherited on-chain identity and an on-chain-enforced budget — a live demo of MOI context inheritance.",
+  "scripts": {
+    "deploy": "node deploy-budget.js",
+    "squad": "node squad.js",
+    "selftest": "node squad.js selftest"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.111.0",
+    "js-moi-sdk": "^0.7.0-rc15",
+    "js-moi-utils": "^0.7.0-rc15",
+    "js-polo": "^0.1.4",
+    "websocket": "^1.0.34"
+  }
+}

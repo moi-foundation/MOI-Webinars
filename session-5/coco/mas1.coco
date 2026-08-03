@@ -1,0 +1,110 @@
+// MAS1 NFT collection — mint with per-token metadata, transfer by token ID.
+//
+// Ownership is tracked by the asset engine: BalanceOf(token_id, address) > 0.
+// Policy (our logic): manager-gated mint, name + image URI at mint time.
+// Protocol (MOI): token IDs, balances, transfers.
+//
+// Cocolab:
+//   coco compile
+//   compile MAS1 from manifest(mas1.yaml)
+//   create MAS1(symbol: "ART", decimals: 0, manager: alice, max_supply: 10000, enable_events: true) as alice
+//   invoke MAS1.Init() as alice
+//   invoke MAS1.Mint(beneficiary: alice, name: "Genesis", image_uri: "ipfs://…") as alice
+//   invoke MAS1.Transfer(token_id: 0, beneficiary: bob) as alice
+//   invoke MAS1.IsOwner(token_id: 0, address: bob)
+
+coco asset MAS1
+
+const TOKEN_COUNT String = "__token_count__"
+const META_NAME String = "name"
+const META_IMAGE_URI String = "image_uri"
+
+event NFTEvent:
+    topic operation String
+    field token_id U64
+    field operator Identifier
+    field beneficiary Identifier
+    field name String
+    field image_uri String
+
+function get_token_count() -> (token_count U64):
+    memory value = asset.GetDynamicMetadata(key: TOKEN_COUNT)
+    token_count = depolorize(U64, value)
+
+function dynamic set_token_count(token_count U64):
+    asset.SetDynamicMetadata(key: TOKEN_COUNT, polorize(token_count))
+
+function dynamic RequireManager():
+    if Sender != asset.Manager():
+        throw "Only manager can mint"
+
+function RequireNonEmpty(value String, field_name String):
+    if len(value) == 0:
+        throw f"{field_name} cannot be empty"
+
+endpoint deploy Init():
+    set_token_count(token_count: 0)
+
+endpoint dynamic Mint(beneficiary Identifier, name String, image_uri String) -> (token_id U64):
+    RequireManager()
+    RequireNonEmpty(value: name, field_name: "Name")
+    RequireNonEmpty(value: image_uri, field_name: "Image URI")
+    memory new_token_id = (token_count) <- get_token_count()
+    memory metadata = Map[String]Bytes{
+        META_NAME: polorize(name),
+        META_IMAGE_URI: polorize(image_uri),
+    }
+    if asset.EnableEvents():
+        emit NFTEvent{
+            operation: "Mint",
+            token_id: new_token_id,
+            operator: Sender,
+            beneficiary: beneficiary,
+            name: name,
+            image_uri: image_uri,
+        }
+    asset.MintWithMetadata(
+        token_id: new_token_id,
+        beneficiary,
+        amount: U256(1),
+        static_metadata: metadata,
+    )
+    set_token_count(token_count: new_token_id + 1)
+    token_id = new_token_id
+
+endpoint Transfer(token_id U64, beneficiary Identifier):
+    if beneficiary == Sender:
+        throw "Cannot transfer to self"
+    if asset.EnableEvents():
+        emit NFTEvent{
+            operation: "Transfer",
+            token_id: token_id,
+            operator: Sender,
+            beneficiary: beneficiary,
+            name: "",
+            image_uri: "",
+        }
+    asset.Transfer(token_id, beneficiary, amount: U256(1))
+
+endpoint BalanceOf(token_id U64, address Identifier) -> (balance U256):
+    balance = asset.BalanceOf(token_id, address)
+
+endpoint IsOwner(token_id U64, address Identifier) -> (is_owner Bool):
+    is_owner = asset.BalanceOf(token_id, address) > 0
+
+endpoint GetTokenName(token_id U64) -> (name String):
+    memory value = asset.GetStaticTokenMetadata(token_id, key: META_NAME)
+    name = depolorize(String, value)
+
+endpoint GetImageUri(token_id U64) -> (image_uri String):
+    memory value = asset.GetStaticTokenMetadata(token_id, key: META_IMAGE_URI)
+    image_uri = depolorize(String, value)
+
+endpoint TokenCount() -> (count U64):
+    count = (token_count) <- get_token_count()
+
+endpoint Symbol() -> (symbol String):
+    symbol = asset.Symbol()
+
+endpoint Manager() -> (manager Identifier):
+    manager = asset.Manager()

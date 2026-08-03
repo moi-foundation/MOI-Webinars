@@ -1,0 +1,68 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #0f1117;
+  color: #e8eaed;
+  line-height: 1.5;
+}
+
+main {
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+}
+
+h1 { margin: 0 0 0.25rem; font-size: 1.75rem; }
+.subtitle { margin: 0 0 1rem; color: #9aa0a6; }
+.status { margin-bottom: 1.25rem; font-size: 0.9rem; }
+
+.card {
+  background: #1a1d27;
+  border: 1px solid #2d3142;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.card h2 { margin: 0 0 0.5rem; font-size: 1rem; }
+.card p { margin: 0 0 1rem; color: #9aa0a6; font-size: 0.9rem; }
+
+input {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid #3c4048;
+  border-radius: 8px;
+  background: #0f1117;
+  color: #e8eaed;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+}
+
+button {
+  padding: 0.65rem 1.25rem;
+  border: none;
+  border-radius: 8px;
+  background: #4f6ef7;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+button:not(:disabled):hover { background: #3d5ce0; }
+
+.log pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  color: #c4c7c5;
+}
+
+.hidden { display: none; }
+.ok { color: #81c995; }
+.err { color: #f28b82; }

@@ -1,0 +1,767 @@
+{
+  "syntax": 1,
+  "engine": {
+    "kind": "PISA",
+    "flags": [],
+    "version": "0.7.0"
+  },
+  "kind": "asset",
+  "elements": [
+    {
+      "ptr": 0,
+      "kind": "literal",
+      "data": {
+        "type": "string",
+        "value": "0x065f5f746f6b656e5f636f756e745f5f"
+      }
+    },
+    {
+      "ptr": 1,
+      "kind": "literal",
+      "data": {
+        "type": "string",
+        "value": "0x066e616d65"
+      }
+    },
+    {
+      "ptr": 2,
+      "kind": "literal",
+      "data": {
+        "type": "string",
+        "value": "0x06696d6167655f757269"
+      }
+    },
+    {
+      "ptr": 3,
+      "kind": "literal",
+      "data": {
+        "type": "string",
+        "value": "0x064f6e6c79206d616e616765722063616e206d696e74"
+      }
+    },
+    {
+      "ptr": 4,
+      "kind": "literal",
+      "data": {
+        "type": "string",
+        "value": "0x062063616e6e6f7420626520656d707479"
+      }
+    },
+    {
+      "ptr": 5,
+      "kind": "literal",
+      "data": {
+        "type": "string",
+        "value": "0x064e616d65"
+      }
+    },
+    {
+      "ptr": 6,
+      "kind": "literal",
+      "data": {
+        "type": "string",
+        "value": "0x06496d61676520555249"
+      }
+    },
+    {
+      "ptr": 7,
+      "kind": "literal",
+      "data": {
+        "type": "string",
+        "value": "0x064d696e74"
+      }
+    },
+    {
+      "ptr": 8,
+      "kind": "literal",
+      "data": {
+        "type": "string",
+        "value": "0x0643616e6e6f74207472616e7366657220746f2073656c66"
+      }
+    },
+    {
+      "ptr": 9,
+      "kind": "literal",
+      "data": {
+        "type": "string",
+        "value": "0x065472616e73666572"
+      }
+    },
+    {
+      "ptr": 10,
+      "kind": "literal",
+      "data": {
+        "type": "string",
+        "value": "0x06"
+      }
+    },
+    {
+      "ptr": 11,
+      "kind": "typedef",
+      "data": "map[string]bytes"
+    },
+    {
+      "ptr": 12,
+      "kind": "event",
+      "data": {
+        "name": "NFTEvent",
+        "topics": 1,
+        "fields": [
+          {
+            "slot": 0,
+            "label": "operation",
+            "type": "string"
+          },
+          {
+            "slot": 1,
+            "label": "token_id",
+            "type": "u64"
+          },
+          {
+            "slot": 2,
+            "label": "operator",
+            "type": "identifier"
+          },
+          {
+            "slot": 3,
+            "label": "beneficiary",
+            "type": "identifier"
+          },
+          {
+            "slot": 4,
+            "label": "name",
+            "type": "string"
+          },
+          {
+            "slot": 5,
+            "label": "image_uri",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "ptr": 13,
+      "kind": "callable",
+      "data": {
+        "name": "get_token_count",
+        "mode": "pure",
+        "kind": "internal",
+        "accepts": [],
+        "returns": [
+          {
+            "slot": 0,
+            "label": "token_count",
+            "type": "u64"
+          }
+        ],
+        "executes": {
+          "asm": [
+            "CARGS $0",
+            "LDPTR1 $1 0x0",
+            "LMAKE $1 $1",
+            "SETFLD $0 &0 $1",
+            "ASSET $1",
+            "CALLM $0 $1 &1b $0",
+            "GETFLD $0 $0 &0",
+            "PFORM $0 &5 $0",
+            "YIELD $0 &0"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 14,
+      "kind": "callable",
+      "data": {
+        "name": "set_token_count",
+        "mode": "dynamic",
+        "kind": "internal",
+        "accepts": [
+          {
+            "slot": 0,
+            "label": "token_count",
+            "type": "u64"
+          }
+        ],
+        "returns": [],
+        "executes": {
+          "asm": [
+            "CARGS $0",
+            "LDPTR1 $1 0x0",
+            "LMAKE $1 $1",
+            "OBTAIN $2 &0",
+            "ENCODE $2 $2",
+            "SETFLD $0 &0 $1",
+            "SETFLD $0 &1 $2",
+            "ASSET $1",
+            "CALLM $0 $1 &19 $0"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 15,
+      "deps": [
+        3
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "RequireManager",
+        "mode": "dynamic",
+        "kind": "internal",
+        "accepts": [],
+        "returns": [],
+        "executes": {
+          "asm": [
+            "CARGS $0",
+            "ASSET $1",
+            "CALLM $0 $1 &13 $0",
+            "GETFLD $0 $0 &0",
+            "ORIGIN $1",
+            "EQ $0 $1 $0",
+            "LDPTR1 $1 0xb",
+            "JUMPI $1 $0",
+            "LDPTR1 $0 0x3",
+            "LMAKE $0 $0",
+            "THROW $0",
+            "DEST"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 16,
+      "deps": [
+        4
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "RequireNonEmpty",
+        "mode": "pure",
+        "kind": "internal",
+        "accepts": [
+          {
+            "slot": 0,
+            "label": "value",
+            "type": "string"
+          },
+          {
+            "slot": 1,
+            "label": "field_name",
+            "type": "string"
+          }
+        ],
+        "returns": [],
+        "executes": {
+          "asm": [
+            "OBTAIN $0 &0",
+            "LEN $0 $0",
+            "PMAKE $1 &5",
+            "EQ $0 $0 $1",
+            "NOT $0 $0",
+            "LDPTR1 $1 0xc",
+            "JUMPI $1 $0",
+            "OBTAIN $0 &1",
+            "LDPTR1 $1 0x4",
+            "LMAKE $1 $1",
+            "JOIN $0 $0 $1",
+            "THROW $0",
+            "DEST"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 17,
+      "deps": [
+        14
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "Init",
+        "mode": "dynamic",
+        "kind": "deploy",
+        "accepts": [],
+        "returns": [],
+        "executes": {
+          "asm": [
+            "CARGS $0",
+            "PMAKE $1 &5",
+            "SETFLD $0 &0 $1",
+            "LDPTR1 $1 0xe",
+            "CALLC $0 $1 $0"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 18,
+      "deps": [
+        5,
+        6,
+        7,
+        11,
+        12,
+        15,
+        16,
+        13,
+        14
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "Mint",
+        "mode": "dynamic",
+        "kind": "invoke",
+        "accepts": [
+          {
+            "slot": 0,
+            "label": "beneficiary",
+            "type": "identifier"
+          },
+          {
+            "slot": 1,
+            "label": "name",
+            "type": "string"
+          },
+          {
+            "slot": 2,
+            "label": "image_uri",
+            "type": "string"
+          }
+        ],
+        "returns": [
+          {
+            "slot": 0,
+            "label": "token_id",
+            "type": "u64"
+          }
+        ],
+        "executes": {
+          "asm": [
+            "CARGS $0",
+            "LDPTR1 $1 0xf",
+            "CALLC $0 $1 $0",
+            "CARGS $0",
+            "OBTAIN $1 &1",
+            "SETFLD $0 &0 $1",
+            "LDPTR1 $2 0x5",
+            "LMAKE $2 $2",
+            "SETFLD $0 &1 $2",
+            "LDPTR1 $2 0x10",
+            "CALLC $0 $2 $0",
+            "CARGS $0",
+            "OBTAIN $2 &2",
+            "SETFLD $0 &0 $2",
+            "LDPTR1 $3 0x6",
+            "LMAKE $3 $3",
+            "SETFLD $0 &1 $3",
+            "LDPTR1 $3 0x10",
+            "CALLC $0 $3 $0",
+            "CARGS $0",
+            "LDPTR1 $3 0xd",
+            "CALLC $0 $3 $0",
+            "GETFLD $0 $0 &0",
+            "LDPTR1 $3 0xb",
+            "MAKE $3 $3",
+            "LDPTR1 $4 0x1",
+            "LMAKE $4 $4",
+            "ENCODE $5 $1",
+            "SETKEY $3 $4 $5",
+            "LDPTR1 $4 0x2",
+            "LMAKE $4 $4",
+            "ENCODE $5 $2",
+            "SETKEY $3 $4 $5",
+            "CARGS $4",
+            "ASSET $5",
+            "CALLM $4 $5 &17 $4",
+            "GETFLD $4 $4 &0",
+            "NOT $4 $4",
+            "LDPTR1 $6 0x38",
+            "JUMPI $6 $4",
+            "CARGS $4",
+            "LDPTR1 $6 0x7",
+            "LMAKE $6 $6",
+            "SETFLD $4 &0 $6",
+            "SETFLD $4 &1 $0",
+            "ORIGIN $6",
+            "SETFLD $4 &2 $6",
+            "OBTAIN $6 &0",
+            "SETFLD $4 &3 $6",
+            "SETFLD $4 &4 $1",
+            "SETFLD $4 &5 $2",
+            "LDPTR1 $1 0xc",
+            "EVMAKE $1 $1 $4",
+            "LOGIC $2",
+            "ID $2 $2",
+            "EMIT $2 $1",
+            "DEST",
+            "CARGS $1",
+            "OBTAIN $2 &0",
+            "PMAKE $4 &5",
+            "INCR $4",
+            "CARGS $6",
+            "CALLM $4 $4 &13 $6",
+            "GETFLD $6 $4 &0",
+            "SETFLD $1 &0 $0",
+            "SETFLD $1 &1 $2",
+            "SETFLD $1 &2 $6",
+            "SETFLD $1 &3 $3",
+            "CALLM $1 $5 &2 $1",
+            "CARGS $1",
+            "PMAKE $2 &5",
+            "INCR $2",
+            "ADD $2 $0 $2",
+            "SETFLD $1 &0 $2",
+            "LDPTR1 $2 0xe",
+            "CALLC $1 $2 $1",
+            "YIELD $0 &0"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 19,
+      "deps": [
+        8,
+        9,
+        10,
+        12
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "Transfer",
+        "mode": "pure",
+        "kind": "invoke",
+        "accepts": [
+          {
+            "slot": 0,
+            "label": "token_id",
+            "type": "u64"
+          },
+          {
+            "slot": 1,
+            "label": "beneficiary",
+            "type": "identifier"
+          }
+        ],
+        "returns": [],
+        "executes": {
+          "asm": [
+            "OBTAIN $0 &1",
+            "ORIGIN $1",
+            "EQ $1 $0 $1",
+            "NOT $1 $1",
+            "LDPTR1 $2 0x9",
+            "JUMPI $2 $1",
+            "LDPTR1 $1 0x8",
+            "LMAKE $1 $1",
+            "THROW $1",
+            "DEST",
+            "CARGS $1",
+            "ASSET $2",
+            "CALLM $1 $2 &17 $1",
+            "GETFLD $1 $1 &0",
+            "NOT $1 $1",
+            "LDPTR1 $3 0x25",
+            "JUMPI $3 $1",
+            "CARGS $1",
+            "LDPTR1 $3 0x9",
+            "LMAKE $3 $3",
+            "SETFLD $1 &0 $3",
+            "OBTAIN $3 &0",
+            "SETFLD $1 &1 $3",
+            "ORIGIN $3",
+            "SETFLD $1 &2 $3",
+            "SETFLD $1 &3 $0",
+            "LDPTR1 $3 0xa",
+            "LMAKE $3 $3",
+            "SETFLD $1 &4 $3",
+            "LDPTR1 $3 0xa",
+            "LMAKE $3 $3",
+            "SETFLD $1 &5 $3",
+            "LDPTR1 $3 0xc",
+            "EVMAKE $1 $3 $1",
+            "LOGIC $3",
+            "ID $3 $3",
+            "EMIT $3 $1",
+            "DEST",
+            "CARGS $1",
+            "OBTAIN $3 &0",
+            "PMAKE $4 &5",
+            "INCR $4",
+            "CARGS $5",
+            "CALLM $4 $4 &13 $5",
+            "GETFLD $5 $4 &0",
+            "SETFLD $1 &0 $3",
+            "SETFLD $1 &2 $0",
+            "SETFLD $1 &3 $5",
+            "CALLM $0 $2 &1 $1"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 20,
+      "kind": "callable",
+      "data": {
+        "name": "BalanceOf",
+        "mode": "pure",
+        "kind": "invoke",
+        "accepts": [
+          {
+            "slot": 0,
+            "label": "token_id",
+            "type": "u64"
+          },
+          {
+            "slot": 1,
+            "label": "address",
+            "type": "identifier"
+          }
+        ],
+        "returns": [
+          {
+            "slot": 0,
+            "label": "balance",
+            "type": "u256"
+          }
+        ],
+        "executes": {
+          "asm": [
+            "CARGS $0",
+            "OBTAIN $1 &0",
+            "OBTAIN $2 &1",
+            "SETFLD $0 &0 $1",
+            "SETFLD $0 &1 $2",
+            "ASSET $1",
+            "CALLM $0 $1 &11 $0",
+            "GETFLD $0 $0 &0",
+            "YIELD $0 &0"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 21,
+      "kind": "callable",
+      "data": {
+        "name": "IsOwner",
+        "mode": "pure",
+        "kind": "invoke",
+        "accepts": [
+          {
+            "slot": 0,
+            "label": "token_id",
+            "type": "u64"
+          },
+          {
+            "slot": 1,
+            "label": "address",
+            "type": "identifier"
+          }
+        ],
+        "returns": [
+          {
+            "slot": 0,
+            "label": "is_owner",
+            "type": "bool"
+          }
+        ],
+        "executes": {
+          "asm": [
+            "CARGS $0",
+            "OBTAIN $1 &0",
+            "OBTAIN $2 &1",
+            "SETFLD $0 &0 $1",
+            "SETFLD $0 &1 $2",
+            "ASSET $1",
+            "CALLM $0 $1 &11 $0",
+            "GETFLD $0 $0 &0",
+            "PMAKE $1 &7",
+            "GT $0 $0 $1",
+            "YIELD $0 &0"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 22,
+      "kind": "callable",
+      "data": {
+        "name": "GetTokenName",
+        "mode": "pure",
+        "kind": "invoke",
+        "accepts": [
+          {
+            "slot": 0,
+            "label": "token_id",
+            "type": "u64"
+          }
+        ],
+        "returns": [
+          {
+            "slot": 0,
+            "label": "name",
+            "type": "string"
+          }
+        ],
+        "executes": {
+          "asm": [
+            "CARGS $0",
+            "OBTAIN $1 &0",
+            "LDPTR1 $2 0x1",
+            "LMAKE $2 $2",
+            "SETFLD $0 &0 $1",
+            "SETFLD $0 &1 $2",
+            "ASSET $1",
+            "CALLM $0 $1 &1e $0",
+            "GETFLD $0 $0 &0",
+            "PFORM $0 &3 $0",
+            "YIELD $0 &0"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 23,
+      "kind": "callable",
+      "data": {
+        "name": "GetImageUri",
+        "mode": "pure",
+        "kind": "invoke",
+        "accepts": [
+          {
+            "slot": 0,
+            "label": "token_id",
+            "type": "u64"
+          }
+        ],
+        "returns": [
+          {
+            "slot": 0,
+            "label": "image_uri",
+            "type": "string"
+          }
+        ],
+        "executes": {
+          "asm": [
+            "CARGS $0",
+            "OBTAIN $1 &0",
+            "LDPTR1 $2 0x2",
+            "LMAKE $2 $2",
+            "SETFLD $0 &0 $1",
+            "SETFLD $0 &1 $2",
+            "ASSET $1",
+            "CALLM $0 $1 &1e $0",
+            "GETFLD $0 $0 &0",
+            "PFORM $0 &3 $0",
+            "YIELD $0 &0"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 24,
+      "deps": [
+        13
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "TokenCount",
+        "mode": "pure",
+        "kind": "invoke",
+        "accepts": [],
+        "returns": [
+          {
+            "slot": 0,
+            "label": "count",
+            "type": "u64"
+          }
+        ],
+        "executes": {
+          "asm": [
+            "CARGS $0",
+            "LDPTR1 $1 0xd",
+            "CALLC $0 $1 $0",
+            "GETFLD $0 $0 &0",
+            "YIELD $0 &0"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 25,
+      "kind": "callable",
+      "data": {
+        "name": "Symbol",
+        "mode": "pure",
+        "kind": "invoke",
+        "accepts": [],
+        "returns": [
+          {
+            "slot": 0,
+            "label": "symbol",
+            "type": "string"
+          }
+        ],
+        "executes": {
+          "asm": [
+            "CARGS $0",
+            "ASSET $1",
+            "CALLM $0 $1 &10 $0",
+            "GETFLD $0 $0 &0",
+            "YIELD $0 &0"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 26,
+      "kind": "callable",
+      "data": {
+        "name": "Manager",
+        "mode": "pure",
+        "kind": "invoke",
+        "accepts": [],
+        "returns": [
+          {
+            "slot": 0,
+            "label": "manager",
+            "type": "identifier"
+          }
+        ],
+        "executes": {
+          "asm": [
+            "CARGS $0",
+            "ASSET $1",
+            "CALLM $0 $1 &13 $0",
+            "GETFLD $0 $0 &0",
+            "YIELD $0 &0"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 27,
+      "kind": "asset",
+      "data": {
+        "engine": "1.0.0"
+      }
+    }
+  ]
+}

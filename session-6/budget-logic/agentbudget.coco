@@ -1,0 +1,92 @@
+coco AgentBudget
+
+// A tiny per-agent budget ledger — the "useful logic" the webinar squad
+// actually uses. Each participating account gets its own budget and spent
+// total in ACTOR STATE: storage that lives on the account, under this logic.
+//
+// Only an account inherited under this logic has that storage, so SetBudget
+// and RecordSpend can only be called by an inherited sub-account. A bare
+// primary has nowhere to write and the call reverts. That is exactly why
+// context inheritance is required to use this logic.
+
+event BudgetSet:
+    topic owner Identifier
+    field budget U256
+
+event SpendRecorded:
+    topic owner Identifier
+    field amount U256
+    field memo String
+    field spent U256
+    field remaining U256
+
+// Per-account state. Every inherited account holds its own copy; there is no
+// shared logic state.
+state actor:
+    budget U256
+    spent U256
+
+// SetBudget assigns this account's spending allowance. Writing Sender.budget
+// requires actor state under this logic — i.e. the caller must be an
+// inherited sub-account.
+endpoint dynamic SetBudget(amount U256):
+    if amount == 0:
+        throw "budget must be positive"
+    mutate b <- AgentBudget.Sender.budget:
+        b = amount
+    emit BudgetSet{owner: Sender, budget: amount} -> Sender
+
+// RecordSpend adds to this account's spent total, but only if it stays within
+// the account's budget. The cap is enforced ON CHAIN — not by convention.
+endpoint dynamic RecordSpend(amount U256, memo String) -> (spent U256, remaining U256):
+    if amount == 0:
+        throw "amount must be positive"
+    memory budget U256
+    observe b <- AgentBudget.Sender.budget:
+        budget = b
+    if budget == 0:
+        throw f"{Sender} has no budget set — call SetBudget first"
+    memory current U256
+    observe s <- AgentBudget.Sender.spent:
+        current = s
+    memory remaining_before U256
+    if budget > current:
+        remaining_before = budget - current
+    else:
+        remaining_before = U256(0)
+    memory next U256 = current + amount
+    if next > budget:
+        throw f"spend {amount} exceeds remaining budget {remaining_before}"
+    mutate s2 <- AgentBudget.Sender.spent:
+        s2 = next
+    memory rem U256 = budget - next
+    emit SpendRecorded{
+        owner: Sender,
+        amount: amount,
+        memo: memo,
+        spent: next,
+        remaining: rem,
+    } -> Sender
+    spent = next
+    remaining = rem
+
+// GetBudget reads the CALLER'S OWN ledger (read-only). Call it AS the agent
+// (the wallet you call with is Sender). `report` calls it once per agent.
+// (Actor(owner) cross-reads throw "actor not found" from a static call — the
+// proven pattern, per the js-moi-sdk skill's ContextFlipper.Mode(), is a
+// Sender-based static read.)
+endpoint static GetBudget() -> (budget U256, spent U256, remaining U256):
+    memory bud U256
+    observe b <- AgentBudget.Sender.budget:
+        bud = b
+    memory sp U256
+    observe s <- AgentBudget.Sender.spent:
+        sp = s
+    memory rem U256
+    if bud > sp:
+        rem = bud - sp
+    else:
+        rem = U256(0)
+    budget = bud
+    spent = sp
+    remaining = rem

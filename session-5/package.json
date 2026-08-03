@@ -1,0 +1,16 @@
+{
+  "name": "moi-webinar-s5",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MOI Builders Webinar Session 5 — NFT marketplace (MAS1 mint + transfer + UI)",
+  "scripts": {
+    "mint": "node sdk/mint.js",
+    "transfer": "node sdk/transfer.js",
+    "dev": "npm run dev --prefix ui"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "js-moi-sdk": "^0.7.1"
+  }
+}
