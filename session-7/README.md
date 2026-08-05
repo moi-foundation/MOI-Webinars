@@ -17,7 +17,7 @@ summary. About a second, no prior relationship.
 x402 tells you an amount and a 32-byte address. It cannot tell you **whose address that is**.
 
 MOI can. The buyer reads the seller's `agent_wallet` from the on-chain registry and refuses to pay
-if the invoice disagrees. `pnpm demo -- --tamper` repoints the registry entry at an attacker and
+if the invoice disagrees. `npm run demo -- --tamper` repoints the registry entry at an attacker and
 the buyer walks away — a check no x402 facilitator on any other chain can perform.
 
 ## The flow
@@ -38,12 +38,12 @@ seller 200 + summary + X-Payment-Response
 ## Run order
 
 ```bash
-pnpm install
+npm install
 cp .env.example .env          # paste ONE funded devnet mnemonic
-pnpm verify-sdk               # 63 assertions vs live devnet — no wallet needed
-pnpm setup:asset              # MAS0 asset + buyer float -> SETTLEMENT_ASSET_ID
-pnpm setup:registry           # register both agents -> SELLER_AGENT_ID / BUYER_AGENT_ID
-pnpm demo
+npm run verify-sdk               # 63 assertions vs live devnet — no wallet needed
+npm run setup:asset              # MAS0 asset + buyer float -> SETTLEMENT_ASSET_ID
+npm run setup:registry           # register both agents -> SELLER_AGENT_ID / BUYER_AGENT_ID
+npm run demo
 ```
 
 Only **one** funded wallet is needed: the buyer signs, the seller only receives.
@@ -62,7 +62,7 @@ Only **one** funded wallet is needed: the buyer signs, the seller only receives.
 
 ## What is and isn't proven
 
-**Verified:** `pnpm verify-sdk` passes 63 assertions against live devnet — the registry surface,
+**Verified:** `npm run verify-sdk` passes 63 assertions against live devnet — the registry surface,
 sign/verify including negative cases, the public-key→identifier derivation, the MAS0 method
 surface, and the receipt/tesseract/calldata shapes the facilitator depends on. Everything
 typechecks.

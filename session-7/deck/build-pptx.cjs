@@ -328,7 +328,7 @@ Then the facilitator confirms, and the book comes back with a receipt.
 
 [ >>> SWITCH TO TERMINAL — DEMO 1, the happy path.
 
-    DEMO_PAUSE_MS=1200 pnpm demo
+    DEMO_PAUSE_MS=1200 npm run demo
 
   ~25 seconds. Narrate as the banners print — they are the 13 steps you just walked through.
   Call out step 1 (found on chain), step 6 (the identity check), step 7 (the buyer's own transfer).
@@ -427,7 +427,7 @@ That is the session in one demo.
 
 [ >>> SWITCH TO TERMINAL — DEMO 2, the attack. This is the one they remember.
 
-    pnpm demo -- --tamper
+    npm run demo -- --tamper
 
   Before you run it, say what you're doing: "I've repointed the seller's registry entry at an
   attacker's address."
@@ -465,7 +465,7 @@ Nine checks in total, all read-only. And the suite fires eleven forged payments 
 
 [ OPTIONAL, if you have time —
 
-    pnpm attack-test
+    npm run attack-test
 
   Eleven forgeries rejected, one honest control accepted. Skip it if you're over 30 minutes. ]`);
 
@@ -500,11 +500,11 @@ y = head(s, 12, "your turn", "Run it in sixty seconds",
   "Fund one devnet wallet, run two setup scripts, and the same demo settles for real on Voyage — with an interaction hash you can look up.", true);
 code(s, { x: L, y, w: W, h: 2.18, fs: 11, file: "terminal", lines: [
   [{ t: "git clone …/MOI-Webinars && " }, { t: "cd", c: K }, { t: " MOI-Webinars/session-7" }],
-  [{ t: "pnpm install" }],
+  [{ t: "npm install" }],
   [],
-  [{ t: "pnpm setup:asset && pnpm setup:registry   " }, { t: "# one-time", c: C }],
-  [{ t: "pnpm demo                                 " }, { t: "# the happy path", c: C }],
-  [{ t: "pnpm demo -- --tamper                     " }, { t: "# watch it refuse", c: C }],
+  [{ t: "npm run setup:asset && npm run setup:registry   " }, { t: "# one-time", c: C }],
+  [{ t: "npm run demo                                 " }, { t: "# the happy path", c: C }],
+  [{ t: "npm run demo -- --tamper                     " }, { t: "# watch it refuse", c: C }],
 ]});
 card(s, { x: L, y: y + 2.4, w: hw, h: 1.05, tone: "darkline", label: "one wallet is enough",
   p: "Only the buyer needs funding — the seller receives, so it never signs and never needs gas." });
@@ -514,11 +514,11 @@ s.addNotes(`[ SCREEN — DECK  ·  final slide ]
 
 Your turn — and you can do this on the train home.
 
-Clone the repo, pnpm install, and fund one devnet wallet at voyage.moi.technology. Just one — the seller only ever receives, so it never signs and never needs gas.
+Clone the repo, npm install, and fund one devnet wallet at voyage.moi.technology. Just one — the seller only ever receives, so it never signs and never needs gas.
 
-Two setup scripts: one mints the MAS0 asset and gives the buyer a float, the other registers both agents on chain. Then pnpm demo, and everything you just watched happens against real devnet, with an interaction hash you can look up.
+Two setup scripts: one mints the MAS0 asset and gives the buyer a float, the other registers both agents on chain. Then npm run demo, and everything you just watched happens against real devnet, with an interaction hash you can look up.
 
-Add --tamper to see it refuse, and pnpm attack-test to fire eleven forged payments at the facilitator.
+Add --tamper to see it refuse, and npm run attack-test to fire eleven forged payments at the facilitator.
 
 If you read one file, make it verify-payment.ts. The nine checks are the whole session in about a hundred and fifty lines.
 

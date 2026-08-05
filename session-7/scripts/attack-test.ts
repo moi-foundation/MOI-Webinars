@@ -1,6 +1,6 @@
 // Adversarial tests against a running facilitator.
 //
-//   pnpm attack-test
+//   npm run attack-test
 //
 // A passing happy path proves nothing about whether the 9 checks do any work. This fires forged
 // payments at a real facilitator over real HTTP and asserts each is rejected for the RIGHT reason
@@ -92,14 +92,14 @@ async function main(): Promise<void> {
   // A genuinely unrelated wallet — a different derivation path, so a different key.
   const attacker = await loadAccount("attacker", "m/44'/6174'/7020'/0/99");
 
-  // Uses the agents `pnpm setup:registry` already put on chain.
+  // Uses the agents `npm run setup:registry` already put on chain.
   const sellerAgentId = config.sellerAgentId;
-  if (!sellerAgentId) throw new Error("SELLER_AGENT_ID unset — run `pnpm setup:registry` first.");
+  if (!sellerAgentId) throw new Error("SELLER_AGENT_ID unset — run `npm run setup:registry` first.");
   const held = await balanceOf(buyer, buyer.address);
   if (held < config.price * 6n) {
     throw new Error(
       `buyer holds ${held} ${config.assetSymbol}; this suite needs at least ${config.price * 6n}. ` +
-      "Run `pnpm setup:asset`.",
+      "Run `npm run setup:asset`.",
     );
   }
 

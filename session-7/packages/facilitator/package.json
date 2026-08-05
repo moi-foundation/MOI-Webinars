@@ -5,7 +5,7 @@
   "type": "module",
   "main": "./src/index.ts",
   "dependencies": {
-    "@demo/shared": "workspace:*"
+    "@demo/shared": "*"
   },
   "exports": {
     ".": "./src/index.ts",

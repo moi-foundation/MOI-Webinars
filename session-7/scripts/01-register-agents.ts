@@ -1,6 +1,6 @@
 // Register both agents in the on-chain MOI agent registry.
 //
-//   pnpm setup:registry
+//   npm run setup:registry
 //
 // This is the step that makes the payment VERIFIABLE rather than merely valid: after this, the
 // buyer can ask the chain "who owns this address?" before sending money.
@@ -81,7 +81,7 @@ async function main(): Promise<void> {
     ["SELLER_AGENT_ID", sellerId],
     ["BUYER_AGENT_ID", buyerId],
     ["written to", path],
-    ["next", "pnpm demo"],
+    ["next", "npm run demo"],
   ]);
 }
 

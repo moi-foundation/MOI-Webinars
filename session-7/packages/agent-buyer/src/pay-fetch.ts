@@ -90,10 +90,12 @@ export async function payingFetch<T = unknown>(
   if (refusal) throw new PaymentRefused(refusal);
 
   const price = BigInt(requirements.maxAmountRequired);
+  // MAS0 transfer amounts must be numbers at the wire layer (bigint breaks signing).
+  const transferAmount = Number(price);
 
   // ── the buyer moves its OWN funds. Nobody else can. ─────────────────────────────────────
   const asset = new MAS0AssetLogic(requirements.asset, opts.buyer.wallet);
-  const ix = await asset.transfer(requirements.payTo, price).send();
+  const ix = await asset.transfer(requirements.payTo, transferAmount).send();
   const result = (await ix.result()) as unknown as { error?: unknown };
   if (result?.error) throw new Error(`transfer reverted: ${JSON.stringify(result.error)}`);
   const txHash = ix.hash;

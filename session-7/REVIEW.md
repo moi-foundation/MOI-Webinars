@@ -12,19 +12,19 @@ budget logic. Authority is session 8; full commerce is session 9.
 ## Run it (needs one funded devnet wallet)
 
 ```bash
-cd session-7 && pnpm install
+cd session-7 && npm install
 cp .env.example .env      # funded devnet mnemonic
-pnpm setup:asset && pnpm setup:registry
-pnpm demo
+npm run setup:asset && npm run setup:registry
+npm run demo
 ```
 
 Then the three that matter:
 
 | Command | What it should show |
 | --- | --- |
-| `pnpm demo -- --tamper` | registry wallet repointed → buyer **refuses**, no money moves |
-| `pnpm attack-test` | 11 forgeries rejected + 1 honest control accepted |
-| `pnpm verify-sdk` | 63 assertions against live devnet (no wallet needed) |
+| `npm run demo -- --tamper` | registry wallet repointed → buyer **refuses**, no money moves |
+| `npm run attack-test` | 11 forgeries rejected + 1 honest control accepted |
+| `npm run verify-sdk` | 63 assertions against live devnet (no wallet needed) |
 
 ## Read in this order
 

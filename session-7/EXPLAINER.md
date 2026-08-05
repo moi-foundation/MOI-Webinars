@@ -50,17 +50,17 @@ It's a referee, not a cashier. It signs nothing.
 Fund one devnet wallet at <https://voyage.moi.technology>, then:
 
 ```bash
-cd session-7 && pnpm install
+cd session-7 && npm install
 cp .env.example .env          # paste the mnemonic
-pnpm setup:asset              # mint the payment asset
-pnpm setup:registry           # register both agents on chain
-pnpm demo
+npm run setup:asset              # mint the payment asset
+npm run setup:registry           # register both agents on chain
+npm run demo
 ```
 
 Then watch it refuse to be defrauded:
 
 ```bash
-pnpm demo -- --tamper         # someone swaps the seller's address
+npm run demo -- --tamper         # someone swaps the seller's address
 ```
 
 Everything settles on MOI devnet for real — the receipt carries an interaction hash you can look

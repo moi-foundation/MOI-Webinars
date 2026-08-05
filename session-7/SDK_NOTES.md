@@ -3,10 +3,10 @@
 Every signature below was read from the **installed package in this repo** and, where marked
 ✅ **VERIFIED LIVE**, executed against MOI Voyage devnet this session.
 
-Reproduce: `pnpm verify-sdk` (no wallet, no `.env` required — 63 assertions, all passing).
+Reproduce: `npm run verify-sdk` (no wallet, no `.env` required — 63 assertions, all passing).
 
-There is no offline mode: `pnpm demo` and `pnpm attack-test` settle on live devnet and need a
-funded wallet. `pnpm verify-sdk` is the only command that runs without one.
+There is no offline mode: `npm run demo` and `npm run attack-test` settle on live devnet and need a
+funded wallet. `npm run verify-sdk` is the only command that runs without one.
 
 | Package | Installed | Status |
 | --- | --- | --- |

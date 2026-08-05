@@ -20,7 +20,7 @@ export async function startSeller(): Promise<SellerHandle> {
 
   banner("SELLER", "boot", "Bookseller online");
   detail("wallet", seller.address);
-  detail("agent id", config.sellerAgentId ?? "(unregistered — run pnpm setup:registry)");
+  detail("agent id", config.sellerAgentId ?? "(unregistered — run npm run setup:registry)");
   detail("catalog", `${CATALOG.length} books`);
   detail("price", `${config.price} ${config.assetSymbol} per book`);
   detail("brain", config.groqKey ? `groq:${config.groqModel}` : "canned summaries (no GROQ_API_KEY)");

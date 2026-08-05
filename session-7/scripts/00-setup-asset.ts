@@ -1,6 +1,6 @@
 // Create the native MAS0 asset the agents pay with, and give the buyer a float.
 //
-//   pnpm setup:asset
+//   npm run setup:asset
 //
 // SESSION 7 = V1: no logic to deploy, no sub-accounts to inherit. Just an asset and a balance.
 // The BUYER is the funded wallet (it signs the transfer, so it needs gas). The SELLER only ever
@@ -15,8 +15,10 @@ import {
 } from "@demo/shared";
 import { updateEnv } from "./env-file.js";
 
-const SUPPLY = 1_000_000_000n;
-const BUYER_FLOAT = 100_000n;
+// js-moi-providers validates max_supply as typeof === "number"; bigint throws
+// "Failed to sign interaction" / "max_supply must be a non-negative number".
+const SUPPLY = 1_000_000_000;
+const BUYER_FLOAT = 100_000;
 
 async function balance(reader: Account, assetId: string, holder: string): Promise<bigint> {
   try {
@@ -64,7 +66,7 @@ async function main(): Promise<void> {
   updateEnv({ SETTLEMENT_ASSET_ID: assetId });
 
   const held = await balance(buyer, assetId, buyer.address);
-  if (held < BUYER_FLOAT) {
+  if (held < BigInt(BUYER_FLOAT)) {
     const mint = await new MAS0AssetLogic(assetId, buyer.wallet).mint(buyer.address, BUYER_FLOAT).send();
     await mint.result();
     ok(`minted ${BUYER_FLOAT} ${config.assetSymbol} to the buyer`);
@@ -81,7 +83,7 @@ async function main(): Promise<void> {
     ["SETTLEMENT_ASSET_ID", assetId],
     ["buyer balance", String(await balance(buyer, assetId, buyer.address))],
     ["seller balance", String(await balance(buyer, assetId, seller.address))],
-    ["next", "pnpm setup:registry"],
+    ["next", "npm run setup:registry"],
   ]);
 }
 

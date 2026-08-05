@@ -1,6 +1,6 @@
 // Phase 0 verification. Every claim in SDK_NOTES.md marked "VERIFIED LIVE" is produced here.
 //
-//   pnpm verify-sdk
+//   npm run verify-sdk
 //
 // Needs NO funded wallet and NO .env — it generates throwaway mnemonics. Anything requiring
 // funds is reported as UNVERIFIABLE-WITHOUT-FUNDS rather than silently assumed.

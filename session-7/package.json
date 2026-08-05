@@ -7,6 +7,9 @@
   "engines": {
     "node": ">=20"
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "build": "tsc --noEmit",
     "verify-sdk": "tsx scripts/verify-sdk.ts",
@@ -19,10 +22,10 @@
     "attack-test": "tsx scripts/attack-test.ts"
   },
   "dependencies": {
-    "@demo/agent-buyer": "workspace:*",
-    "@demo/agent-seller": "workspace:*",
-    "@demo/facilitator": "workspace:*",
-    "@demo/shared": "workspace:*",
+    "@demo/agent-buyer": "*",
+    "@demo/agent-seller": "*",
+    "@demo/facilitator": "*",
+    "@demo/shared": "*",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
     "groq-sdk": "^1.5.0",

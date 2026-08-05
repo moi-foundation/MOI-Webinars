@@ -1,7 +1,7 @@
 // The on-stage driver for SESSION 7 (V1: identity + payment).
 //
-//   pnpm demo                the happy path
-//   pnpm demo -- --tamper    repoint the seller's registry wallet at an attacker, so the identity
+//   npm run demo                the happy path
+//   npm run demo -- --tamper    repoint the seller's registry wallet at an attacker, so the identity
 //                            check FAILS live and the buyer refuses. Restored afterwards.
 //
 // There is deliberately NO budget beat here — authority is session 8.
@@ -32,16 +32,16 @@ async function main(): Promise<void> {
   const seller = await sellerAccount();
 
   if (!config.assetIdOrNull) {
-    throw new Error("SETTLEMENT_ASSET_ID is not set — run `pnpm setup:asset` first.");
+    throw new Error("SETTLEMENT_ASSET_ID is not set — run `npm run setup:asset` first.");
   }
   if (!config.sellerAgentId || !config.buyerAgentId) {
-    throw new Error("agents are not registered — run `pnpm setup:registry` first.");
+    throw new Error("agents are not registered — run `npm run setup:registry` first.");
   }
 
   banner("DEMO", "1", "The two agents, on chain");
   const reg = await registryClient(buyer, false).catch(() => null);
   for (const [label, id] of [["seller", config.sellerAgentId], ["buyer", config.buyerAgentId]] as const) {
-    if (!id) { warn(`${label}: not registered — run pnpm setup:registry`); continue; }
+    if (!id) { warn(`${label}: not registered — run npm run setup:registry`); continue; }
     const p = await getProfile(reg, id);
     if (!p) { warn(`${label}: ${id} not found on chain`); continue; }
     detail(`${label} agent`, `${p.agent_id}  [${p.status}]`);

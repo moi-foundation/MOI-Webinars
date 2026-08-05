@@ -35,7 +35,7 @@ const WIDTH = 78;
  * Recording aid. The whole demo runs in ~1.2s, which is unwatchable on video, so DEMO_PAUSE_MS
  * inserts a beat before each banner. Zero (the default) changes nothing.
  *
- *   DEMO_PAUSE_MS=1500 pnpm demo
+ *   DEMO_PAUSE_MS=1500 npm run demo
  */
 const PAUSE_MS = Number(process.env.DEMO_PAUSE_MS ?? "0");
 

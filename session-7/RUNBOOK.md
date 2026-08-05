@@ -16,12 +16,12 @@ cp .env.example .env
 # put a funded devnet mnemonic in USER_MNEMONIC
 # fund it at https://voyage.moi.technology  (path m/44'/6174'/7020'/0/0)
 
-pnpm verify-sdk        # 63 checks against live devnet. Do this first.
-pnpm setup:asset       # creates the MAS0 asset, gives the buyer a float
-pnpm setup:registry    # registers both agents on chain
-pnpm demo              # the real thing — a real interaction hash at the end
-pnpm demo -- --tamper  # the attack; restores the registry entry afterwards
-pnpm attack-test       # 11 forged payments (costs ~6 base units of real transfers)
+npm run verify-sdk        # 63 checks against live devnet. Do this first.
+npm run setup:asset       # creates the MAS0 asset, gives the buyer a float
+npm run setup:registry    # registers both agents on chain
+npm run demo              # the real thing — a real interaction hash at the end
+npm run demo -- --tamper  # the attack; restores the registry entry afterwards
+npm run attack-test       # 11 forged payments (costs ~6 base units of real transfers)
 ```
 
 Only the buyer needs funding. The seller only ever receives, so it never needs gas.
@@ -36,7 +36,7 @@ There is no fallback, so leave time to fix it.
 The demo finishes in 1.2 seconds, which is unwatchable. Slow it down:
 
 ```bash
-DEMO_PAUSE_MS=1200 pnpm demo
+DEMO_PAUSE_MS=1200 npm run demo
 ```
 
 ~25 seconds, enough to narrate. Set `0` for the "and here it is at full speed" beat.
@@ -47,7 +47,7 @@ DEMO_PAUSE_MS=1200 pnpm demo
 
 ### Before you start
 
-- [ ] `pnpm demo` green **against devnet** on the machine you'll present from
+- [ ] `npm run demo` green **against devnet** on the machine you'll present from
 - [ ] buyer wallet funded, and holding enough USDM for several runs
 - [ ] terminal at 18–20pt, dark theme, ~100 columns
 - [ ] scrollback cleared
@@ -122,11 +122,11 @@ reimplemented ~200 lines. Details in `SDK_NOTES.md`.
 ## Cheat sheet
 
 ```bash
-pnpm demo                          # happy path
-DEMO_PAUSE_MS=1200 pnpm demo       # slowed for presenting
-pnpm demo -- --tamper              # it refuses
-pnpm attack-test                   # 11 forgeries
-pnpm verify-sdk                    # SDK claims still true?
+npm run demo                          # happy path
+DEMO_PAUSE_MS=1200 npm run demo       # slowed for presenting
+npm run demo -- --tamper              # it refuses
+npm run attack-test                   # 11 forgeries
+npm run verify-sdk                    # SDK claims still true?
 ```
 
 Docs: [EXPLAINER](./EXPLAINER.md) plain English · [SPEC](./SPEC.md) how it works ·

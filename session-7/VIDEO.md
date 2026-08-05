@@ -10,8 +10,8 @@ Companion blog is mandatory (video without text doesn't get indexed). See §6.
 
 ```bash
 cd session-7
-pnpm install
-pnpm demo          # confirm it's green
+npm install
+npm run demo          # confirm it's green
 ```
 
 **Terminal setup**
@@ -26,7 +26,7 @@ pnpm demo          # confirm it's green
 **Pacing.** The demo runs in 1.2s — unwatchable. Record with:
 
 ```bash
-DEMO_PAUSE_MS=1200 pnpm demo
+DEMO_PAUSE_MS=1200 npm run demo
 ```
 
 That stretches it to ~25s, enough to narrate live. Use `1500` if you speak slowly. `0` (default)
@@ -48,7 +48,7 @@ is the real speed — worth showing once at the end as a "and here it is at full
 Type the command, don't run it yet:
 
 ```bash
-pnpm demo
+npm run demo
 ```
 
 ---
@@ -136,7 +136,7 @@ Slow down here. This is the whole video.
 **Screen:** clear, then run:
 
 ```bash
-pnpm demo -- --tamper
+npm run demo -- --tamper
 ```
 
 > "Now let's attack it. I've repointed the seller's registry entry at an attacker's address —
@@ -166,7 +166,7 @@ Cut these if you're over time.
 
 | Insert | When | Line |
 | --- | --- | --- |
-| `pnpm attack-test` | after Shot 9 | "Eleven forged payments, all rejected, each for the right reason." |
+| `npm run attack-test` | after Shot 9 | "Eleven forged payments, all rejected, each for the right reason." |
 | Full-speed rerun | before Shot 10 | "That was slowed down. Here it is at real speed." (`DEMO_PAUSE_MS=0`) |
 | `verify-sdk` | never in the launch cut | too dry — save it for the dev talk |
 
@@ -174,7 +174,7 @@ Cut these if you're over time.
 
 ## 4. Recording checklist
 
-- [ ] `pnpm demo` green before you hit record
+- [ ] `npm run demo` green before you hit record
 - [ ] scrollback cleared
 - [ ] font ≥18pt, dark theme
 - [ ] `DEMO_PAUSE_MS=1200` exported

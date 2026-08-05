@@ -394,10 +394,10 @@ h1.sub{color:var(--moi-main);font-size:38px;margin-top:2px}
     <div class="code" style="margin-bottom:22px">
       <div class="fn">terminal</div>
       git clone <span class="c">…</span>/MOI-Webinars &amp;&amp; <span class="k">cd</span> MOI-Webinars/session-7<br>
-      pnpm install<br><br>
-      CHAIN_MODE=mock pnpm demo               <span class="c"># the happy path</span><br>
-      CHAIN_MODE=mock pnpm demo -- --tamper   <span class="c"># watch it refuse</span><br>
-      CHAIN_MODE=mock pnpm attack-test        <span class="c"># 11 forgeries, all rejected</span>
+      npm install<br><br>
+      CHAIN_MODE=mock npm run demo               <span class="c"># the happy path</span><br>
+      CHAIN_MODE=mock npm run demo -- --tamper   <span class="c"># watch it refuse</span><br>
+      CHAIN_MODE=mock npm run attack-test        <span class="c"># 11 forgeries, all rejected</span>
     </div>
     <div class="split">
       <div class="card"><h3 style="margin-top:0">Then with a real wallet</h3>

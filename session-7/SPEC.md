@@ -45,12 +45,12 @@ Session 7 is "done" when all of these pass:
 All of these run against **live devnet** — there is no offline mode:
 
 ```bash
-pnpm build                            # typecheck, strict
-pnpm verify-sdk                       # 63 assertions vs live devnet (no wallet needed)
-pnpm setup:asset && pnpm setup:registry
-pnpm demo                             # book delivered, real interaction hash in the receipt
-pnpm demo -- --tamper                 # buyer refuses; no money moves; registry restored
-pnpm attack-test                      # 11 rejected for the right reason + control accepted
+npm run build                            # typecheck, strict
+npm run verify-sdk                       # 63 assertions vs live devnet (no wallet needed)
+npm run setup:asset && npm run setup:registry
+npm run demo                             # book delivered, real interaction hash in the receipt
+npm run demo -- --tamper                 # buyer refuses; no money moves; registry restored
+npm run attack-test                      # 11 rejected for the right reason + control accepted
 ```
 
 ⚠️ Everything below `verify-sdk` is **not yet executed** against a funded wallet.
@@ -423,12 +423,12 @@ search. Demo-scale only, and must never be described as semantic search.
 ## 8. Operations
 
 ```bash
-pnpm install
+npm install
 cp .env.example .env      # one funded devnet mnemonic
-pnpm verify-sdk           # 63 assertions vs live devnet; no wallet required
-pnpm setup:asset          # -> SETTLEMENT_ASSET_ID
-pnpm setup:registry       # -> SELLER_AGENT_ID / BUYER_AGENT_ID
-pnpm demo
+npm run verify-sdk           # 63 assertions vs live devnet; no wallet required
+npm run setup:asset          # -> SETTLEMENT_ASSET_ID
+npm run setup:registry       # -> SELLER_AGENT_ID / BUYER_AGENT_ID
+npm run demo
 ```
 
 On-chain writes: 1 asset create + 1 mint (setup), 2 registrations (setup), **1 transfer per
@@ -457,7 +457,7 @@ purchase**. Everything else is reads or HTTP.
 - **Privacy.** The catalog request and the resource URL are plaintext HTTP; on a LAN demo this is
   intentional.
 
-### 10.3 Threat coverage (`pnpm attack-test`)
+### 10.3 Threat coverage (`npm run attack-test`)
 
 | Attack | Rejected by |
 | --- | --- |
@@ -482,11 +482,11 @@ The control matters: a facilitator that rejected everything would otherwise "pas
 
 | Command | Asserts |
 | --- | --- |
-| `pnpm build` | typecheck, strict mode |
-| `pnpm verify-sdk` | 63 assertions vs live devnet; no wallet |
-| `pnpm demo` | full flow completes, book delivered, real interaction hash |
-| `pnpm demo -- --tamper` | buyer refuses; no money moves; registry restored |
-| `pnpm attack-test` | 11 forgeries rejected **for the right reason**, control accepted |
+| `npm run build` | typecheck, strict mode |
+| `npm run verify-sdk` | 63 assertions vs live devnet; no wallet |
+| `npm run demo` | full flow completes, book delivered, real interaction hash |
+| `npm run demo -- --tamper` | buyer refuses; no money moves; registry restored |
+| `npm run attack-test` | 11 forgeries rejected **for the right reason**, control accepted |
 
 All currently pass.
 
@@ -518,7 +518,7 @@ All currently pass.
 | `groq-sdk` | 1.5.0 | agent brains, optional |
 | `express` | 4.x | seller + facilitator |
 
-Node ≥ 20, pnpm workspaces, TypeScript strict, ESM.
+Node ≥ 20, npm workspaces, TypeScript strict, ESM.
 
 ---
 
