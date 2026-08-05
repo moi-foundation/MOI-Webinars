@@ -369,16 +369,17 @@ HAPPY PATH — type: should i be worried about a crash
           "I never gave it that URL."
   step 3  catalog is free — questions public, answers paid
   step 4  check "decided by" shows the model. "crash" isn't in the catalog; it says "draw down"
-  step 5  HTTP 402 — reserved since 1997. Seller says WHY it charges this.
-  step 6  ** SLOW DOWN ** the identity check. payTo is 32 bytes: it says WHERE, not WHOSE.
-  step 7  real interaction hash — CLICK IT to copy, paste into voyage.moi.technology
-  step 8  seven checks, all read-only, seller reads the chain itself
-  step 9  answer appears, balance drops
+  step 5  HTTP 402 — reserved since 1997. The seller says WHY it charges this; it decided.
+  step 6  the buyer decides that price is worth paying. two agents, two decisions.
+  step 7  ** SLOW DOWN ** the identity check. payTo is 32 bytes: it says WHERE, not WHOSE.
+  step 8  real interaction hash — CLICK IT to copy, paste into voyage.moi.technology
+  step 9  seven checks, all read-only, seller reads the chain itself
+  step 10 answer appears, balance drops by 3
 
 SAY OUT LOUD: the probabilities are made up. No model, no market data.
 
 REFUSAL — tick "Simulate a compromised listing", ask again.
-  Stops at step 6. "Money moved: none" is literal — no transaction was ever built.
+  Stops at step 7. "Money moved: none" is literal — no transaction was ever built.
   The party with something to lose is the one that checked.
 
 If the happy path refuses: you Ctrl-C'd a tamper run. Rerun --tamper and let it finish.`);
@@ -398,7 +399,7 @@ If the happy path refuses: you Ctrl-C'd a tamper run. Rerun --tamper and let it 
   });
   const files = [
     ["payment-proof.ts", "the whole wire format — a quote, and a signed claim"],
-    ["identity-check.ts", "39 lines. this is the session.", true],
+    ["identity-check.ts", "42 lines. this is the session.", true],
     ["verify-proof.ts", "the seller's seven checks, all read-only"],
     ["pricing.ts + worth.ts", "what each agent decides — and what it is not allowed to"],
   ];
@@ -421,7 +422,7 @@ payment-proof.ts — "Two messages. The seller sends a Quote: price, asset, wher
 agent id. The buyer sends back a Claim: I sent this much, to you, in this transaction, for this
 thing, signed." Point at payToAgentId — without it, payTo is anonymous bytes.
 
-identity-check.ts — WHOLE FILE ON SCREEN, 39 lines, don't scroll. Point at ONE line:
+identity-check.ts — WHOLE FILE ON SCREEN, 42 lines, don't scroll. Point at ONE line:
   if (normalizeAddress(registryWallet) !== normalizeAddress(quote.payTo))
 "Read the registered wallet off the chain. Compare it to the invoice. Refuse if they disagree.
 No payment protocol can answer that on its own — it needs an identity both parties can check."

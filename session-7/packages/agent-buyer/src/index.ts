@@ -164,9 +164,9 @@ export async function runBuyer(
 
   // ── policy applied before any money moves ───────────────────────────────────────────────
   const approve = async (q: Quote): Promise<string | null> => {
-    banner("BUYER", "step 6", "Is this seller who it claims to be?");
+    banner("BUYER", "step 6", "Is this price worth paying?");
     detail("asking price", `${q.price} ${q.symbol}`);
-    detail("payTo", q.payTo);
+    detail("list price", `${q.listPrice ?? "?"} ${q.symbol}`);
     detail("asset", shortId(q.asset));
 
     steps.emit({
@@ -226,6 +226,9 @@ export async function runBuyer(
       status: "ok",
     });
 
+    banner("BUYER", "step 7", "Is this seller who it claims to be?");
+    detail("payTo", q.payTo);
+
     const identity = await checkSellerIdentity(registry, q);
     if (!identity.ok) {
       fail("payTo does NOT match the seller's on-chain registry wallet");
@@ -273,13 +276,13 @@ export async function runBuyer(
     switch (e.type) {
       case "request":
         if (e.attempt === 1) banner("BUYER", "step 4", `GET ${e.url} (no payment)`);
-        else banner("BUYER", "step 8", "Retry with X-Payment-Proof header");
+        else banner("BUYER", "step 9", "Retry with X-Payment-Proof header");
         break;
       case "quoted":
         ok("received HTTP 402 with a quote");
         break;
       case "transferred":
-        banner("BUYER", "step 7", "Pay — the buyer moves its OWN funds");
+        banner("BUYER", "step 8", "Pay — the buyer moves its OWN funds");
         detail("amount", `${e.amount} ${config.assetSymbol}`);
         detail("ix hash", e.txHash);
         say("BUYER", "on MOI only the owner can move their own money — nobody holds it for us");
@@ -305,7 +308,7 @@ export async function runBuyer(
         ok(`ECDSA_S256 signature ${short(e.signature, 14, 6)}`);
         break;
       case "paid":
-        banner("BUYER", "step 11", "Receipt received");
+        banner("BUYER", "step 12", "Receipt received");
         detail("confirmed ix", e.receipt.txHash);
         detail("network", e.receipt.network);
         break;

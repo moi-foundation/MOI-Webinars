@@ -118,7 +118,7 @@ Everything so far is setup for this. Slow down.
 
 ### Show the code
 
-Open **`identity-check.ts`**. The whole file is 39 lines — put it on screen at once, don't scroll.
+Open **`identity-check.ts`**. The whole file is 42 lines — put it on screen at once, don't scroll.
 
 Point at exactly one line:
 
@@ -152,8 +152,8 @@ npm run demo -- --tamper
 Three things, in order:
 
 1. `DEMO · 1b` — the registry now says `0xdededede…`
-2. `BUYER · step 6` — red ✗, `registry says` vs `quote says` side by side
-3. **It stops at step 6.** There is no step 7.
+2. `BUYER · step 7` — red ✗, `registry says` vs `quote says` side by side
+3. **It stops at step 7.** There is no step 8 — no transaction was ever built.
 
 > "It never reached the payment. **Money moved: none.** And notice it's the buyer that caught this
 > — not the seller, not a middleman. The party with something to lose is the one that checks."
@@ -226,7 +226,7 @@ Don't read all twelve lines aloud. Pick three:
 
 | Symptom | Do this |
 | --- | --- |
-| **Happy path refuses at step 6** | You Ctrl-C'd a `--tamper` run and the registry is still pointed at the attacker. Run `npm run demo -- --tamper` again and **let it finish** — it restores on the way out. |
+| **Happy path refuses at step 7** | You Ctrl-C'd a `--tamper` run and the registry is still pointed at the attacker. Run `npm run demo -- --tamper` again and **let it finish** — it restores on the way out. |
 | `SETTLEMENT_ASSET_ID is not set` | `npm run setup:asset` |
 | `agents are not registered` | `npm run setup:registry` |
 | Devnet unreachable | There is no offline mode. Go to the recording. |

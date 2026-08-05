@@ -58,6 +58,9 @@ schedule and the break-glass table.
 
 **Have http://localhost:4000 open. Terminal visible in a second window if you can.**
 
+Step numbers below match both the browser cards and the terminal banners — they were aligned so
+you can switch between them mid-sentence without the numbering changing under you.
+
 ## 2.1 — The happy path
 
 > I'm going to type what I want in plain language. I'm not naming a seller, a price, or an address.
@@ -91,9 +94,15 @@ schedule and the break-glass table.
 > HTTP 402. It's been reserved since 1997 and essentially unused, because until now nothing needed
 > to charge a machine per request.
 >
-> And look — the seller tells me *why* it's charging this. That's its own pricing decision.
+> And look — the seller tells me *why* it's charging this. That price isn't in a config file
+> anywhere; the desk decided it.
 
-**Step 6 — "Checked who I am paying" ← SLOW DOWN HERE**
+**Step 6 — "3 USDM — I'll pay that"**
+
+> And the buyer decides whether that's worth it. Two agents, two decisions. If the desk had marked
+> this up hard, you'd see the buyer walk.
+
+**Step 7 — "Checked who I am paying" ← SLOW DOWN HERE**
 
 > This is the whole session.
 >
@@ -103,7 +112,7 @@ schedule and the break-glass table.
 > So before paying, the agent goes back to the registry and asks: is this actually the wallet this
 > agent registered? It matches. Now it'll pay.
 
-**Step 7 — "Paid — on chain, from my own wallet"**
+**Step 8 — "Paid — on chain, from my own wallet"**
 
 > Real transfer, real interaction hash. **That's clickable — I can copy it and look it up.**
 
@@ -112,12 +121,12 @@ schedule and the break-glass table.
 > And note the wording: *from my own wallet*. On MOI only the owner can move their own funds. There
 > is no middleman holding money here, because there can't be.
 
-**Step 8 — "I checked your payment myself"**
+**Step 9 — "I checked your payment myself"**
 
 > Seven checks. The seller doesn't take the buyer's word that it paid — it reads that interaction
 > off the chain and decodes it. Right sender, right recipient, right amount, not already spent.
 
-**Step 9 — the answer appears**
+**Step 10 — the answer appears**
 
 > Paid, delivered. And the balance at the top just went down by three.
 >
@@ -131,7 +140,7 @@ schedule and the break-glass table.
 > Now I've repointed the seller's registry entry at an attacker — as if someone got into the
 > listing. The seller itself is unchanged; it still asks to be paid at its real address.
 
-**Let it reach step 6.**
+**Let it reach step 7.**
 
 > It stopped. `registry says` one thing, `quote says` another, and it walked away. **Money moved:
 > none** — and that's literal. It never even built a transaction.
@@ -162,9 +171,9 @@ schedule and the break-glass table.
 
 ## 3.2 — `packages/agent-buyer/src/identity-check.ts` ← the one that matters
 
-**Whole file on screen. 39 lines. Don't scroll.**
+**Whole file on screen. 42 lines. Don't scroll.**
 
-> This is the entire idea, and it's 39 lines.
+> This is the entire idea, and it's 42 lines.
 
 **Point at one line:**
 

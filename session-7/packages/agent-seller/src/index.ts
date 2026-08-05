@@ -44,7 +44,7 @@ export async function startSeller(opts?: { onEvent?: (e: SellerEvent) => void })
         detail("agent id", e.quote.payToAgentId ?? "(none)");
         break;
       case "proof-received":
-        banner("SELLER", "step 9", "Payment proof received — checking it myself");
+        banner("SELLER", "step 10", "Payment proof received — checking it myself");
         detail("from", e.proof.claim.from);
         detail("their tx", e.proof.claim.txHash);
         detail("signature", short(e.proof.signature, 14, 6));
@@ -54,7 +54,7 @@ export async function startSeller(opts?: { onEvent?: (e: SellerEvent) => void })
         if (e.ok) ok(`payment CONFIRMED on chain — ix ${e.txHash}`);
         break;
       case "produced":
-        banner("SELLER", "step 10", "Paid — delivering the estimate");
+        banner("SELLER", "step 11", "Paid — delivering the estimate");
         break;
       case "rejected":
         say("SELLER", `refusing to deliver: ${e.reason}`);

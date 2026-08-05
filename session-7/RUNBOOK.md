@@ -71,7 +71,7 @@ DEMO_PAUSE_MS=1200 npm run demo
 
 ### The one moment that matters
 
-Everything else is setup for **step 6 of the demo** — the identity check. Slow down there.
+Everything else is setup for **step 7 of the demo** — the identity check. Slow down there.
 
 > "That `payTo` is 32 bytes. It doesn't tell you *whose* address it is. So the agent goes back to
 > the registry and asks. No payment protocol can answer that, and it's the reason this runs on MOI."
