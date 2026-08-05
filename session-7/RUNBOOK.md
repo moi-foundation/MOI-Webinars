@@ -2,6 +2,9 @@
 
 Two parts: getting the demo working on your machine, and the 45 minutes on the day.
 
+For the live choreography — which file to open when, what to point at in the output, and what to do
+when it breaks — see [DEMO-PLAN.md](./DEMO-PLAN.md).
+
 ---
 
 ## Part 1 — Get it running

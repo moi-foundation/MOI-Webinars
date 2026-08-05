@@ -10,7 +10,7 @@ summary. About a second, no prior relationship.
 > **V3 (session 9)** adds the full commerce flow. Nothing from later phases appears here.
 
 > New here? [EXPLAINER.md](./EXPLAINER.md) is the plain-English version.
-> Reviewing the code? [REVIEW.md](./REVIEW.md). Building against it? [SPEC.md](./SPEC.md).
+> Reviewing the code? [REVIEW.md](./REVIEW.md). Presenting it? [DEMO-PLAN.md](./DEMO-PLAN.md).
 
 ## The aha
 
