@@ -54,6 +54,7 @@ async function main(): Promise<void> {
           "I don't take your word that you paid. I read the interaction off the chain and " +
           "decoded it: right sender, right recipient, right amount, not already spent.",
         checks: e.checks,
+        ...(e.txHash ? { detail: [["confirmed interaction", e.txHash]] as [string, string][] } : {}),
         status: e.ok ? "ok" : "fail",
       } satisfies AgentStep);
     },
@@ -193,6 +194,10 @@ const PAGE = `<!doctype html>
   .kv{display:grid;grid-template-columns:150px 1fr;gap:3px 14px;font-size:12.5px;
     font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
   .kv dt{color:var(--mut)} .kv dd{margin:0;word-break:break-all;color:var(--hi)}
+  .kv dd.hash{color:var(--accent);cursor:pointer;border-bottom:1px dashed rgba(188,166,255,.4)}
+  .kv dd.hash:hover{color:#fff}
+  .kv dd.hash::after{content:" ⧉";opacity:.5;font-size:11px}
+  .copied{color:var(--ok) !important}
   .chk{display:flex;gap:9px;align-items:baseline;font-size:12.5px;
     font-family:ui-monospace,SFMono-Regular,Menlo,monospace;padding:2px 0}
   .chk i{font-style:normal} .chk .p{color:var(--ok)} .chk .f{color:var(--bad)}
@@ -224,12 +229,23 @@ const $=s=>document.querySelector(s), feed=$("#feed"), bal=$("#bal");
 const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 let before=null;
 document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{$("#q").value=c.textContent;$("#f").requestSubmit()});
+// Interaction hashes are the proof this really happened — make them one click to copy so you can
+// paste straight into an explorer while the room is watching.
+feed.addEventListener("click",e=>{
+  const d=e.target.closest(".hash"); if(!d) return;
+  navigator.clipboard.writeText(d.textContent.trim()).then(()=>{
+    d.classList.add("copied"); setTimeout(()=>d.classList.remove("copied"),900);
+  });
+});
 function render(s){
   const d=document.createElement("div");
   d.className="step "+(s.status||"");
   let h='<div class="who '+s.actor+'">'+esc(s.actor)+'</div><div class="ttl">'+esc(s.title)+'</div>';
   if(s.thought) h+='<div class="say">'+esc(s.thought)+'</div>';
-  if(s.detail&&s.detail.length) h+='<dl class="kv">'+s.detail.map(([k,v])=>'<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>').join("")+'</dl>';
+  if(s.detail&&s.detail.length) h+='<dl class="kv">'+s.detail.map(([k,v])=>{
+    const isHash=/^0x[0-9a-f]{64}$/i.test(String(v));
+    return '<dt>'+esc(k)+'</dt><dd'+(isHash?' class="hash" title="click to copy — paste into voyage.moi.technology"':'')+'>'+esc(v)+'</dd>';
+  }).join("")+'</dl>';
   if(s.checks) h+=s.checks.map(c=>'<div class="chk"><i class="'+(c.passed?"p":"f")+'">'+(c.passed?"✓":"✗")+'</i><b>'+esc(c.name)+'</b><span>'+esc(c.detail)+'</span></div>').join("");
   if(s.data!==undefined) h+='<pre>'+esc(JSON.stringify(s.data,null,2))+'</pre>';
   d.innerHTML=h; feed.appendChild(d); d.scrollIntoView({behavior:"smooth",block:"end"});
