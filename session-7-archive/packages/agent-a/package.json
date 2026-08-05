@@ -1,0 +1,8 @@
+{
+  "name": "@s7/agent-a",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "dependencies": { "@s7/shared": "*" }
+}

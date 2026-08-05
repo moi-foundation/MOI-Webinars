@@ -12,6 +12,9 @@ Hands-on repos for the **MOI Builders** webinar series. Each session is a self-c
 | 4 | Account-to-account native swap — MAS0 Lockup + Release (CLI + UI) **(bounty)** | [`session-4/`](./session-4) |
 | 5 | NFT Marketplace — MAS1 mint + transfer (CLI + UI) | [`session-5/`](./session-5) |
 | 6 | Context inheritance — one wallet, many agents with on-chain budgets | [`session-6/`](./session-6) |
+| 7 | Agentic Payments **V1** — an agent finds another agent on MOI and pays it (x402 + registry identity) | [`session-7/`](./session-7) |
+| 8 | Agentic Payments **V2** — authority: an on-chain spend cap the chain enforces | [`session-8/`](./session-8) |
+| 9 | Agentic Payments **V3** — full agentic commerce (planned) | [`session-9/`](./session-9) |
 
 ## Quick start
 
@@ -31,6 +34,8 @@ Session 4 needs **two** funded devnet wallets (`VITE_ALICE_MNEMONIC` / `VITE_BOB
 Session 5 needs a funded devnet wallet and `cd ui && npm install` before `npm run dev` — see [`session-5/README.md`](./session-5/README.md).
 
 Session 6 needs a funded devnet wallet and an `ANTHROPIC_API_KEY` for the real-agent `run` command (scripted `spend` works without it) — see [`session-6/README.md`](./session-6/README.md).
+
+Sessions 7–9 are one story in three parts: **find and pay an agent** (7), **constrain what it may spend** (8), **a full purchase with delivery** (9). Sessions 7 and 8 are pnpm-workspaces TypeScript monorepos. Session 7 has no offline mode — every run settles on devnet, so it needs a funded wallet (`pnpm setup:asset && pnpm setup:registry && pnpm demo`). Start at [`session-7/EXPLAINER.md`](./session-7/EXPLAINER.md) for the plain-English version, or [`session-7/REVIEW.md`](./session-7/REVIEW.md) to read the code. Session 9 is a plan only.
 
 ## Prerequisites
 

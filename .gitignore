@@ -1,4 +1,12 @@
 node_modules/
+session-7/deck/node_modules/
+
+# Meeting transcripts / internal notes — never for student clones
+otter-transcript/
+session-7/STORYLINE.md
+session-7/FACILITATOR-NOTE.md
+# Source deck borrowed from session 5 purely to sample its palette — not a deliverable
+session-7/deck/MOI_Builders_S5_2.pptx
 
 # Instructor / local-only (not for student clones)
 OVERVIEW.md

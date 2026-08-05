@@ -1,0 +1,39 @@
+{
+  "name": "moi-webinars-session-7",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MOI Builders Session 7 — Agentic Payments: two autonomous agents paying each other over x402, settled natively on MOI.",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "setup-asset": "tsx scripts/setup-asset.ts",
+    "register-agents": "tsx scripts/register-agents.ts",
+    "demo": "tsx scripts/demo.ts",
+    "facilitator": "tsx packages/facilitator/src/index.ts",
+    "agent-b": "tsx packages/agent-b/src/index.ts",
+    "agent-a": "tsx packages/agent-a/src/index.ts",
+    "verify-sdk": "tsx scripts/verify-sdk.ts",
+    "attack-test": "tsx scripts/attack-test.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "js-moi-agent-registry": "^0.1.1",
+    "js-moi-sdk": "^0.7.1",
+    "x402": "^1.2.0",
+    "x402-express": "^1.2.0",
+    "x402-fetch": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

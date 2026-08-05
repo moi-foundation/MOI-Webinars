@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MOI Builders · Session 7 — Agentic Payments</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --moi-main:#4B17E5; --moi-dark:#320F99; --moi-black:#0A0026;
+  --lav:#D9CCFF; --mist:#F5F2FF; --almost:#FCFBFF;
+  --hi:rgba(10,0,38,.85); --med:rgba(10,0,38,.69); --low:rgba(10,0,38,.55);
+  --d-hi:rgba(255,255,255,.92); --d-med:rgba(255,255,255,.69); --d-low:rgba(255,255,255,.5);
+  --d-accent:#BCA6FF;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Poppins,sans-serif;background:#6b6b78;-webkit-font-smoothing:antialiased}
+
+.slide{
+  width:1280px;height:720px;background:#fff;position:relative;overflow:hidden;
+  margin:24px auto;box-shadow:0 8px 40px rgba(0,0,0,.25);
+  padding:64px 72px 0;display:flex;flex-direction:column;
+}
+/* ── chrome ─────────────────────────────────────── */
+.eyebrow{font-size:14px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--moi-main)}
+.rail{position:absolute;top:56px;right:72px;display:flex;align-items:center;gap:14px}
+.rail span{font-size:12px;font-weight:500;letter-spacing:.14em;color:rgba(10,0,38,.32);text-transform:uppercase}
+.rail img{width:34px;height:34px;border-radius:50%;background:var(--mist);padding:5px}
+h1{font-size:60px;font-weight:700;line-height:1.05;color:var(--moi-black);letter-spacing:-.02em;margin-top:14px}
+h2{font-size:52px;font-weight:700;line-height:1.08;color:var(--moi-black);letter-spacing:-.02em;margin:10px 0 0}
+.lede{font-size:19px;line-height:1.62;color:var(--med);max-width:1020px;margin-top:20px;font-weight:400}
+.body{flex:1;margin-top:36px}
+
+/* ── footer strip ───────────────────────────────── */
+.foot{position:absolute;left:72px;right:72px;bottom:40px;background:var(--moi-black);
+  border-radius:6px;padding:17px 26px;font-size:16px;color:var(--d-hi);font-weight:400}
+.foot b{color:var(--lav);font-weight:600}
+.foot.accent{background:var(--moi-main)}
+
+/* ── cards ──────────────────────────────────────── */
+.cards{display:grid;gap:22px}
+.c3{grid-template-columns:repeat(3,1fr)}
+.c2{grid-template-columns:1fr 1fr}
+.card{border:1px solid rgba(10,0,38,.10);border-radius:8px;padding:24px 24px 26px;background:#fff}
+.card.top{border-top:4px solid var(--moi-main)}
+.card .n{font-size:26px;font-weight:700;color:var(--moi-main);line-height:1}
+.card h3{font-size:20px;font-weight:600;color:var(--moi-black);margin:14px 0 9px}
+.card p{font-size:15px;line-height:1.55;color:var(--low)}
+.card.dark{background:var(--moi-black);border-color:transparent}
+.card.dark h3,.card.dark .n{color:#fff}
+.card.dark p{color:var(--d-med)}
+.card.soft{background:var(--mist);border-color:transparent}
+
+/* ── numbered agenda ────────────────────────────── */
+.agenda{display:grid;grid-template-columns:1fr 1fr;gap:20px 56px}
+.item{display:flex;gap:18px}
+.item .n{font-size:19px;font-weight:700;color:var(--moi-main);min-width:30px;line-height:1.35}
+.item h4{font-size:19px;font-weight:600;color:var(--moi-black);margin-bottom:3px}
+.item p{font-size:14.5px;line-height:1.5;color:var(--low)}
+
+/* ── code ───────────────────────────────────────── */
+.code{background:var(--moi-black);border-radius:8px;padding:22px 26px;font-size:15.5px;line-height:1.72;
+  color:var(--d-hi);font-family:Poppins,monospace;font-weight:400;overflow:hidden}
+.code .fn{font-size:13px;color:var(--d-low);margin-bottom:12px;letter-spacing:.04em}
+.k{color:#C792EA}.s{color:#C3E88D}.f{color:#82AAFF}.c{color:rgba(255,255,255,.34)}.w{color:#FFCB6B}
+
+/* ── two-col split ──────────────────────────────── */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.split.wide{grid-template-columns:1.25fr 1fr}
+
+/* ── kv rows ────────────────────────────────────── */
+.kv{font-size:16px;line-height:2.05;color:var(--hi)}
+.kv i{font-style:normal;color:var(--low);font-size:14.5px}
+.kv b{font-weight:600}
+
+/* ── flow diagram ───────────────────────────────── */
+.flow{display:flex;flex-direction:column;gap:9px;font-size:15.5px}
+.row{display:grid;grid-template-columns:34px 1fr;align-items:center;gap:14px}
+.row .s{width:26px;height:26px;border-radius:50%;background:var(--mist);color:var(--moi-main);
+  font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.row.hot .s{background:var(--moi-main);color:#fff}
+.row p{color:var(--hi)}
+.row.hot p{font-weight:600}
+.row .tag{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--moi-main);background:var(--mist);padding:3px 9px;border-radius:4px;margin-left:10px}
+
+/* ── title slide ────────────────────────────────── */
+.title{justify-content:center}
+.orb{position:absolute;right:-140px;top:-160px;width:640px;height:640px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,var(--mist),var(--almost));z-index:0}
+.orb2{position:absolute;right:118px;top:232px;width:200px;height:200px;z-index:1;opacity:.95}
+.title > :not(.orb):not(.orb2){position:relative;z-index:2}
+.byline{margin-top:34px;padding-top:22px;border-top:1px solid rgba(10,0,38,.12);max-width:520px}
+.byline b{font-size:17px;font-weight:600;color:var(--moi-black)}
+.byline span{font-size:15px;color:var(--low)}
+.byline small{display:block;margin-top:6px;font-size:13.5px;color:rgba(10,0,38,.38);letter-spacing:.04em}
+h1.sub{color:var(--moi-main);font-size:38px;margin-top:2px}
+
+@media print{
+  body{background:#fff}
+  .slide{margin:0;box-shadow:none;page-break-after:always}
+  @page{size:1280px 720px;margin:0}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ 01 TITLE ═══ -->
+<section class="slide title">
+  <div class="orb"></div>
+  <img class="orb2" src="assets/moi-mark.png" alt="">
+  <img src="assets/moi-mark.png" style="width:74px;height:74px;margin-bottom:26px" alt="MOI">
+  <div class="eyebrow">Developer webinar &nbsp;·&nbsp; Session 07</div>
+  <h1>Agentic payments<br>on MOI</h1>
+  <h1 class="sub">An agent that pays another agent</h1>
+  <p class="lede" style="max-width:660px">
+    Your agent finds a seller it has never met, checks who it is on chain, and pays it
+    mid-request. No signup. No API key. No human.
+  </p>
+  <div class="byline">
+    <b>Adithya</b> &nbsp;·&nbsp; <span>Ecosystem, Sarva Labs</span>
+    <small>Session 7 · MOI Builders Series</small>
+  </div>
+</section>
+
+<!-- ═══ 02 WHY ═══ -->
+<section class="slide">
+  <div class="rail"><span>MOI · Build 02</span><img src="assets/moi-mark.png" alt=""></div>
+  <div class="eyebrow">Why this matters</div>
+  <h2>Agents can find each other. They still can't pay each other.</h2>
+  <p class="lede">Session 3 gave an agent an on-chain identity. But an identity that can't transact
+    is a business card. The moment one agent wants something another agent has, three things break.</p>
+  <div class="body">
+    <div class="cards c3">
+      <div class="card top"><div class="n">01</div><h3>No way to charge</h3>
+        <p>Every paid API assumes a human: a signup, a card on file, an invoice. None of that
+        survives contact with an agent acting alone.</p></div>
+      <div class="card"><div class="n">02</div><h3>No way to know who</h3>
+        <p>A payment address is 32 bytes. It doesn't tell you whose it is, or whether the listing
+        was swapped a minute ago.</p></div>
+      <div class="card"><div class="n">03</div><h3>No sane unit</h3>
+        <p>You cannot put a human in the loop on a tenth of a cent. The approval costs more than
+        the thing being bought.</p></div>
+    </div>
+  </div>
+  <div class="foot"><b>Today:</b> two agents transact end to end — and the chain answers who is being paid.</div>
+</section>
+
+<!-- ═══ 03 AGENDA ═══ -->
+<section class="slide">
+  <div class="rail"><span>MOI · Build 03</span><img src="assets/moi-mark.png" alt=""></div>
+  <div class="eyebrow">What we'll cover</div>
+  <h2>The session, end to end</h2>
+  <div class="body">
+    <div class="agenda">
+      <div class="item"><div class="n">01</div><div><h4>What x402 is</h4>
+        <p>HTTP 402, reserved in 1997 and finally used. Four messages.</p></div></div>
+      <div class="item"><div class="n">05</div><div><h4>The identity check</h4>
+        <p>Is that payment address really the seller's? The one question x402 can't ask.</p></div></div>
+      <div class="item"><div class="n">02</div><div><h4>Where it stops</h4>
+        <p>It moves value. It says nothing about who you're paying.</p></div></div>
+      <div class="item"><div class="n">06</div><div><h4>Pay and verify</h4>
+        <p>A native MAS0 transfer, then a facilitator that reads the chain.</p></div></div>
+      <div class="item"><div class="n">03</div><div><h4>Discovery by skill</h4>
+        <p>Find a seller in the registry. No URL handed to you.</p></div></div>
+      <div class="item"><div class="n">07</div><div><h4>Watch it refuse</h4>
+        <p>Swap the seller's address. The agent walks away.</p></div></div>
+      <div class="item"><div class="n">04</div><div><h4>The 402 response</h4>
+        <p>Price, asset, and where to pay — machine readable.</p></div></div>
+      <div class="item"><div class="n">08</div><div><h4>What comes next</h4>
+        <p>Authority in session 8. Conditional settlement in session 9.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 04 CORE IDEA ═══ -->
+<section class="slide">
+  <div class="rail"><span>MOI · Build 04</span><img src="assets/moi-mark.png" alt=""></div>
+  <div class="eyebrow">The core idea</div>
+  <h2>x402 gives you an address.<br>MOI tells you whose it is.</h2>
+  <p class="lede">x402 is a payment protocol, and a good one. It deliberately says nothing about
+    identity. That gap is exactly the shape of what MOI already provides.</p>
+  <div class="body">
+    <div class="split">
+      <div class="card soft" style="padding:28px 30px">
+        <div class="eyebrow" style="font-size:13px">x402 answers</div>
+        <div class="kv" style="margin-top:16px">
+          <b>how much</b> <i>— 1 USDM</i><br>
+          <b>which asset</b> <i>— a MAS0 asset id</i><br>
+          <b>where to</b> <i>— 0x0000…97c4</i><br>
+          <b>by when</b> <i>— a timeout</i>
+        </div>
+      </div>
+      <div class="card dark" style="padding:28px 30px">
+        <div class="eyebrow" style="font-size:13px;color:var(--d-accent)">MOI answers</div>
+        <div class="kv" style="margin-top:16px;color:var(--d-hi)">
+          <b>who owns that address</b><br>
+          <b>are they still active</b><br>
+          <b>what do they claim to sell</b><br>
+          <b>did the payment really land</b>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><b>Why it matters:</b> without the second column, you are wiring money to a number.</div>
+</section>
+
+<!-- ═══ 05 X402 ═══ -->
+<section class="slide">
+  <div class="rail"><span>MOI · Build 05</span><img src="assets/moi-mark.png" alt=""></div>
+  <div class="eyebrow">The protocol</div>
+  <h2>Four messages. That's the whole thing.</h2>
+  <p class="lede">HTTP 402 Payment Required was reserved in 1997 and left unimplemented for
+    28 years. x402 finally uses it — and the server never touches a chain.</p>
+  <div class="body">
+    <div class="code" style="margin-bottom:22px">
+      <div class="fn">the handshake</div>
+      <span class="f">GET</span> /book/the-prince                      <span class="c">→ ask</span><br>
+      <span class="w">402</span> <span class="k">Payment Required</span> { accepts: [ … ] }   <span class="c">→ pay me this, here</span><br>
+      <span class="f">GET</span> /book/the-prince <span class="k">+ X-Payment</span>          <span class="c">→ retry, with proof</span><br>
+      <span class="w">200</span> <span class="k">OK</span> + summary + X-Payment-Response     <span class="c">→ goods + receipt</span>
+    </div>
+    <div class="split">
+      <div class="card"><h3 style="margin-top:0">The server stays dumb</h3>
+        <p>It declares a price and points at a <b>facilitator</b>. It never signs, never holds keys,
+        never learns what a chain is.</p></div>
+      <div class="card top"><h3 style="margin-top:0">The facilitator is the seam</h3>
+        <p>It is the only chain-specific piece in x402. Adding MOI meant writing one service —
+        not forking a protocol.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 06 FLOW ═══ -->
+<section class="slide">
+  <div class="rail"><span>MOI · Build 06</span><img src="assets/moi-mark.png" alt=""></div>
+  <div class="eyebrow">The flow</div>
+  <h2>One purchase, thirteen steps, one second</h2>
+  <div class="body" style="margin-top:26px">
+    <div class="flow">
+      <div class="row"><div class="s">1</div><p>Ask the registry — <b>who sells books?</b><span class="tag">on chain</span></p></div>
+      <div class="row"><div class="s">2</div><p>Read the catalog. Free — discovery shouldn't cost money.</p></div>
+      <div class="row"><div class="s">3</div><p>The agent picks the book that answers its question.</p></div>
+      <div class="row"><div class="s">4</div><p>Ask for it → <b>402 Payment Required</b></p></div>
+      <div class="row hot"><div class="s">6</div><p>Is that address really the seller's registered wallet?<span class="tag">the beat</span></p></div>
+      <div class="row"><div class="s">7</div><p>Pay — the buyer moves its <b>own</b> funds.<span class="tag">the only write</span></p></div>
+      <div class="row"><div class="s">8</div><p>Retry with the signed payment attached.</p></div>
+      <div class="row"><div class="s">10</div><p>Facilitator runs nine checks. All read-only.</p></div>
+      <div class="row"><div class="s">13</div><p>Book delivered. Receipt carries a real interaction hash.</p></div>
+    </div>
+  </div>
+  <div class="foot"><b>Exactly one</b> on-chain write per purchase. Everything else is HTTP, or a read.</div>
+</section>
+
+<!-- ═══ 07 DISCOVERY ═══ -->
+<section class="slide">
+  <div class="rail"><span>MOI · Build 07</span><img src="assets/moi-mark.png" alt=""></div>
+  <div class="eyebrow">Step one — discover</div>
+  <h2>Nobody hands you a URL</h2>
+  <p class="lede">The buyer searches the registry by <b>skill</b>. It learns the seller's agent id,
+    its operating wallet, and where it runs — all from the chain.</p>
+  <div class="body">
+    <div class="split wide">
+      <div class="code">
+        <div class="fn">discover.ts</div>
+        <span class="k">const</span> found = <span class="k">await</span> <span class="f">discoverBySkill</span>(registry, <span class="s">'sells-books'</span>)<br><br>
+        <span class="c">// straight off the chain</span><br>
+        found[<span class="w">0</span>].agent_id      <span class="c">// "agent_12"</span><br>
+        found[<span class="w">0</span>].agent_wallet  <span class="c">// 0x0000…97c4</span><br>
+        found[<span class="w">0</span>].url           <span class="c">// where it runs</span><br>
+        found[<span class="w">0</span>].status        <span class="c">// ACTIVE</span>
+      </div>
+      <div class="card soft" style="padding:26px 28px">
+        <h3 style="margin-top:0">Be precise about this</h3>
+        <p style="margin-bottom:14px">It's an <b>O(n) client-side scan</b> — every agent id, then
+        every profile, then filter on the card's skill tags.</p>
+        <p>The registry has no index and no search. That's fine at demo scale. Don't call it
+        semantic search.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 08 THE 402 ═══ -->
+<section class="slide">
+  <div class="rail"><span>MOI · Build 08</span><img src="assets/moi-mark.png" alt=""></div>
+  <div class="eyebrow">Step two — the invoice</div>
+  <h2>A machine-readable bill</h2>
+  <p class="lede">The seller answers 402 with everything an agent needs to pay, and nothing it
+    doesn't. Field names are the x402 spec's, verbatim.</p>
+  <div class="body">
+    <div class="code">
+      <div class="fn">402 response body</div>
+      {<span class="s">"x402Version"</span>: <span class="w">1</span>, <span class="s">"accepts"</span>: [{<br>
+      &nbsp;&nbsp;<span class="s">"scheme"</span>:  <span class="s">"moi-transfer"</span>,<br>
+      &nbsp;&nbsp;<span class="s">"network"</span>: <span class="s">"moi-voyage-devnet"</span>,<br>
+      &nbsp;&nbsp;<span class="s">"maxAmountRequired"</span>: <span class="s">"1"</span>,<br>
+      &nbsp;&nbsp;<span class="s">"asset"</span>: <span class="s">"0x…"</span>,          <span class="c">// a MAS0 asset</span><br>
+      &nbsp;&nbsp;<span class="s">"payTo"</span>: <span class="s">"0x0000…97c4"</span>,  <span class="c">// ← 32 anonymous bytes</span><br>
+      &nbsp;&nbsp;<span class="s">"extra"</span>: { <span class="s">"payToAgentId"</span>: <span class="s">"agent_12"</span> }   <span class="c">// ← our addition</span><br>
+      }]}
+    </div>
+  </div>
+  <div class="foot"><b>payToAgentId</b> is the hook. It's what lets the buyer go and check.</div>
+</section>
+
+<!-- ═══ 09 THE BEAT ═══ -->
+<section class="slide">
+  <div class="rail"><span>MOI · Build 09</span><img src="assets/moi-mark.png" alt=""></div>
+  <div class="eyebrow">Step three — the check</div>
+  <h2>The question x402 cannot ask</h2>
+  <p class="lede">Before a single unit moves, the buyer goes back to the chain and asks whether
+    that payment address really belongs to the agent it thinks it's buying from.</p>
+  <div class="body">
+    <div class="split wide">
+      <div class="code">
+        <div class="fn">identity-check.ts</div>
+        <span class="k">const</span> onChain = <span class="k">await</span> <span class="f">readAgentWallet</span>(<br>
+        &nbsp;&nbsp;registry, requirements.extra.payToAgentId<br>
+        )<br><br>
+        <span class="k">if</span> (onChain !== requirements.payTo) {<br>
+        &nbsp;&nbsp;<span class="k">return</span> <span class="s">'refuse — payTo is not their wallet'</span><br>
+        }
+      </div>
+      <div class="card dark" style="padding:26px 28px">
+        <div class="eyebrow" style="font-size:13px;color:var(--d-accent)">Live, on stage</div>
+        <h3 style="color:#fff;margin-top:12px">We swap the address</h3>
+        <p style="color:var(--d-med)">Repoint the seller's registry entry at an attacker, then run
+        the demo again.</p>
+        <p style="color:var(--d-med);margin-top:12px">The seller still asks to be paid at its real
+        address. The numbers disagree. <b style="color:#fff">The agent walks away and no money
+        moves.</b></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 10 FACILITATOR ═══ -->
+<section class="slide">
+  <div class="rail"><span>MOI · Build 10</span><img src="assets/moi-mark.png" alt=""></div>
+  <div class="eyebrow">Settlement</div>
+  <h2>A referee, not a cashier</h2>
+  <p class="lede">On other chains the facilitator pulls the buyer's funds. On MOI only you can move
+    your own money — so the buyer pays itself, and the facilitator proves it happened.</p>
+  <div class="body">
+    <div class="split">
+      <div class="card"><h3 style="margin-top:0">Elsewhere</h3>
+        <p>The token contract verifies an off-chain signature, so a third party can move your funds
+        for you. The facilitator holds the money.</p></div>
+      <div class="card top"><h3 style="margin-top:0">Here</h3>
+        <p>The buyer submits its own transfer and signs a statement naming it. The facilitator
+        <b>reads the chain</b> and confirms — sender, recipient, asset, amount. It signs nothing.</p></div>
+    </div>
+    <div class="card soft" style="margin-top:22px;padding:22px 26px">
+      <p style="font-size:16px;color:var(--hi)">
+        Nine checks, all read-only — signature, key ownership, amount, freshness,
+        <b>is the payee a registered agent</b>, did the transfer land, has it been spent before.
+        Eleven forged payments get rejected in the test suite. One honest one gets through.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 11 NEXT ═══ -->
+<section class="slide">
+  <div class="rail"><span>MOI · Build 11</span><img src="assets/moi-mark.png" alt=""></div>
+  <div class="eyebrow">Where this goes</div>
+  <h2>Identity today. Authority next.</h2>
+  <p class="lede">One idea per session, so each one lands. Today's demo deliberately says nothing
+    about what an agent is allowed to spend — that's a different idea, and it gets its own session.</p>
+  <div class="body">
+    <div class="cards c3">
+      <div class="card top"><div class="n">07</div><h3>Identity + payment</h3>
+        <p><b>Who am I paying?</b><br>The registry answers it, and the agent refuses when the answer
+        is wrong. You are here.</p></div>
+      <div class="card"><div class="n">08</div><h3>Authority</h3>
+        <p><b>What may my agent spend?</b><br>A cap the chain itself enforces. The agent doesn't get
+        to be well behaved — it simply can't.</p></div>
+      <div class="card"><div class="n">09</div><h3>Conditional settlement</h3>
+        <p><b>What if it never arrives?</b><br>Funds release on delivery. Escrow as a chain
+        primitive, not a trusted middleman.</p></div>
+    </div>
+  </div>
+  <div class="foot"><b>The throughline:</b> you can't give authority to an agent that has no identity. Today we spent that identity.</div>
+</section>
+
+<!-- ═══ 12 RUN IT ═══ -->
+<section class="slide">
+  <div class="rail"><span>MOI · Build 12</span><img src="assets/moi-mark.png" alt=""></div>
+  <div class="eyebrow">Your turn</div>
+  <h2>Run it in sixty seconds</h2>
+  <p class="lede">No wallet. No devnet account. No API key. The signatures and every check are
+    real — only the ledger is simulated, and fake hashes are labelled as such.</p>
+  <div class="body">
+    <div class="code" style="margin-bottom:22px">
+      <div class="fn">terminal</div>
+      git clone <span class="c">…</span>/MOI-Webinars &amp;&amp; <span class="k">cd</span> MOI-Webinars/session-7<br>
+      pnpm install<br><br>
+      CHAIN_MODE=mock pnpm demo               <span class="c"># the happy path</span><br>
+      CHAIN_MODE=mock pnpm demo -- --tamper   <span class="c"># watch it refuse</span><br>
+      CHAIN_MODE=mock pnpm attack-test        <span class="c"># 11 forgeries, all rejected</span>
+    </div>
+    <div class="split">
+      <div class="card"><h3 style="margin-top:0">Then with a real wallet</h3>
+        <p>Fund one devnet account, run <b>setup:asset</b> and <b>setup:registry</b>, and the same
+        demo settles for real on Voyage.</p></div>
+      <div class="card top"><h3 style="margin-top:0">Read the code</h3>
+        <p>Start at <b>verify-payment.ts</b> — the nine checks are the session in one file.</p></div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

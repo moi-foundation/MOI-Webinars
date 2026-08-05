@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"],
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    // NOTE: verbatimModuleSyntax is deliberately OFF. js-moi-logic ships raw .ts sources that
+    // TypeScript follows through imports (neither `exclude` nor skipLibCheck stops that), and they
+    // violate TS1484. Our own code still uses `import type` consistently by convention.
+
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // js-moi-logic ships raw .ts sources that TypeScript will happily pull in and typecheck.
+    // skipLibCheck only covers .d.ts, so exclude the tree outright — we typecheck OUR code.
+    "maxNodeModuleJsDepth": 0,
+
+    "noEmit": true
+  },
+  "include": ["packages/*/src/**/*.ts", "scripts/**/*.ts"],
+  "exclude": ["node_modules"]
+}

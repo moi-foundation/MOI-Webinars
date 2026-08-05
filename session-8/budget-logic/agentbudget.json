@@ -1,0 +1,375 @@
+{
+  "syntax": 1,
+  "engine": {
+    "kind": "PISA",
+    "flags": [],
+    "version": "0.7.0"
+  },
+  "kind": "logic",
+  "elements": [
+    {
+      "ptr": 0,
+      "kind": "literal",
+      "data": {
+        "type": "string",
+        "value": "0x06627564676574206d75737420626520706f736974697665"
+      }
+    },
+    {
+      "ptr": 1,
+      "kind": "literal",
+      "data": {
+        "type": "string",
+        "value": "0x06616d6f756e74206d75737420626520706f736974697665"
+      }
+    },
+    {
+      "ptr": 2,
+      "kind": "literal",
+      "data": {
+        "type": "string",
+        "value": "0x0620686173206e6f206275646765742073657420e280942063616c6c20536574427564676574206669727374"
+      }
+    },
+    {
+      "ptr": 3,
+      "kind": "literal",
+      "data": {
+        "type": "string",
+        "value": "0x067370656e6420"
+      }
+    },
+    {
+      "ptr": 4,
+      "kind": "literal",
+      "data": {
+        "type": "string",
+        "value": "0x0620657863656564732072656d61696e696e672062756467657420"
+      }
+    },
+    {
+      "ptr": 5,
+      "kind": "event",
+      "data": {
+        "name": "BudgetSet",
+        "topics": 1,
+        "fields": [
+          {
+            "slot": 0,
+            "label": "owner",
+            "type": "identifier"
+          },
+          {
+            "slot": 1,
+            "label": "budget",
+            "type": "u256"
+          }
+        ]
+      }
+    },
+    {
+      "ptr": 6,
+      "kind": "event",
+      "data": {
+        "name": "SpendRecorded",
+        "topics": 1,
+        "fields": [
+          {
+            "slot": 0,
+            "label": "owner",
+            "type": "identifier"
+          },
+          {
+            "slot": 1,
+            "label": "amount",
+            "type": "u256"
+          },
+          {
+            "slot": 2,
+            "label": "memo",
+            "type": "string"
+          },
+          {
+            "slot": 3,
+            "label": "spent",
+            "type": "u256"
+          },
+          {
+            "slot": 4,
+            "label": "remaining",
+            "type": "u256"
+          }
+        ]
+      }
+    },
+    {
+      "ptr": 7,
+      "kind": "state",
+      "data": {
+        "mode": "actor",
+        "fields": [
+          {
+            "slot": 0,
+            "label": "budget",
+            "type": "u256"
+          },
+          {
+            "slot": 1,
+            "label": "spent",
+            "type": "u256"
+          }
+        ]
+      }
+    },
+    {
+      "ptr": 8,
+      "deps": [
+        0,
+        5,
+        7
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "SetBudget",
+        "mode": "dynamic",
+        "kind": "invoke",
+        "accepts": [
+          {
+            "slot": 0,
+            "label": "amount",
+            "type": "u256"
+          }
+        ],
+        "returns": [],
+        "executes": {
+          "asm": [
+            "OBTAIN $0 &0",
+            "PMAKE $1 &7",
+            "EQ $1 $0 $1",
+            "NOT $1 $1",
+            "LDPTR1 $2 0x9",
+            "JUMPI $2 $1",
+            "LDPTR1 $1 0x0",
+            "LMAKE $1 $1",
+            "THROW $1",
+            "DEST",
+            "ORIGIN $1",
+            "ALOAD $2 $1 &0",
+            "GATHER $3 $2",
+            "COPY $3 $0",
+            "DISPER $2 $3",
+            "STORE $2",
+            "CARGS $1",
+            "ORIGIN $2",
+            "SETFLD $1 &0 $2",
+            "SETFLD $1 &1 $0",
+            "LDPTR1 $0 0x5",
+            "EVMAKE $0 $0 $1",
+            "ORIGIN $1",
+            "EMIT $1 $0"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 9,
+      "deps": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "RecordSpend",
+        "mode": "dynamic",
+        "kind": "invoke",
+        "accepts": [
+          {
+            "slot": 0,
+            "label": "amount",
+            "type": "u256"
+          },
+          {
+            "slot": 1,
+            "label": "memo",
+            "type": "string"
+          }
+        ],
+        "returns": [
+          {
+            "slot": 0,
+            "label": "spent",
+            "type": "u256"
+          },
+          {
+            "slot": 1,
+            "label": "remaining",
+            "type": "u256"
+          }
+        ],
+        "executes": {
+          "asm": [
+            "OBTAIN $0 &0",
+            "PMAKE $1 &7",
+            "EQ $1 $0 $1",
+            "NOT $1 $1",
+            "LDPTR1 $2 0x9",
+            "JUMPI $2 $1",
+            "LDPTR1 $1 0x1",
+            "LMAKE $1 $1",
+            "THROW $1",
+            "DEST",
+            "PMAKE $1 &7",
+            "ORIGIN $2",
+            "ALOAD $3 $2 &0",
+            "GATHER $4 $3",
+            "COPY $1 $4",
+            "DUMP $3",
+            "PMAKE $2 &7",
+            "EQ $2 $1 $2",
+            "NOT $2 $2",
+            "LDPTR1 $3 0x1b",
+            "JUMPI $3 $2",
+            "ORIGIN $2",
+            "STR $2 $2",
+            "LDPTR1 $3 0x2",
+            "LMAKE $3 $3",
+            "JOIN $2 $2 $3",
+            "THROW $2",
+            "DEST",
+            "PMAKE $2 &7",
+            "ORIGIN $3",
+            "ALOAD $4 $3 &1",
+            "GATHER $5 $4",
+            "COPY $2 $5",
+            "DUMP $4",
+            "PMAKE $3 &7",
+            "GT $5 $1 $2",
+            "NOT $5 $5",
+            "LDPTR1 $6 0x2b",
+            "JUMPI $6 $5",
+            "SUB $5 $1 $2",
+            "COPY $3 $5",
+            "LDPTR1 $6 0x31",
+            "JUMP $6",
+            "DEST",
+            "PMAKE $5 &5",
+            "CARGS $6",
+            "CALLM $5 $5 &13 $6",
+            "GETFLD $6 $5 &0",
+            "COPY $3 $6",
+            "DEST",
+            "ADD $2 $2 $0",
+            "GT $5 $2 $1",
+            "NOT $5 $5",
+            "LDPTR1 $6 0x41",
+            "JUMPI $6 $5",
+            "LDPTR1 $5 0x3",
+            "LMAKE $5 $5",
+            "STR $6 $0",
+            "JOIN $5 $5 $6",
+            "LDPTR1 $6 0x4",
+            "LMAKE $6 $6",
+            "JOIN $5 $5 $6",
+            "STR $3 $3",
+            "JOIN $5 $5 $3",
+            "THROW $5",
+            "DEST",
+            "ORIGIN $3",
+            "ALOAD $4 $3 &1",
+            "GATHER $5 $4",
+            "COPY $5 $2",
+            "DISPER $4 $5",
+            "STORE $4",
+            "SUB $1 $1 $2",
+            "CARGS $3",
+            "ORIGIN $4",
+            "SETFLD $3 &0 $4",
+            "SETFLD $3 &1 $0",
+            "OBTAIN $0 &1",
+            "SETFLD $3 &2 $0",
+            "SETFLD $3 &3 $2",
+            "SETFLD $3 &4 $1",
+            "LDPTR1 $0 0x6",
+            "EVMAKE $0 $0 $3",
+            "ORIGIN $3",
+            "EMIT $3 $0",
+            "YIELD $2 &0",
+            "YIELD $1 &1"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 10,
+      "deps": [
+        7
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "GetBudget",
+        "mode": "static",
+        "kind": "invoke",
+        "accepts": [],
+        "returns": [
+          {
+            "slot": 0,
+            "label": "budget",
+            "type": "u256"
+          },
+          {
+            "slot": 1,
+            "label": "spent",
+            "type": "u256"
+          },
+          {
+            "slot": 2,
+            "label": "remaining",
+            "type": "u256"
+          }
+        ],
+        "executes": {
+          "asm": [
+            "PMAKE $0 &7",
+            "ORIGIN $1",
+            "ALOAD $2 $1 &0",
+            "GATHER $3 $2",
+            "COPY $0 $3",
+            "DUMP $2",
+            "PMAKE $1 &7",
+            "ORIGIN $2",
+            "ALOAD $3 $2 &1",
+            "GATHER $4 $3",
+            "COPY $1 $4",
+            "DUMP $3",
+            "PMAKE $2 &7",
+            "GT $3 $0 $1",
+            "NOT $3 $3",
+            "LDPTR1 $4 0x15",
+            "JUMPI $4 $3",
+            "SUB $3 $0 $1",
+            "COPY $2 $3",
+            "LDPTR1 $4 0x1b",
+            "JUMP $4",
+            "DEST",
+            "PMAKE $3 &5",
+            "CARGS $4",
+            "CALLM $3 $3 &13 $4",
+            "GETFLD $4 $3 &0",
+            "COPY $2 $4",
+            "DEST",
+            "YIELD $0 &0",
+            "YIELD $1 &1",
+            "YIELD $2 &2"
+          ]
+        },
+        "catches": []
+      }
+    }
+  ]
+}

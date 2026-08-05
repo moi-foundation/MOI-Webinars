@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+.env.local
+.agents.json
+cards/
+*.log
+.DS_Store

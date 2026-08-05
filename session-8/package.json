@@ -1,0 +1,45 @@
+{
+  "name": "moi-builders-8",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MOI Builders #8 \u2014 Agentic Payments V2: authority. Session 7's flow, plus context inheritance and an on-chain spend cap the chain enforces.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "verify-sdk": "tsx scripts/verify-sdk.ts",
+    "setup:asset": "tsx scripts/00-setup-asset.ts",
+    "setup:budget": "tsx scripts/01-deploy-budget.ts",
+    "setup:agents": "tsx scripts/02-provision-agents.ts",
+    "setup:registry": "tsx scripts/03-register-agents.ts",
+    "facilitator": "tsx packages/facilitator/src/index.ts",
+    "seller": "tsx packages/agent-seller/src/index.ts",
+    "buyer": "tsx packages/agent-buyer/src/index.ts",
+    "demo": "tsx scripts/demo.ts",
+    "attack-test": "tsx scripts/attack-test.ts"
+  },
+  "dependencies": {
+    "@demo/agent-buyer": "workspace:*",
+    "@demo/agent-seller": "workspace:*",
+    "@demo/facilitator": "workspace:*",
+    "@demo/shared": "workspace:*",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "groq-sdk": "^1.5.0",
+    "js-moi-agent-registry": "0.1.1",
+    "js-moi-sdk": "^0.7.1",
+    "js-moi-utils": "^0.7.1",
+    "js-polo": "^0.1.4",
+    "x402": "^1.2.0",
+    "x402-express": "^1.2.0",
+    "x402-fetch": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
