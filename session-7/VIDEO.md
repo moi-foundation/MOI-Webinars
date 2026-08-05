@@ -1,5 +1,10 @@
 # Launch video — script & shot list
 
+> ⚠️ **Out of date on this branch.** This document describes the **x402 + facilitator**
+> architecture, which now lives on the `claude/agent-payments-moi-x402` branch. Session 7 on this
+> branch speaks a simpler two-message protocol and has no facilitator — see
+> [README.md](./README.md) and [REVIEW.md](./REVIEW.md), which are current.
+
 Target: **~3:30**, screen recording + voiceover. One idea, one demo, one refusal.
 
 Companion blog is mandatory (video without text doesn't get indexed). See §6.

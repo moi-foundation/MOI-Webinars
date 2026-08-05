@@ -1,5 +1,10 @@
 # SDK_NOTES.md — session 7 (V1: identity + payment)
 
+> ⚠️ **Out of date on this branch.** This document describes the **x402 + facilitator**
+> architecture, which now lives on the `claude/agent-payments-moi-x402` branch. Session 7 on this
+> branch speaks a simpler two-message protocol and has no facilitator — see
+> [README.md](./README.md) and [REVIEW.md](./REVIEW.md), which are current.
+
 Every signature below was read from the **installed package in this repo** and, where marked
 ✅ **VERIFIED LIVE**, executed against MOI Voyage devnet this session.
 

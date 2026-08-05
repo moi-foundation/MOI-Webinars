@@ -1,5 +1,10 @@
 # Session 7 — Technical Specification
 
+> ⚠️ **Out of date on this branch.** This document describes the **x402 + facilitator**
+> architecture, which now lives on the `claude/agent-payments-moi-x402` branch. Session 7 on this
+> branch speaks a simpler two-message protocol and has no facilitator — see
+> [README.md](./README.md) and [REVIEW.md](./REVIEW.md), which are current.
+
 **Agentic Payments V1: identity + payment.**
 Two autonomous agents transact over x402, settled in a native MAS0 asset on MOI Voyage devnet.
 
