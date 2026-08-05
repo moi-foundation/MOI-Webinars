@@ -90,7 +90,7 @@ Step numbers match the cards in the browser.
 
 **Type:** `should i be worried about a crash`
 
-**Let it run. Talk over it — cards land about a second apart.**
+**Let it run. Cards land about six seconds apart — that gap is yours, talk into it.**
 
 **1 · "I don't know the answer to this"**
 

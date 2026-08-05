@@ -261,8 +261,12 @@ function render(s){
 // The work is bursty — the registry scan takes ~10s and emits one step, then the catalog and the
 // choice land milliseconds apart. Rendering as fast as events arrive makes half the run appear at
 // once, which is unreadable from the back of a room. So the stream fills a queue and the page
-// drains it at a steady beat. ?gap=1200 to slow it down for presenting.
-const GAP=Math.max(0,Number(new URLSearchParams(location.search).get("gap")||700));
+// drains it at a steady beat.
+//
+// Default is 6s per card. That is far slower than the work actually takes, and that is the point:
+// this is narrated live, and a card you cannot finish a sentence over may as well not be on screen.
+// Override with ?gap=1500 to move quickly, or ?gap=0 to watch it run flat out.
+const GAP=Math.max(0,Number(new URLSearchParams(location.search).get("gap")||6000));
 let queue=[], finished=null, timer=null, pend=null;
 
 function showPending(){
