@@ -67,7 +67,24 @@ carries a `disclaimer` field saying so — point at it rather than letting someo
 
 ---
 
-## Optional opener — let the room drive it
+## Optional opener — the agent console (browser)
+
+```bash
+npm run ui          # http://localhost:4000
+```
+
+A page that narrates the agent's reasoning as it happens — it realises it can't answer, scans the
+registry, shows the seller's advertised skills, gets quoted, checks who it's about to pay, pays on
+chain, watches the seller verify, and unlocks the answer. Balance ticks down at the top.
+
+This is the strongest opener if you have a projector: it shows the *decision process*, not just a
+log. Terminal version below if you'd rather stay in one window.
+
+⚠️ Same Groq caveat as `ask` — see below.
+
+---
+
+## Optional opener — let the room drive it (terminal)
 
 If you want the "agentic" idea to land before any code, take a question from the audience:
 

@@ -26,7 +26,11 @@ import {
   short,
   shortId,
   summary,
+  readInlineCard,
+  cardSkills,
+  StepEmitter,
   type Quote,
+  type StepSink,
 } from "@demo/shared";
 import { payingFetch, PaymentRefused, type BuyerEvent } from "./pay.js";
 import { checkSellerIdentity } from "./identity-check.js";
@@ -42,9 +46,12 @@ export interface BuyResult {
 
 const DEFAULT_QUESTION = "How likely is a big bitcoin drawdown this quarter?";
 
-export async function runBuyer(opts: { fallbackUrl: string; question?: string }): Promise<BuyResult> {
+export async function runBuyer(
+  opts: { fallbackUrl: string; question?: string; onStep?: StepSink },
+): Promise<BuyResult> {
   const buyer = await buyerAccount();
   const question = opts.question ?? DEFAULT_QUESTION;
+  const steps = new StepEmitter(opts.onStep);
 
   banner("BUYER", "boot", "Risk Agent waking up");
   detail("wallet", buyer.address);
@@ -61,6 +68,14 @@ export async function runBuyer(opts: { fallbackUrl: string; question?: string })
 
   // ── STEP 1: DISCOVER ────────────────────────────────────────────────────────────────────
   banner("BUYER", "step 1", "Find a signal desk in the MOI agent registry");
+  steps.emit({
+    actor: "buyer",
+    title: "I don't know the answer to this",
+    thought:
+      `"${question}" is not something I can answer myself. I need to find an agent that sells ` +
+      "this kind of estimate. I'll scan the MOI agent registry for the skill tag `sells-signals`.",
+    status: "working",
+  });
   let sellerUrl = opts.fallbackUrl;
 
   if (registry) {
@@ -81,6 +96,27 @@ export async function runBuyer(opts: { fallbackUrl: string; question?: string })
         detail("service url", chosen.url);
         if (chosen.url) sellerUrl = chosen.url;
         ok("seller resolved on chain — we were never handed a URL");
+
+        const card = readInlineCard(chosen.card_uri);
+        const skills = cardSkills(card) as { name?: string; description?: string; tags?: string[] }[];
+        steps.emit({
+          actor: "chain",
+          title: `Found one: ${chosen.agent_id}`,
+          thought:
+            `I scanned ${found.scanned} agents and one of them advertises this skill. Everything ` +
+            "below came off the chain — I was never handed an address.",
+          detail: [
+            ["agent id", chosen.agent_id],
+            ["status", String(chosen.status)],
+            ["registered wallet", addr0x(chosen.agent_wallet)],
+            ["service url", chosen.url],
+            ...skills.map((sk, i): [string, string] => [
+              `skill ${i + 1}`,
+              `${sk.name ?? "(unnamed)"} — ${sk.description ?? ""} [${(sk.tags ?? []).join(", ")}]`,
+            ]),
+          ],
+          status: "ok",
+        });
       } else {
         warn(`no registered signal desk found — falling back to ${sellerUrl}`);
       }
@@ -99,6 +135,13 @@ export async function runBuyer(opts: { fallbackUrl: string; question?: string })
     markets: CatalogMarket[]; price: { amount: string; symbol: string };
   };
   for (const m of catalog.markets) detail(m.id, `${m.question}  [${m.horizon}]`);
+  steps.emit({
+    actor: "seller",
+    title: "Here is what I sell",
+    thought: "Browsing costs nothing. The questions are public — only the answers are paid for.",
+    detail: catalog.markets.map((m): [string, string] => [m.id, `${m.question}  [${m.horizon}]`]),
+    status: "ok",
+  });
 
   // ── STEP 3: CHOOSE ──────────────────────────────────────────────────────────────────────
   const choice = await chooseMarket(question, catalog.markets);
@@ -106,6 +149,13 @@ export async function runBuyer(opts: { fallbackUrl: string; question?: string })
   banner("BUYER", "step 3", `Chose: ${picked?.question ?? choice.marketId}`);
   detail("why", choice.reason);
   detail("decided by", choice.by);
+  steps.emit({
+    actor: "buyer",
+    title: `This is the one I want: ${picked?.question ?? choice.marketId}`,
+    thought: choice.reason,
+    detail: [["market", choice.marketId], ["decided by", choice.by]],
+    status: "ok",
+  });
 
   // ── policy applied before any money moves ───────────────────────────────────────────────
   const approve = async (q: Quote): Promise<string | null> => {
@@ -114,11 +164,36 @@ export async function runBuyer(opts: { fallbackUrl: string; question?: string })
     detail("payTo", q.payTo);
     detail("asset", shortId(q.asset));
 
+    steps.emit({
+      actor: "seller",
+      title: "402 Payment Required",
+      thought: "You can have it, but not for free. Here is my price and where to send it.",
+      detail: [
+        ["price", `${q.price} ${q.symbol}`],
+        ["pay to", q.payTo],
+        ["their agent id", q.payToAgentId ?? "(none)"],
+        ["asset", q.asset],
+      ],
+      status: "ok",
+    });
+
     const identity = await checkSellerIdentity(registry, q);
     if (!identity.ok) {
       fail("payTo does NOT match the seller's on-chain registry wallet");
       detail("registry says", identity.registryWallet ?? "(unreadable)");
       detail("quote says", q.payTo);
+      steps.emit({
+        actor: "buyer",
+        title: "That is NOT the wallet this agent registered",
+        thought:
+          "The address in the quote does not match what the chain says belongs to this agent. " +
+          "I am not sending money to it. Nothing has been spent.",
+        detail: [
+          ["registry says", identity.registryWallet ?? "(unreadable)"],
+          ["quote says", q.payTo],
+        ],
+        status: "fail",
+      });
       return identity.reason ?? "identity check failed";
     }
     if (identity.registryWallet) ok(`payTo matches registry wallet ${shortId(identity.registryWallet)}`);
@@ -129,6 +204,19 @@ export async function runBuyer(opts: { fallbackUrl: string; question?: string })
       return "unexpected asset";
     }
     ok("asset is the one we hold");
+    steps.emit({
+      actor: "buyer",
+      title: "Checked who I am paying",
+      thought:
+        "That address was just 32 bytes handed to me by the seller. I asked the registry what " +
+        "wallet this agent actually registered, and the two match. Safe to pay.",
+      detail: [
+        ["registry wallet", identity.registryWallet ?? "(no registry entry)"],
+        ["quote pay to", q.payTo],
+        ["asset", "matches the one I hold"],
+      ],
+      status: "ok",
+    });
     return null;
   };
 
@@ -146,6 +234,19 @@ export async function runBuyer(opts: { fallbackUrl: string; question?: string })
         detail("amount", `${e.amount} ${config.assetSymbol}`);
         detail("ix hash", e.txHash);
         say("BUYER", "on MOI only the owner can move their own money — nobody holds it for us");
+        steps.emit({
+          actor: "chain",
+          title: "Paid — on chain, from my own wallet",
+          thought:
+            "On MOI only the owner can move their own funds, so I signed and submitted this " +
+            "myself. Nobody held the money for me.",
+          detail: [
+            ["amount", `${e.amount} ${config.assetSymbol}`],
+            ["from", buyer.address],
+            ["interaction", e.txHash],
+          ],
+          status: "ok",
+        });
         break;
       case "signed":
         detail("signed value", e.claim.value);
@@ -168,6 +269,13 @@ export async function runBuyer(opts: { fallbackUrl: string; question?: string })
     const result = await payingFetch(url, { buyer, approve, onEvent: narrate });
     banner("BUYER", "done", "Estimate delivered — agent loop complete");
     console.log(JSON.stringify(result.data, null, 2));
+    steps.emit({
+      actor: "seller",
+      title: "Paid — here is what you bought",
+      thought: "Payment confirmed on chain, so the answer is yours.",
+      data: result.data,
+      status: "ok",
+    });
     return {
       data: result.data,
       txHash: result.txHash,

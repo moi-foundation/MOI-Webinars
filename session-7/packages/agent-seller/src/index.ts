@@ -15,7 +15,7 @@ export interface SellerHandle {
   close: () => Promise<void>;
 }
 
-export async function startSeller(): Promise<SellerHandle> {
+export async function startSeller(opts?: { onEvent?: (e: SellerEvent) => void }): Promise<SellerHandle> {
   const seller = await sellerAccount();
 
   banner("SELLER", "boot", "Signal Desk online");
@@ -29,6 +29,8 @@ export async function startSeller(): Promise<SellerHandle> {
   say("SELLER", "it verifies its own payments by reading the chain — no facilitator");
 
   const narrate = (e: SellerEvent) => {
+    // Anything watching from outside the terminal sees the same events, unfiltered.
+    opts?.onEvent?.(e);
     switch (e.type) {
       case "quoted":
         banner("SELLER", "step 5", "402 Payment Required — here is my quote");
