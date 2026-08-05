@@ -11,11 +11,17 @@ import { config, NETWORK, type Quote } from "@demo/shared";
 export interface Priced {
   question: string;
   price: bigint;
+  listPrice: bigint;
+  priceReason: string;
+  pricedBy: string;
 }
 
 export function buildQuote(resource: string, payTo: string, item: Priced): Quote {
   return {
     price: item.price.toString(),
+    listPrice: item.listPrice.toString(),
+    priceReason: item.priceReason,
+    pricedBy: item.pricedBy,
     symbol: config.assetSymbol,
     asset: config.assetId,
     payTo,

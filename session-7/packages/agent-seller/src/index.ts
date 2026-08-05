@@ -8,6 +8,7 @@ import { config, sellerAccount, banner, detail, say, ok, check, shortId, short }
 import { paywall, type SellerEvent } from "./paywall.js";
 import { produceEstimate } from "./data-route.js";
 import { MARKETS, findMarket, catalogJson } from "./catalog.js";
+import { decidePrice } from "./pricing.js";
 
 export interface SellerHandle {
   url: string;
@@ -22,7 +23,8 @@ export async function startSeller(opts?: { onEvent?: (e: SellerEvent) => void })
   detail("wallet", seller.address);
   detail("agent id", config.sellerAgentId ?? "(unregistered — run npm run setup:registry)");
   detail("catalog", `${MARKETS.length} markets`);
-  detail("prices", MARKETS.map((m) => `${m.id} ${m.price}`).join("  ") + `  (${config.assetSymbol})`);
+  detail("prices", MARKETS.map((m) => `${m.id} ${m.listPrice}-${m.maxPrice}`).join("  ") + `  (${config.assetSymbol})`);
+  detail("pricing", config.groqKey ? `groq:${config.groqModel} decides per request` : "demand curve (no GROQ_API_KEY)");
   detail("brain", config.groqKey ? `groq:${config.groqModel}` : "canned estimates (no GROQ_API_KEY)");
   say("SELLER", "the probabilities are PLACEHOLDERS — no model, no market data");
   say("SELLER", "this wallet only ever RECEIVES — it never signs, so it needs no gas");
@@ -34,7 +36,9 @@ export async function startSeller(opts?: { onEvent?: (e: SellerEvent) => void })
     switch (e.type) {
       case "quoted":
         banner("SELLER", "step 5", "402 Payment Required — here is my quote");
-        detail("price", `${e.quote.price} ${e.quote.symbol}`);
+        detail("price", `${e.quote.price} ${e.quote.symbol}  (list ${e.quote.listPrice})`);
+        detail("why this price", e.quote.priceReason ?? "(none)");
+        detail("priced by", e.quote.pricedBy ?? "(none)");
         detail("payTo", e.quote.payTo);
         detail("asset", shortId(e.quote.asset));
         detail("agent id", e.quote.payToAgentId ?? "(none)");
@@ -58,6 +62,10 @@ export async function startSeller(opts?: { onEvent?: (e: SellerEvent) => void })
     }
   };
 
+  // How many of each market the desk has sold this run. Feeds the pricing decision, which is why
+  // asking the same question twice can cost more the second time.
+  const sold = new Map<string, number>();
+
   const app = express();
 
   // FREE. The QUESTIONS are public; only the answers cost money. A buyer that cannot see what is
@@ -77,10 +85,18 @@ export async function startSeller(opts?: { onEvent?: (e: SellerEvent) => void })
     paywall(
       seller.address,
       produceEstimate,
-      (req) => {
+      async (req) => {
         const m = findMarket(String(req.params.id));
-        // No catalog entry: fall back to the configured default rather than giving it away.
-        return { question: m?.question ?? String(req.params.id), price: m?.price ?? config.price };
+        if (!m) {
+          // No catalog entry: charge the configured default rather than giving it away.
+          const id = String(req.params.id);
+          return { question: id, price: config.price, listPrice: config.price,
+                   priceReason: "not in my catalog — default rate", pricedBy: "policy" };
+        }
+        const decision = await decidePrice(m, sold.get(m.id) ?? 0);
+        sold.set(m.id, (sold.get(m.id) ?? 0) + 1);
+        return { question: m.question, price: decision.price, listPrice: m.listPrice,
+                 priceReason: decision.reason, pricedBy: decision.by };
       },
       narrate,
     ),

@@ -7,8 +7,9 @@
 // finds who sells the answer, checks who they are, pays them, and comes back. You never name a
 // seller, a price or an address.
 //
-// EVERY question spends real money — one MAS0 transfer of PRICE_PER_ESTIMATE per answer. The
-// balance line before and after is the honest part: watch it go down.
+// EVERY question spends real money. The seller decides what to charge each time, so the same
+// question can cost more the second time you ask it. The balance line before and after is the
+// honest part: watch it go down.
 
 import { createInterface } from "node:readline/promises";
 import { config, buyerAccount, banner, detail, say, ok, fail, warn, summary, type Account } from "@demo/shared";
@@ -36,7 +37,7 @@ async function main(): Promise<void> {
   const buyer = await buyerAccount();
   detail("your wallet", buyer.address);
   detail("balance", `${await myBalance(buyer)} ${config.assetSymbol}`);
-  detail("price", `${config.price} ${config.assetSymbol} per answer`);
+  detail("prices", `set by the seller per request — see its catalog`);
   detail("brain", config.groqKey ? `groq:${config.groqModel}` : "keyword fallback (no GROQ_API_KEY)");
 
   if (!config.groqKey) {

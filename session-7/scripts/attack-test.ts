@@ -75,7 +75,7 @@ async function main(): Promise<void> {
   // being tested. Price comes from the catalog, same as it would for a real buyer.
   const market = findMarket("btc-100k-2026")!;
   const resource = `${config.sellerUrl}/signal/${market.id}`;
-  const price = market.price;
+  const price = market.listPrice;
 
   const needed = price * 12n;
   const held = await balanceOf(buyer, buyer.address);

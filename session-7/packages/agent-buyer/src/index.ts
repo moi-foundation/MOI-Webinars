@@ -35,6 +35,7 @@ import {
 import { payingFetch, PaymentRefused, type BuyerEvent } from "./pay.js";
 import { checkSellerIdentity } from "./identity-check.js";
 import { chooseMarket, type CatalogMarket } from "./brain.js";
+import { worthIt, SOFT_LIMIT } from "./worth.js";
 
 export interface BuyResult {
   data: unknown;
@@ -133,16 +134,16 @@ export async function runBuyer(
   if (!catalogRes.ok) throw new Error(`GET /catalog failed: HTTP ${catalogRes.status}`);
   const catalog = (await catalogRes.json()) as { markets: CatalogMarket[]; symbol: string };
   for (const m of catalog.markets) {
-    detail(m.id, `${m.price} ${catalog.symbol}  ${m.question}  [${m.horizon}]`);
+    detail(m.id, `from ${m.listPrice} ${catalog.symbol}  ${m.question}  [${m.horizon}]`);
   }
   steps.emit({
     actor: "seller",
     title: "Here is what I sell",
     thought:
-      "Browsing costs nothing. The questions and their prices are public — only the answers are " +
-      "paid for. The seller sets these prices; I either accept one or walk away.",
+      "Browsing costs nothing. These are opening prices — the desk decides what to actually " +
+      "charge when I ask. I either accept its number or walk away.",
     detail: catalog.markets.map((m): [string, string] => [
-      `${m.price} ${catalog.symbol}`, `${m.question}  [${m.horizon}]`,
+      `from ${m.listPrice} ${catalog.symbol}`, `${m.question}  [${m.horizon}]`,
     ]),
     status: "ok",
   });
@@ -171,12 +172,56 @@ export async function runBuyer(
     steps.emit({
       actor: "seller",
       title: "402 Payment Required",
-      thought: "You can have it, but not for free. Here is my price and where to send it.",
+      thought: q.priceReason
+        ? `You can have it, but not for free. "${q.priceReason}"`
+        : "You can have it, but not for free. Here is my price and where to send it.",
       detail: [
         ["price", `${q.price} ${q.symbol}`],
+        ["list price", `${q.listPrice ?? "?"} ${q.symbol}`],
+        ["priced by", q.pricedBy ?? "(none)"],
         ["pay to", q.payTo],
         ["their agent id", q.payToAgentId ?? "(none)"],
-        ["asset", q.asset],
+      ],
+      status: "ok",
+    });
+
+    // ── is this price worth paying? ───────────────────────────────────────────────────────
+    const verdict = await worthIt({
+      question,
+      marketQuestion: picked?.question ?? choice.marketId,
+      price: BigInt(q.price),
+      listPrice: BigInt(q.listPrice ?? q.price),
+      symbol: q.symbol,
+      sellerReason: q.priceReason,
+    });
+    detail("seller's reason", q.priceReason ?? "(none)");
+    detail("my ceiling", `${SOFT_LIMIT} ${q.symbol}`);
+    if (!verdict.accept) {
+      fail(`too expensive: ${verdict.reason}`);
+      steps.emit({
+        actor: "buyer",
+        title: "Not paying that",
+        thought: verdict.reason,
+        detail: [
+          ["quoted", `${q.price} ${q.symbol}`],
+          ["list price", `${q.listPrice ?? "?"} ${q.symbol}`],
+          ["seller's reason", q.priceReason ?? "(none)"],
+          ["decided by", verdict.by],
+        ],
+        status: "fail",
+      });
+      return `refused the price: ${verdict.reason}`;
+    }
+    ok(`price accepted — ${verdict.reason}`);
+    steps.emit({
+      actor: "buyer",
+      title: `${q.price} ${q.symbol} — I'll pay that`,
+      thought: verdict.reason,
+      detail: [
+        ["quoted", `${q.price} ${q.symbol}`],
+        ["list price", `${q.listPrice ?? "?"} ${q.symbol}`],
+        ["seller argued", q.priceReason ?? "(none)"],
+        ["decided by", verdict.by],
       ],
       status: "ok",
     });

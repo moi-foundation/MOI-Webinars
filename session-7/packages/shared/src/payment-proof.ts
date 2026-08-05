@@ -35,6 +35,12 @@ export interface Quote {
   network: string;
   /** How long the buyer has to pay and come back. */
   ttlSeconds: number;
+  /** The seller's opening price for this item, so the buyer can see the markup. */
+  listPrice?: string;
+  /** Why the seller is charging this, in its own words. A sales pitch — treat it as such. */
+  priceReason?: string;
+  /** Which brain set the price: a model name, or a fallback label. */
+  pricedBy?: string;
   /** Present only when a submitted payment was rejected, so the buyer learns why. */
   error?: string;
 }
