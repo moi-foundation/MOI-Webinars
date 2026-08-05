@@ -200,6 +200,9 @@ const PAGE = `<!doctype html>
   pre{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;
     padding:16px;overflow-x:auto;font-size:12.5px;margin:4px 0 0;
     font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .pendttl{color:var(--mut);font-weight:400}
+  .pendttl::after{content:"";animation:dots 1.4s steps(4,end) infinite}
+  @keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
   .end{border-radius:12px;padding:14px 18px;margin-top:8px;font-size:14px}
   .end.ok{background:rgba(60,203,142,.12);border:1px solid rgba(60,203,142,.35)}
   .end.no{background:rgba(214,51,108,.12);border:1px solid rgba(214,51,108,.35)}
@@ -231,26 +234,55 @@ function render(s){
   if(s.data!==undefined) h+='<pre>'+esc(JSON.stringify(s.data,null,2))+'</pre>';
   d.innerHTML=h; feed.appendChild(d); d.scrollIntoView({behavior:"smooth",block:"end"});
 }
+// The work is bursty — the registry scan takes ~10s and emits one step, then the catalog and the
+// choice land milliseconds apart. Rendering as fast as events arrive makes half the run appear at
+// once, which is unreadable from the back of a room. So the stream fills a queue and the page
+// drains it at a steady beat. ?gap=1200 to slow it down for presenting.
+const GAP=Math.max(0,Number(new URLSearchParams(location.search).get("gap")||700));
+let queue=[], finished=null, timer=null, pend=null;
+
+function showPending(){
+  if(!pend){
+    pend=document.createElement("div");
+    pend.className="step working";
+    pend.innerHTML='<div class="who">···</div><div class="ttl pendttl">working</div>';
+  }
+  feed.appendChild(pend);           // always last
+}
+function hidePending(){ if(pend&&pend.parentNode) pend.remove(); }
+
+function finish(r){
+  const d=document.createElement("div");
+  d.className="end "+(r.ok?"ok":"no");
+  d.textContent=r.ok?"Done — the agent found a seller, verified it, paid it, and got the answer."
+    :(r.refused?"Agent refused to pay. No money moved.":"Failed: "+r.message);
+  feed.appendChild(d); d.scrollIntoView({behavior:"smooth",block:"end"});
+  $("#go").disabled=false;
+}
+
+function tick(){
+  if(queue.length){ hidePending(); render(queue.shift()); return; }
+  if(finished){ clearInterval(timer); timer=null; hidePending(); const r=finished; finished=null; finish(r); return; }
+  showPending();
+}
+
 $("#f").onsubmit=e=>{
   e.preventDefault();
   const q=$("#q").value.trim(); if(!q) return;
   feed.innerHTML=""; bal.textContent=""; $("#go").disabled=true;
+  queue=[]; finished=null; pend=null;
+  if(timer) clearInterval(timer);
+  timer=setInterval(tick,GAP||16);
   const es=new EventSource("/ask?q="+encodeURIComponent(q)+($("#tamper").checked?"&tamper=1":""));
-  es.addEventListener("step",m=>render(JSON.parse(m.data)));
+  es.addEventListener("step",m=>queue.push(JSON.parse(m.data)));
   es.addEventListener("balance",m=>{
     const b=JSON.parse(m.data);
     if(b.before!==undefined){before=b.before;bal.innerHTML="balance <b>"+esc(b.before)+"</b>";}
     else bal.innerHTML="balance <b>"+esc(before)+"</b> → <b>"+esc(b.after)+"</b>";
   });
-  es.addEventListener("done",m=>{
-    const r=JSON.parse(m.data), d=document.createElement("div");
-    d.className="end "+(r.ok?"ok":"no");
-    d.textContent=r.ok?"Done — the agent found a seller, verified it, paid it, and got the answer."
-      :(r.refused?"Agent refused to pay. No money moved.":"Failed: "+r.message);
-    feed.appendChild(d); d.scrollIntoView({behavior:"smooth",block:"end"});
-    es.close(); $("#go").disabled=false;
-  });
-  es.onerror=()=>{es.close();$("#go").disabled=false;};
+  // Don't end the run the moment the server does — let the queue drain first.
+  es.addEventListener("done",m=>{ finished=JSON.parse(m.data); es.close(); });
+  es.onerror=()=>{ es.close(); if(!finished&&!queue.length){ if(timer)clearInterval(timer); timer=null; hidePending(); $("#go").disabled=false; } };
 };
 </script></body></html>`;
 

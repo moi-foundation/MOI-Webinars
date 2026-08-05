@@ -70,8 +70,15 @@ carries a `disclaimer` field saying so — point at it rather than letting someo
 ## Optional opener — the agent console (browser)
 
 ```bash
-npm run ui          # http://localhost:4000
+npm run ui                       # http://localhost:4000
+open http://localhost:4000?gap=1200   # slower reveal, for a big room
 ```
+
+Steps are revealed one at a time on a steady beat rather than in bursts — the work itself is lumpy
+(the registry scan, then the transfer landing) and rendering as fast as events arrive dumps half
+the run on screen at once. `?gap=` sets the millisecond spacing; default 700. A pulsing "working"
+row shows whenever the agent is genuinely waiting on the chain, so a pause reads as work rather
+than as a hang.
 
 A page that narrates the agent's reasoning as it happens — it realises it can't answer, scans the
 registry, shows the seller's advertised skills, gets quoted, checks who it's about to pay, pays on

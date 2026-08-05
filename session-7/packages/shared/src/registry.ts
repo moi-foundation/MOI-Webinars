@@ -155,11 +155,17 @@ export async function discoverBySkill(
     scope = "every agent on the registry";
   }
 
+  // Fetch profiles in parallel batches. One at a time meant 17 agents took ~22 seconds, which is
+  // most of the demo spent staring at nothing. Batched rather than all-at-once so a large registry
+  // doesn't fire hundreds of concurrent RPCs at the node.
+  const BATCH = 6;
   const matches: Profile[] = [];
-  for (const id of ids) {
-    const profile = await getProfile(reg, id);
-    if (!profile) continue;
-    if (hasTag(readInlineCard(profile.card_uri), tag)) matches.push(profile);
+  for (let i = 0; i < ids.length; i += BATCH) {
+    const profiles = await Promise.all(ids.slice(i, i + BATCH).map((id) => getProfile(reg, id)));
+    for (const profile of profiles) {
+      if (!profile) continue;
+      if (hasTag(readInlineCard(profile.card_uri), tag)) matches.push(profile);
+    }
   }
   return { matches, scanned: ids.length, scope };
 }
