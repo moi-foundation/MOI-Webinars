@@ -131,15 +131,19 @@ export async function runBuyer(
   banner("BUYER", "step 2", "Read the catalog (free — the questions are public, the answers are not)");
   const catalogRes = await fetch(`${base}/catalog`);
   if (!catalogRes.ok) throw new Error(`GET /catalog failed: HTTP ${catalogRes.status}`);
-  const catalog = (await catalogRes.json()) as {
-    markets: CatalogMarket[]; price: { amount: string; symbol: string };
-  };
-  for (const m of catalog.markets) detail(m.id, `${m.question}  [${m.horizon}]`);
+  const catalog = (await catalogRes.json()) as { markets: CatalogMarket[]; symbol: string };
+  for (const m of catalog.markets) {
+    detail(m.id, `${m.price} ${catalog.symbol}  ${m.question}  [${m.horizon}]`);
+  }
   steps.emit({
     actor: "seller",
     title: "Here is what I sell",
-    thought: "Browsing costs nothing. The questions are public — only the answers are paid for.",
-    detail: catalog.markets.map((m): [string, string] => [m.id, `${m.question}  [${m.horizon}]`]),
+    thought:
+      "Browsing costs nothing. The questions and their prices are public — only the answers are " +
+      "paid for. The seller sets these prices; I either accept one or walk away.",
+    detail: catalog.markets.map((m): [string, string] => [
+      `${m.price} ${catalog.symbol}`, `${m.question}  [${m.horizon}]`,
+    ]),
     status: "ok",
   });
 

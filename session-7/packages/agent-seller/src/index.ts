@@ -7,7 +7,7 @@ import express from "express";
 import { config, sellerAccount, banner, detail, say, ok, check, shortId, short } from "@demo/shared";
 import { paywall, type SellerEvent } from "./paywall.js";
 import { produceEstimate } from "./data-route.js";
-import { MARKETS, findMarket } from "./catalog.js";
+import { MARKETS, findMarket, catalogJson } from "./catalog.js";
 
 export interface SellerHandle {
   url: string;
@@ -22,7 +22,7 @@ export async function startSeller(opts?: { onEvent?: (e: SellerEvent) => void })
   detail("wallet", seller.address);
   detail("agent id", config.sellerAgentId ?? "(unregistered — run npm run setup:registry)");
   detail("catalog", `${MARKETS.length} markets`);
-  detail("price", `${config.price} ${config.assetSymbol} per estimate`);
+  detail("prices", MARKETS.map((m) => `${m.id} ${m.price}`).join("  ") + `  (${config.assetSymbol})`);
   detail("brain", config.groqKey ? `groq:${config.groqModel}` : "canned estimates (no GROQ_API_KEY)");
   say("SELLER", "the probabilities are PLACEHOLDERS — no model, no market data");
   say("SELLER", "this wallet only ever RECEIVES — it never signs, so it needs no gas");
@@ -66,8 +66,8 @@ export async function startSeller(opts?: { onEvent?: (e: SellerEvent) => void })
     res.json({
       seller: "Signal Desk",
       agentId: config.sellerAgentId,
-      price: { amount: config.price.toString(), symbol: config.assetSymbol },
-      markets: MARKETS,
+      symbol: config.assetSymbol,
+      markets: catalogJson(),
     });
   });
 
@@ -77,7 +77,11 @@ export async function startSeller(opts?: { onEvent?: (e: SellerEvent) => void })
     paywall(
       seller.address,
       produceEstimate,
-      (req) => findMarket(String(req.params.id))?.question ?? String(req.params.id),
+      (req) => {
+        const m = findMarket(String(req.params.id));
+        // No catalog entry: fall back to the configured default rather than giving it away.
+        return { question: m?.question ?? String(req.params.id), price: m?.price ?? config.price };
+      },
       narrate,
     ),
   );

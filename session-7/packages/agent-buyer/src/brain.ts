@@ -14,6 +14,8 @@ export interface CatalogMarket {
   id: string;
   question: string;
   horizon: string;
+  /** Base units, decimal string — the seller sets this per market. */
+  price: string;
   topics: string[];
 }
 
@@ -58,7 +60,7 @@ export async function chooseMarket(question: string, catalog: CatalogMarket[]): 
           '{"marketId": "<id from the catalog>", "reason": "<one short line>"}.' },
         { role: "user", content:
           `Question: ${question}\nMarkets: ${JSON.stringify(catalog.map((m) => ({
-            id: m.id, question: m.question, horizon: m.horizon, topics: m.topics,
+            id: m.id, question: m.question, horizon: m.horizon, price: m.price, topics: m.topics,
           })))}` },
       ],
     });

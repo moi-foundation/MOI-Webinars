@@ -11,7 +11,7 @@
 // with the BUYER, so it is tested against checkSellerIdentity instead.
 //
 // Runs against real devnet, so it needs a funded buyer and a completed setup. Eleven of the twelve
-// cases make a real MAS0 transfer of PRICE_PER_ESTIMATE, so the suite moves ~11 base units. Slower
+// cases make a real MAS0 transfer at the cheapest market's price, so the suite moves ~11 base
 // a unit test — it is verifying real chain reads.
 
 import {
@@ -25,6 +25,7 @@ import {
 } from "@demo/shared";
 import { MAS0AssetLogic, getAssetDriver } from "js-moi-sdk";
 import { verifyProof } from "@demo/agent-seller/src/verify-proof.js";
+import { findMarket } from "@demo/agent-seller/src/catalog.js";
 import { checkSellerIdentity } from "@demo/agent-buyer/src/identity-check.js";
 
 /** MAS0 balance in base units. Accounts that never held the asset report 0n. */
@@ -69,7 +70,14 @@ async function main(): Promise<void> {
   const sellerAgentId = config.sellerAgentId;
   if (!sellerAgentId) throw new Error("SELLER_AGENT_ID unset — run `npm run setup:registry` first.");
 
-  const needed = config.price * 12n;
+  const reg = await registryClient(buyer, false);
+  // The cheapest market on purpose — the suite makes ~11 real transfers and this is not the thing
+  // being tested. Price comes from the catalog, same as it would for a real buyer.
+  const market = findMarket("btc-100k-2026")!;
+  const resource = `${config.sellerUrl}/signal/${market.id}`;
+  const price = market.price;
+
+  const needed = price * 12n;
   const held = await balanceOf(buyer, buyer.address);
   if (held < needed) {
     throw new Error(
@@ -77,10 +85,6 @@ async function main(): Promise<void> {
       "Run `npm run setup:asset`.",
     );
   }
-
-  const reg = await registryClient(buyer, false);
-  const resource = `${config.sellerUrl}/signal/btc-drawdown-20`;
-  const price = config.price;
 
   const quote: Quote = {
     price: price.toString(),

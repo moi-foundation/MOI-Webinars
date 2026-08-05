@@ -15,7 +15,7 @@ import {
   type PaymentProof,
   type Quote,
 } from "@demo/shared";
-import { buildQuote } from "./price.js";
+import { buildQuote, type Priced } from "./price.js";
 import { verifyProof } from "./verify-proof.js";
 
 export type SellerEvent =
@@ -28,7 +28,8 @@ export type SellerEvent =
 export function paywall(
   payTo: string,
   produce: (req: Request) => Promise<unknown>,
-  describe: (req: Request) => string,
+  /** What is being sold on this request, and what the seller charges for it. */
+  resolve: (req: Request) => Priced,
   onEvent?: (e: SellerEvent) => void,
 ): RequestHandler {
   // In-memory, which is honest for a demo: one process, one run. A real seller would persist this,
@@ -40,7 +41,7 @@ export function paywall(
   return async function handler(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const resource = `${req.protocol}://${req.get("host")}${req.originalUrl.split("?")[0]}`;
-      const quote = buildQuote(resource, payTo, describe(req));
+      const quote = buildQuote(resource, payTo, resolve(req));
 
       // ── nothing attached: quote them ────────────────────────────────────────────────────
       const header = req.header("X-Payment-Proof");

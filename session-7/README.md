@@ -25,9 +25,9 @@ the buyer walks away — a check that needs an on-chain identity to be possible 
 
 ```
 buyer  registry: who sells signals?        -> agent id, wallet, URL   (never handed a URL)
-buyer  GET /catalog                        -> free. discovery must not cost money
+buyer  GET /catalog                        -> free. questions AND prices are public
 buyer  brain picks the market for its question
-buyer  GET /signal/:id                     -> 402 + a quote
+buyer  GET /signal/:id                     -> 402 + a quote at THAT market's price
 buyer  is payTo the seller's REGISTERED wallet?   <- the MOI question
 buyer  MAS0 transfer(seller, price)        -> the buyer moves its OWN funds
 buyer  sign a claim naming that interaction hash
