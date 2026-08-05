@@ -197,6 +197,8 @@ const PAGE = `<!doctype html>
   .kv dd.hash{color:var(--accent);cursor:pointer;border-bottom:1px dashed rgba(188,166,255,.4)}
   .kv dd.hash:hover{color:#fff}
   .kv dd.hash::after{content:" ⧉";opacity:.5;font-size:11px}
+  .kv dd.proof{color:var(--ok);border-bottom-color:rgba(60,203,142,.45);font-weight:600}
+  .kv dd.proof:hover{color:#fff}
   .copied{color:var(--ok) !important}
   .chk{display:flex;gap:9px;align-items:baseline;font-size:12.5px;
     font-family:ui-monospace,SFMono-Regular,Menlo,monospace;padding:2px 0}
@@ -243,8 +245,14 @@ function render(s){
   let h='<div class="who '+s.actor+'">'+esc(s.actor)+'</div><div class="ttl">'+esc(s.title)+'</div>';
   if(s.thought) h+='<div class="say">'+esc(s.thought)+'</div>';
   if(s.detail&&s.detail.length) h+='<dl class="kv">'+s.detail.map(([k,v])=>{
-    const isHash=/^0x[0-9a-f]{64}$/i.test(String(v));
-    return '<dt>'+esc(k)+'</dt><dd'+(isHash?' class="hash" title="click to copy — paste into voyage.moi.technology"':'')+'>'+esc(v)+'</dd>';
+    const isHex=/^0x[0-9a-f]{64}$/i.test(String(v));
+    // Wallets and interaction hashes are both 64 hex chars. Only one of them is proof that a
+    // payment happened, so it gets its own colour — otherwise it disappears into the addresses.
+    const isProof=isHex&&/interaction|\btx\b/i.test(k);
+    const cls=isProof?"hash proof":isHex?"hash":"";
+    const tip=isProof?"the on-chain proof — click to copy, paste into voyage.moi.technology"
+                     :isHex?"click to copy":"";
+    return '<dt>'+esc(k)+'</dt><dd'+(cls?' class="'+cls+'" title="'+tip+'"':'')+'>'+esc(v)+'</dd>';
   }).join("")+'</dl>';
   if(s.checks) h+=s.checks.map(c=>'<div class="chk"><i class="'+(c.passed?"p":"f")+'">'+(c.passed?"✓":"✗")+'</i><b>'+esc(c.name)+'</b><span>'+esc(c.detail)+'</span></div>').join("");
   if(s.data!==undefined) h+='<pre>'+esc(JSON.stringify(s.data,null,2))+'</pre>';

@@ -114,9 +114,13 @@ you can switch between them mid-sentence without the numbering changing under yo
 
 **Step 8 — "Paid — on chain, from my own wallet"**
 
-> Real transfer, real interaction hash. **That's clickable — I can copy it and look it up.**
+> Real transfer, real interaction hash.
 
-**Click the hash. Optionally paste into voyage.moi.technology.**
+**Point at the green value next to `interaction`. It's the only green thing on the page — wallets
+are purple, the on-chain proof is green. Click it; it copies.**
+
+> That's not a receipt I printed for myself. That interaction exists on devnet whether or not you
+> believe anything else on this screen — paste it into an explorer and it's there.
 
 > And note the wording: *from my own wallet*. On MOI only the owner can move their own funds. There
 > is no middleman holding money here, because there can't be.
@@ -125,6 +129,9 @@ you can switch between them mid-sentence without the numbering changing under yo
 
 > Seven checks. The seller doesn't take the buyer's word that it paid — it reads that interaction
 > off the chain and decodes it. Right sender, right recipient, right amount, not already spent.
+>
+> And `confirmed interaction` at the bottom is the same hash. The seller independently arrived at
+> the transaction the buyer claimed.
 
 **Step 10 — the answer appears**
 
