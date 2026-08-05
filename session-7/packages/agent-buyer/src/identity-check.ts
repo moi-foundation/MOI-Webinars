@@ -1,11 +1,14 @@
-// The on-stage identity beat. Spec §8.2.
+// The on-stage beat.
 //
-// The buyer does NOT trust the payTo it was handed in the 402. It reads the seller's operating
-// wallet from the on-chain MOI agent registry and refuses if they disagree. This is the question
-// x402 cannot ask — without it, payTo is 32 anonymous bytes.
+// The buyer does NOT trust the payTo it was just handed. It reads the seller's operating wallet
+// from the on-chain MOI agent registry and refuses if the two disagree.
+//
+// This is the one piece that survived dropping x402 unchanged, because it never had anything to do
+// with x402. Any payment protocol tells you WHERE to send money. None of them tell you WHOSE
+// address that is. That answer has to come from somewhere, and here it comes from the chain.
 
 import type { AgentRegistry } from "js-moi-agent-registry";
-import { readAgentWallet, normalizeAddress, type PaymentRequirements } from "@demo/shared";
+import { readAgentWallet, normalizeAddress, type Quote } from "@demo/shared";
 
 export interface IdentityVerdict {
   ok: boolean;
@@ -15,9 +18,9 @@ export interface IdentityVerdict {
 
 export async function checkSellerIdentity(
   registry: AgentRegistry | null,
-  requirements: PaymentRequirements,
+  quote: Quote,
 ): Promise<IdentityVerdict> {
-  const agentId = requirements.extra.payToAgentId;
+  const agentId = quote.payToAgentId;
   // Only skip when there is genuinely nothing to check against.
   if (!agentId || !registry) {
     return { ok: true, registryWallet: null, reason: "no registry or agent id — paying on trust" };
@@ -28,11 +31,11 @@ export async function checkSellerIdentity(
   } catch (err) {
     return { ok: false, registryWallet: null, reason: (err as Error).message };
   }
-  if (normalizeAddress(registryWallet) !== normalizeAddress(requirements.payTo)) {
+  if (normalizeAddress(registryWallet) !== normalizeAddress(quote.payTo)) {
     return {
       ok: false,
       registryWallet,
-      reason: `payTo ${requirements.payTo} does not match the registry wallet ${registryWallet}`,
+      reason: `payTo ${quote.payTo} does not match the registry wallet ${registryWallet}`,
     };
   }
   return { ok: true, registryWallet };

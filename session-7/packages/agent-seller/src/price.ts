@@ -1,24 +1,20 @@
-// What the seller charges, and which facilitator it trusts.
+// What the seller charges.
 //
-// Pointing `facilitator` at our MOI service is the ONLY MOI-specific line in the seller's config.
-// Everything else is stock x402 vocabulary — which is the whole point.
+// `payToAgentId` is the load-bearing field. Without it `payTo` is 32 anonymous bytes and the buyer
+// has no way to tell the real bookseller from someone who edited the listing.
 
-import { config, SCHEME, NETWORK, type PaymentRequirements } from "@demo/shared";
+import { config, NETWORK, type Quote } from "@demo/shared";
 
-export function buildRequirements(resource: string, payTo: string, title: string): PaymentRequirements {
+export function buildQuote(resource: string, payTo: string, title: string): Quote {
   return {
-    scheme: SCHEME,
-    network: NETWORK,
-    maxAmountRequired: config.price.toString(),
+    price: config.price.toString(),
+    symbol: config.assetSymbol,
+    asset: config.assetId,
+    payTo,
+    ...(config.sellerAgentId ? { payToAgentId: config.sellerAgentId } : {}),
     resource,
     description: `Full summary and key ideas of "${title}".`,
-    mimeType: "application/json",
-    payTo,
-    maxTimeoutSeconds: 60,
-    asset: config.assetId,
-    extra: {
-      symbol: config.assetSymbol,
-      ...(config.sellerAgentId ? { payToAgentId: config.sellerAgentId } : {}),
-    },
+    network: NETWORK,
+    ttlSeconds: config.authTtlSeconds,
   };
 }

@@ -10,10 +10,9 @@ import {
   config, buyerAccount, sellerAccount, registryClient, getProfile, updateAgentWallet,
   addr0x, banner, detail, ok, fail, warn, say, summary,
 } from "@demo/shared";
-import { startFacilitator } from "@demo/facilitator";
 import { startSeller } from "@demo/agent-seller";
 import { runBuyer } from "@demo/agent-buyer";
-import { PaymentRefused } from "@demo/agent-buyer/src/pay-fetch.js";
+import { PaymentRefused } from "@demo/agent-buyer/src/pay.js";
 
 const args = new Set(process.argv.slice(2));
 const TAMPER = args.has("--tamper");
@@ -58,7 +57,6 @@ async function main(): Promise<void> {
     say("DEMO", "the seller still asks to be paid at its REAL address — watch the buyer notice");
   }
 
-  const facilitator = await startFacilitator();
   const sellerSvc = await startSeller();
 
   try {
@@ -66,7 +64,7 @@ async function main(): Promise<void> {
     summary("Payment complete", [
       ["book", result.bookId],
       ["buyer's transfer", result.txHash ?? "(none)"],
-      ["facilitator confirmed", result.receiptTx ?? "(none)"],
+      ["seller confirmed", result.receiptTx ?? "(none)"],
       ["price", `${result.price} ${config.assetSymbol}`],
       ["buyer", buyer.address],
       ["seller", seller.address],
@@ -87,7 +85,6 @@ async function main(): Promise<void> {
     }
   } finally {
     await sellerSvc.close();
-    await facilitator.close();
     if (restoreWallet && config.sellerAgentId) {
       await updateAgentWallet(await registryClient(buyer, false), config.sellerAgentId, seller.address);
       ok(`restored the seller's registry wallet to ${seller.address}`);

@@ -28,10 +28,8 @@ export const DEFAULT_SELLER_PATH = "m/44'/6174'/7020'/0/1";
 export const VOYAGE_DEVNET_RPC = "https://dev.voyage-rpc.moi.technology/devnet/";
 export const FAUCET_URL = "https://voyage.moi.technology";
 
-/** Our x402 scheme + network ids. Opaque to useFacilitator; only we must agree. */
-export const SCHEME = "moi-transfer";
+/** Names the chain a payment settled on. Only appears in quotes and receipts. */
 export const NETWORK = "moi-voyage-devnet";
-export const X402_VERSION = 1;
 
 export const FUEL_LIMIT = Number(opt("FUEL_LIMIT", "20000"));
 
@@ -52,15 +50,13 @@ export const config = {
   /** What the buyer will pay for one book, in base units. */
   price: BigInt(opt("PRICE_PER_BOOK", "1")),
 
-  facilitatorUrl: opt("FACILITATOR_URL", "http://localhost:4021"),
   sellerUrl: opt("SELLER_URL", "http://localhost:4011"),
-  facilitatorPort: Number(opt("FACILITATOR_PORT", "4021")),
   sellerPort: Number(new URL(opt("SELLER_URL", "http://localhost:4011")).port || "4011"),
   buyerPort: Number(opt("BUYER_PORT", "4001")),
 
   groqKey: process.env.GROQ_API_KEY?.trim() || null,
   groqModel: opt("GROQ_MODEL", "llama-3.3-70b-versatile"),
 
-  /** How long a signed payment authorization stays valid. */
+  /** How long a quote, and the signed claim that answers it, stay valid. */
   authTtlSeconds: Number(opt("AUTH_TTL_SECONDS", "120")),
 } as const;

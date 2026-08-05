@@ -1,27 +1,31 @@
-// Adversarial tests against a running facilitator.
+// Adversarial tests against the seller's verifier.
 //
 //   npm run attack-test
 //
-// A passing happy path proves nothing about whether the 9 checks do any work. This fires forged
-// payments at a real facilitator over real HTTP and asserts each is rejected for the RIGHT reason
-// — plus an honest control, because a facilitator that rejected everything would otherwise "pass".
+// A passing happy path proves nothing about whether the checks do any work. This forges payments
+// and asserts each is rejected for the RIGHT reason — plus an honest control, because a verifier
+// that rejected everything would otherwise "pass".
 //
-// Runs against real devnet, so it needs a funded buyer and a completed setup. Each honest case
-// costs one real MAS0 transfer of PRICE_PER_BOOK (1 base unit by default), so the whole suite
-// moves a handful of base units. Slower than a unit test — it is verifying the real chain reads.
+// With the facilitator gone these call verifyProof() directly rather than posting over HTTP. Same
+// checks, no server to stand up. The last case is different in kind: the registry check now lives
+// with the BUYER, so it is tested against checkSellerIdentity instead.
+//
+// Runs against real devnet, so it needs a funded buyer and a completed setup. Eleven of the twelve
+// cases make a real MAS0 transfer of PRICE_PER_BOOK, so the suite moves ~11 base units. Slower than
+// a unit test — it is verifying real chain reads.
 
 import {
-  config, SCHEME, NETWORK, X402_VERSION,
+  config, NETWORK,
   loadAccount, buyerAccount, sellerAccount,
-  canonicalAuthorizationBytes, randomNonce, nowSeconds,
-  createAgentEntry,
+  canonicalClaimBytes, randomNonce, nowSeconds,
+  ConsumedTransfers,
+  updateAgentWallet, registryClient,
   banner, detail, ok, fail, summary,
-  type Account, type PaymentAuthorization, type PaymentPayload,
-  type PaymentRequirements, type VerifyResponse,
+  type Account, type PaymentClaim, type PaymentProof, type Quote,
 } from "@demo/shared";
-import { updateAgentWallet, registryClient } from "@demo/shared";
 import { MAS0AssetLogic, getAssetDriver } from "js-moi-sdk";
-import { startFacilitator } from "@demo/facilitator";
+import { verifyProof } from "@demo/agent-seller/src/verify-proof.js";
+import { checkSellerIdentity } from "@demo/agent-buyer/src/identity-check.js";
 
 /** MAS0 balance in base units. Accounts that never held the asset report 0n. */
 async function balanceOf(reader: Account, holder: string): Promise<bigint> {
@@ -38,7 +42,7 @@ async function balanceOf(reader: Account, holder: string): Promise<bigint> {
 
 /** A real MAS0 transfer, signed by the holder. Returns the interaction hash. */
 async function realTransfer(from: Account, to: string, amount: bigint): Promise<string> {
-  const ix = await new MAS0AssetLogic(config.assetId, from.wallet).transfer(to, amount).send();
+  const ix = await new MAS0AssetLogic(config.assetId, from.wallet).transfer(to, Number(amount)).send();
   const r = (await ix.result()) as unknown as { error?: unknown };
   if (r?.error) throw new Error(`transfer reverted: ${JSON.stringify(r.error)}`);
   return ix.hash;
@@ -46,44 +50,14 @@ async function realTransfer(from: Account, to: string, amount: bigint): Promise<
 
 let failures = 0;
 
-async function sign(signer: Account, auth: PaymentAuthorization): Promise<PaymentPayload> {
+async function sign(signer: Account, claim: PaymentClaim): Promise<PaymentProof> {
   const sigAlgo = signer.wallet.signingAlgorithms.ecdsa_secp256k1;
   return {
-    x402Version: X402_VERSION,
-    scheme: SCHEME,
-    network: NETWORK,
-    payload: {
-      publicKey: signer.publicKey,
-      keyId: signer.keyId,
-      signature: await signer.wallet.sign(canonicalAuthorizationBytes(auth), signer.keyId, sigAlgo),
-      authorization: auth,
-    },
+    claim,
+    publicKey: signer.publicKey,
+    keyId: signer.keyId,
+    signature: await signer.wallet.sign(canonicalClaimBytes(claim), signer.keyId, sigAlgo),
   };
-}
-
-async function post(
-  url: string, payload: PaymentPayload, requirements: PaymentRequirements, path = "/verify",
-): Promise<VerifyResponse> {
-  const res = await fetch(`${url}${path}`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ x402Version: X402_VERSION, paymentPayload: payload, paymentRequirements: requirements }),
-  });
-  return (await res.json()) as VerifyResponse;
-}
-
-async function attack(
-  name: string, expected: string, url: string,
-  payload: PaymentPayload, requirements: PaymentRequirements,
-): Promise<void> {
-  const body = await post(url, payload, requirements);
-  if (body.isValid) { fail(`${name} — ACCEPTED (should have been rejected!)`); failures++; return; }
-  if (body.invalidReason !== expected) {
-    fail(`${name} — rejected as "${body.invalidReason}", expected "${expected}"`);
-    failures++;
-    return;
-  }
-  ok(`${name} → ${body.invalidReason}`);
 }
 
 async function main(): Promise<void> {
@@ -92,175 +66,171 @@ async function main(): Promise<void> {
   // A genuinely unrelated wallet — a different derivation path, so a different key.
   const attacker = await loadAccount("attacker", "m/44'/6174'/7020'/0/99");
 
-  // Uses the agents `npm run setup:registry` already put on chain.
   const sellerAgentId = config.sellerAgentId;
   if (!sellerAgentId) throw new Error("SELLER_AGENT_ID unset — run `npm run setup:registry` first.");
+
+  const needed = config.price * 12n;
   const held = await balanceOf(buyer, buyer.address);
-  if (held < config.price * 6n) {
+  if (held < needed) {
     throw new Error(
-      `buyer holds ${held} ${config.assetSymbol}; this suite needs at least ${config.price * 6n}. ` +
+      `buyer holds ${held} ${config.assetSymbol}; this suite needs at least ${needed}. ` +
       "Run `npm run setup:asset`.",
     );
   }
 
   const reg = await registryClient(buyer, false);
-  const facilitator = await startFacilitator();
   const resource = `${config.sellerUrl}/book/the-prince`;
   const price = config.price;
 
-  const requirements: PaymentRequirements = {
-    scheme: SCHEME, network: NETWORK,
-    maxAmountRequired: price.toString(),
-    resource, description: "test", mimeType: "application/json",
-    payTo: seller.address, maxTimeoutSeconds: 60, asset: config.assetId,
-    extra: { symbol: config.assetSymbol, payToAgentId: sellerAgentId },
+  const quote: Quote = {
+    price: price.toString(),
+    symbol: config.assetSymbol,
+    asset: config.assetId,
+    payTo: seller.address,
+    payToAgentId: sellerAgentId,
+    resource,
+    description: "test",
+    network: NETWORK,
+    ttlSeconds: 120,
   };
 
-  /** A fresh, genuine on-chain transfer + a matching authorization. */
-  const honest = async (): Promise<{ auth: PaymentAuthorization; txHash: string }> => {
+  // Shared across cases so the replay test sees the same spent-set the others populated.
+  const consumed = new ConsumedTransfers();
+
+  const attack = async (name: string, expected: string, proof: PaymentProof): Promise<void> => {
+    const out = await verifyProof({ seller, consumed, proof, quote, consume: false });
+    if (out.ok) { fail(`${name} — ACCEPTED (should have been rejected!)`); failures++; return; }
+    if (out.reason !== expected) {
+      fail(`${name} — rejected as "${out.reason}", expected "${expected}"`);
+      failures++;
+      return;
+    }
+    ok(`${name} → ${out.reason}`);
+  };
+
+  /** A fresh, genuine on-chain transfer + a matching claim. */
+  const honest = async (): Promise<PaymentClaim> => {
     const txHash = await realTransfer(buyer, seller.address, price);
-    const now = nowSeconds();
     return {
-      txHash,
-      auth: {
-        from: buyer.address, to: seller.address, asset: config.assetId,
-        value: price.toString(), txHash,
-        validAfter: String(now - 5), validBefore: String(now + 120),
-        nonce: randomNonce(), resource,
-      },
+      from: buyer.address, to: seller.address, asset: config.assetId,
+      value: price.toString(), txHash, resource,
+      nonce: randomNonce(), expiresAt: nowSeconds() + 120,
     };
   };
 
   banner("DEMO", "attack", "Adversarial tests — every one of these must be REJECTED");
-  detail("facilitator", facilitator.url);
   detail("buyer balance", `${held} ${config.assetSymbol}`);
+  detail("suite cost", `~${needed} ${config.assetSymbol} in real transfers`);
 
-  try {
-    // 0. CONTROL. Without this, a facilitator that rejects everything would pass the suite.
-    {
-      const { auth } = await honest();
-      const body = await post(facilitator.url, await sign(buyer, auth), requirements);
-      if (body.isValid) ok("control: an honest payment IS accepted");
-      else { fail(`control: honest payment rejected as ${body.invalidReason}`); failures++; }
+  // 0. CONTROL. Without this, a verifier that rejects everything would pass the suite.
+  {
+    const out = await verifyProof({
+      seller, consumed, proof: await sign(buyer, await honest()), quote, consume: false,
+    });
+    if (out.ok) ok("control: an honest payment IS accepted");
+    else { fail(`control: honest payment rejected as ${out.reason}`); failures++; }
+  }
+
+  // 1. Tampered amount — signed for the real price, then rewritten downward.
+  {
+    const claim = await honest();
+    const p = await sign(buyer, claim);
+    p.claim = { ...claim, value: "0" };
+    await attack("tampered amount", "invalid_signature", p);
+  }
+
+  // 2. Redirected payee — signed, then `to` rewritten to the attacker.
+  {
+    const claim = await honest();
+    const p = await sign(buyer, claim);
+    p.claim = { ...claim, to: attacker.address };
+    await attack("redirected payee", "invalid_signature", p);
+  }
+
+  // 3. Impersonation — rewriting `from` after signing. Caught at the SIGNATURE check, because
+  //    editing the claim breaks the signature over it. Case 3b is what the key-binding check is
+  //    actually for.
+  {
+    const claim = await honest();
+    const p = await sign(buyer, claim);
+    p.claim = { ...claim, from: "0x" + "11".repeat(28) + "00000000" };
+    await attack("impersonated payer", "invalid_signature", p);
+  }
+
+  // 3b. The key-binding check on its own: sign `from` honestly, but with a foreign key.
+  {
+    const claim = await honest();
+    const p = await sign(buyer, { ...claim, from: "0x" + "11".repeat(28) + "00000000" });
+    await attack("valid signature, foreign account", "invalid_proof", p);
+  }
+
+  // 4. Expired claim.
+  {
+    const claim = await honest();
+    await attack("expired claim", "payment_expired",
+      await sign(buyer, { ...claim, expiresAt: nowSeconds() - 300 }));
+  }
+
+  // 5. Claim signed for a DIFFERENT resource.
+  {
+    const claim = await honest();
+    await attack("claim for another resource", "quote_mismatch",
+      await sign(buyer, { ...claim, resource: "http://evil.test/other" }));
+  }
+
+  // 6. Underpayment — honestly signed, but for less than asked.
+  {
+    const txHash = await realTransfer(buyer, seller.address, price);
+    await attack("underpayment", "quote_mismatch", await sign(buyer, {
+      from: buyer.address, to: seller.address, asset: config.assetId,
+      value: "0", txHash, resource, nonce: randomNonce(), expiresAt: nowSeconds() + 120,
+    }));
+  }
+
+  // 7. Invented transfer — a well-signed claim naming a tx that never happened.
+  {
+    await attack("invented transfer hash", "transfer_not_found", await sign(buyer, {
+      from: buyer.address, to: seller.address, asset: config.assetId,
+      value: price.toString(), txHash: "0x" + "ab".repeat(32),
+      resource, nonce: randomNonce(), expiresAt: nowSeconds() + 120,
+    }));
+  }
+
+  // 8. A real transfer that is not a payment to the seller. Buyer to itself, because a transfer
+  //    to the attacker's wallet fails with "account not found" — it has never been funded, so it
+  //    does not exist on chain. A self-transfer is a genuine interaction with the wrong payee,
+  //    which is exactly what this case needs.
+  {
+    const txHash = await realTransfer(buyer, buyer.address, price);
+    await attack("someone else's transfer", "transfer_mismatch", await sign(buyer, {
+      from: buyer.address, to: seller.address, asset: config.assetId,
+      value: price.toString(), txHash, resource,
+      nonce: randomNonce(), expiresAt: nowSeconds() + 120,
+    }));
+  }
+
+  // 9. Replay — redeem a genuine payment twice. The second must be refused.
+  {
+    const p = await sign(buyer, await honest());
+    const first = await verifyProof({ seller, consumed, proof: p, quote, consume: true });
+    if (!first.ok) {
+      fail(`replay setup: first redemption failed (${first.reason})`); failures++;
+    } else {
+      await attack("replayed payment", "already_spent", p);
     }
+  }
 
-    // 1. Tampered amount — signed for the real price, then rewritten downward.
-    {
-      const { auth } = await honest();
-      const p = await sign(buyer, auth);
-      p.payload.authorization = { ...auth, value: "0" };
-      await attack("tampered amount", "invalid_signature", facilitator.url, p, requirements);
-    }
-
-    // 2. Redirected payee — signed, then `to` rewritten to the attacker.
-    {
-      const { auth } = await honest();
-      const p = await sign(buyer, auth);
-      p.payload.authorization = { ...auth, to: attacker.address };
-      await attack("redirected payee", "invalid_signature", facilitator.url, p, requirements);
-    }
-
-    // 3. Impersonation — a well-signed authorization CLAIMING to come from an account the signer
-    //    does not control. Note this is rejected at the SIGNATURE check rather than the key-binding
-    //    check, because rewriting `from` after signing also breaks the signature. The key-binding
-    //    check (4) is the backstop for the case where an attacker signs `from` honestly with a key
-    //    outside that account's family.
-    {
-      const { auth } = await honest();
-      const p = await sign(buyer, auth);
-      p.payload.authorization = { ...auth, from: "0x" + "11".repeat(28) + "00000000" };
-      await attack("impersonated payer", "invalid_signature", facilitator.url, p, requirements);
-    }
-
-    // 3b. The key-binding check on its own: sign `from` honestly, but with a foreign key.
-    {
-      const { auth } = await honest();
-      const foreign = { ...auth, from: "0x" + "11".repeat(28) + "00000000" };
-      const p = await sign(buyer, foreign);   // signature is VALID over this exact authorization
-      await attack("valid signature, foreign account", "invalid_payload", facilitator.url, p, requirements);
-    }
-
-    // 4. Expired authorization.
-    {
-      const { auth } = await honest();
-      const now = nowSeconds();
-      const p = await sign(buyer, { ...auth, validAfter: String(now - 600), validBefore: String(now - 300) });
-      await attack("expired authorization", "payment_expired", facilitator.url, p, requirements);
-    }
-
-    // 5. Authorization signed for a DIFFERENT resource.
-    {
-      const { auth } = await honest();
-      const p = await sign(buyer, { ...auth, resource: "http://evil.test/other" });
-      await attack("authorization for another resource", "invalid_payment_requirements", facilitator.url, p, requirements);
-    }
-
-    // 6. Underpayment — honestly signed, but for less than asked.
-    {
-      const txHash = await realTransfer(buyer, seller.address, price);
-      const now = nowSeconds();
-      const p = await sign(buyer, {
-        from: buyer.address, to: seller.address, asset: config.assetId,
-        value: "0", txHash, validAfter: String(now - 5), validBefore: String(now + 120),
-        nonce: randomNonce(), resource,
-      });
-      await attack("underpayment", "invalid_payment_requirements", facilitator.url, p, requirements);
-    }
-
-    // 7. Invented transfer — a well-signed authorization naming a tx that never happened.
-    {
-      const now = nowSeconds();
-      const p = await sign(buyer, {
-        from: buyer.address, to: seller.address, asset: config.assetId,
-        value: price.toString(), txHash: "0x" + "ab".repeat(32),
-        validAfter: String(now - 5), validBefore: String(now + 120),
-        nonce: randomNonce(), resource,
-      });
-      await attack("invented transfer hash", "transfer_not_found", facilitator.url, p, requirements);
-    }
-
-    // 8. Someone else's transfer — reusing a payment the ATTACKER made to the seller.
-    {
-      // A transfer the BUYER made to itself — a real interaction that is not a payment to the seller.
-      const txHash = await realTransfer(buyer, attacker.address, price);
-      const now = nowSeconds();
-      const p = await sign(buyer, {
-        from: buyer.address, to: seller.address, asset: config.assetId,
-        value: price.toString(), txHash,
-        validAfter: String(now - 5), validBefore: String(now + 120),
-        nonce: randomNonce(), resource,
-      });
-      await attack("someone else's transfer", "transfer_mismatch", facilitator.url, p, requirements);
-    }
-
-    // 9. Replay — settle a genuine payment twice. The second must be refused.
-    {
-      const { auth } = await honest();
-      const p = await sign(buyer, auth);
-      const first = await post(facilitator.url, p, requirements, "/settle");
-      if (!(first as unknown as { success?: boolean }).success) {
-        fail(`replay setup: first settle failed (${JSON.stringify(first)})`); failures++;
-      } else {
-        const second = await post(facilitator.url, p, requirements, "/settle");
-        const reason = (second as unknown as { errorReason?: string }).errorReason;
-        if ((second as unknown as { success?: boolean }).success) {
-          fail("replay: the SAME transfer settled twice"); failures++;
-        } else if (reason !== "duplicate_settlement") {
-          fail(`replay: refused as "${reason}", expected "duplicate_settlement"`); failures++;
-        } else ok("replayed settlement → duplicate_settlement");
-      }
-    }
-
-    // 10. Registry tamper — the seller's on-chain wallet no longer matches payTo.
-    {
-      const { auth } = await honest();
-      const p = await sign(buyer, auth);
-      await updateAgentWallet(reg, sellerAgentId, "0x" + "de".repeat(28) + "00000000");
-      await attack("registry says a different wallet", "payee_wallet_mismatch", facilitator.url, p, requirements);
+  // 10. Registry tamper. This one is NOT the seller's check any more — the buyer is the party at
+  //     risk, so it refuses before paying. Tested where it now lives.
+  {
+    await updateAgentWallet(reg, sellerAgentId, "0x" + "de".repeat(28) + "00000000");
+    try {
+      const verdict = await checkSellerIdentity(reg, quote);
+      if (verdict.ok) { fail("registry tamper — buyer would have PAID an attacker!"); failures++; }
+      else ok("registry says a different wallet → buyer refuses before paying");
+    } finally {
       await updateAgentWallet(reg, sellerAgentId, seller.address);
     }
-  } finally {
-    await facilitator.close();
   }
 
   summary(failures === 0 ? "All attacks rejected" : "SECURITY TEST FAILED", [

@@ -38,7 +38,7 @@ export async function loadAccount(label: string, derivationPath: string): Promis
   };
 }
 
-/** The funded wallet. Buyer and facilitator-reader are the same account in V1. */
+/** The funded wallet. This is the only account that needs gas. */
 export const buyerAccount = () => loadAccount("buyer", config.derivationPath);
 /** Receive-only. Never signs, never needs gas. */
 export const sellerAccount = () => loadAccount("seller", config.sellerDerivationPath);
@@ -47,7 +47,7 @@ export const sellerAccount = () => loadAccount("seller", config.sellerDerivation
  * Derive a participant identifier from a compressed public key.
  * VERIFIED LIVE — reproduces wallet.getIdentifier().
  *
- * This is what lets the facilitator prove the signer actually controls the account being debited.
+ * This is what lets the seller prove the signer actually controls the account being debited.
  * In V1 there are no sub-accounts, so the comparison is exact equality — see verify-payment.ts.
  */
 export function identifierFromPublicKey(publicKey: string): string {

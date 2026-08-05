@@ -60,17 +60,17 @@ head("(d)  js-moi-signer sign / verify  — the payment authorization");
 const sigAlgo = primary.signingAlgorithms.ecdsa_secp256k1;
 info("sigName / prefix", `${sigAlgo.sigName} / ${sigAlgo.prefix}`);
 const keyId = await primary.getKeyId();
-const msg = new TextEncoder().encode(JSON.stringify(["x402-auth", primaryAddr, "1000"]));
+const msg = new TextEncoder().encode(JSON.stringify(["moi-agent-payment-v1", primaryAddr, "1000"]));
 const sig = await primary.sign(msg, keyId, sigAlgo);
 info("signature", `${sig.slice(0, 26)}… (${sig.length} chars)`);
 check("verify with own public key", primary.verify(msg, sig, primary.getPublicKey()));
 
 const other = await Wallet.fromMnemonic(generateMnemonic(), PATH);
 check("verify FAILS with a different key", primary.verify(msg, sig, other.getPublicKey()) === false);
-const tampered = new TextEncoder().encode(JSON.stringify(["x402-auth", primaryAddr, "999999"]));
+const tampered = new TextEncoder().encode(JSON.stringify(["moi-agent-payment-v1", primaryAddr, "999999"]));
 check("verify FAILS on tampered message", primary.verify(tampered, sig, primary.getPublicKey()) === false);
 
-// publicKey -> identifier: lets the facilitator prove the signer controls `from`
+// publicKey -> identifier: lets the seller prove the signer controls `from`
 const idFromPub = (pub: string) =>
   createParticipantId({
     tag: ParticipantTagV0,

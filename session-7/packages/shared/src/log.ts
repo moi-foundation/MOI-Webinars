@@ -1,8 +1,8 @@
 // Demo-legible logging.
 //
 // This is a live vibe-coding talk: an audience has to follow the payment flow from the back of a
-// room. Every step of the x402 handshake prints a labeled, colour-coded banner naming the actor
-// and the step number. Nothing here is decoration — it IS the demo.
+// room. Every step prints a labeled, colour-coded banner naming the actor and the step number.
+// Nothing here is decoration — it IS the demo.
 
 const useColor = process.env.NO_COLOR === undefined && process.stdout.isTTY !== false;
 
@@ -21,7 +21,6 @@ export const cyan = (s: string) => paint("36", s);
 export const ACTORS = {
   BUYER: { color: cyan, role: "reader" },
   SELLER: { color: magenta, role: "bookseller" },
-  FACILITATOR: { color: yellow, role: "referee" },
   CHAIN: { color: blue, role: "MOI devnet" },
   SETUP: { color: blue, role: "setup" },
   DEMO: { color: green, role: "orchestrator" },
@@ -80,7 +79,7 @@ export function warn(message: string): void {
   console.log(`   ${yellow("!")} ${message}`);
 }
 
-/** Renders a facilitator verification check as a pass/fail line. */
+/** Renders one of the seller's verification checks as a pass/fail line. */
 export function check(name: string, passed: boolean, detailText: string): void {
   const mark = passed ? green("✓") : red("✗");
   console.log(`   ${mark} ${name.padEnd(28)} ${dim(detailText)}`);

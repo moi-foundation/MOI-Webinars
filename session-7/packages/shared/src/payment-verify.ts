@@ -1,8 +1,8 @@
-// DECISION B — the facilitator's read-only confirmation that the buyer's OWN transfer landed.
+// Read-only confirmation that the buyer's OWN transfer landed.
 //
-// On MOI only the wallet owner can move their own funds, so the facilitator cannot custody or
-// relay. It is a REFEREE: it signs nothing, and proves the payment happened by reading chain
-// state. Everything here is a read.
+// On MOI only the wallet owner can move their own funds, so no third party can custody or relay a
+// payment on the buyer's behalf. What is left to do is prove the money moved — by reading chain
+// state rather than believing the buyer's word for it. Everything here is a read.
 //
 // Shapes below were probed against a real devnet interaction this session — see SDK_NOTES §B.
 //
@@ -111,7 +111,7 @@ function toHexAddress(v: unknown): string | null {
 
 /**
  * Replay guard. A signed authorization names ONE transfer; the same transfer must not buy twice.
- * In-memory is correct for a single-process demo facilitator — a real one needs shared storage,
+ * In-memory is correct for a single-process demo seller — a real one needs durable storage,
  * and that limitation is stated rather than hidden.
  */
 export class ConsumedTransfers {

@@ -1,7 +1,7 @@
 // THE PRODUCT. GET /book/:id -> the summary you paid for.
 //
 // Deliberately free of ANY payment logic — payment is middleware wrapped around this handler.
-// Adding x402 to an existing endpoint changes the endpoint by zero lines.
+// Adding the paywall to an existing endpoint changes the endpoint by zero lines.
 
 import type { Request } from "express";
 import { findBook } from "./catalog.js";

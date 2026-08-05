@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "MOI Builders #7 \u2014 Agentic Payments V1: two agents, x402, identity from the MOI registry. No context inheritance (that is session 8).",
+  "description": "MOI Builders #7 \u2014 Agentic Payments V1: two agents, a quote, a signed on-chain payment, and an identity check against the MOI agent registry. No x402 (see the claude/agent-payments-moi-x402 branch), no context inheritance (session 8).",
   "engines": {
     "node": ">=20"
   },
@@ -15,7 +15,6 @@
     "verify-sdk": "tsx scripts/verify-sdk.ts",
     "setup:asset": "tsx scripts/00-setup-asset.ts",
     "setup:registry": "tsx scripts/01-register-agents.ts",
-    "facilitator": "tsx packages/facilitator/src/index.ts",
     "seller": "tsx packages/agent-seller/src/index.ts",
     "buyer": "tsx packages/agent-buyer/src/index.ts",
     "demo": "tsx scripts/demo.ts",
@@ -24,7 +23,6 @@
   "dependencies": {
     "@demo/agent-buyer": "*",
     "@demo/agent-seller": "*",
-    "@demo/facilitator": "*",
     "@demo/shared": "*",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
@@ -32,10 +30,7 @@
     "js-moi-agent-registry": "0.1.1",
     "js-moi-sdk": "^0.7.1",
     "js-moi-utils": "^0.7.1",
-    "js-polo": "^0.1.4",
-    "x402": "^1.2.0",
-    "x402-express": "^1.2.0",
-    "x402-fetch": "^1.2.0"
+    "js-polo": "^0.1.4"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

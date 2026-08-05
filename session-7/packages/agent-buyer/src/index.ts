@@ -3,9 +3,9 @@
 //   1. DISCOVER  find an agent in the MOI registry whose skill is selling books
 //   2. BROWSE    read its free catalog
 //   3. CHOOSE    the brain picks the book that answers the question
-//   4. REQUEST   GET the book, expect 402
+//   4. REQUEST   GET the book, expect 402 + a quote
 //   5. CHECK     is payTo really the seller's registered wallet? (MOI-only question)
-//   6. PAY       submit our OWN MAS0 transfer, sign an authorization naming it, retry
+//   6. PAY       submit our OWN MAS0 transfer, sign a claim naming it, retry
 //   7. RECEIVE   the summary + a receipt
 
 import type { AgentRegistry } from "js-moi-agent-registry";
@@ -26,9 +26,9 @@ import {
   short,
   shortId,
   summary,
-  type PaymentRequirements,
+  type Quote,
 } from "@demo/shared";
-import { payingFetch, PaymentRefused, type BuyerEvent } from "./pay-fetch.js";
+import { payingFetch, PaymentRefused, type BuyerEvent } from "./pay.js";
 import { checkSellerIdentity } from "./identity-check.js";
 import { chooseBook, type CatalogBook } from "./brain.js";
 
@@ -106,24 +106,24 @@ export async function runBuyer(opts: { fallbackUrl: string; question?: string })
   detail("decided by", choice.by);
 
   // ── policy applied before any money moves ───────────────────────────────────────────────
-  const approve = async (r: PaymentRequirements): Promise<string | null> => {
+  const approve = async (q: Quote): Promise<string | null> => {
     banner("BUYER", "step 6", "Is this seller who it claims to be?");
-    detail("asking price", `${r.maxAmountRequired} ${r.extra.symbol}`);
-    detail("payTo", r.payTo);
-    detail("asset", shortId(r.asset));
+    detail("asking price", `${q.price} ${q.symbol}`);
+    detail("payTo", q.payTo);
+    detail("asset", shortId(q.asset));
 
-    const identity = await checkSellerIdentity(registry, r);
+    const identity = await checkSellerIdentity(registry, q);
     if (!identity.ok) {
       fail("payTo does NOT match the seller's on-chain registry wallet");
       detail("registry says", identity.registryWallet ?? "(unreadable)");
-      detail("402 says", r.payTo);
+      detail("quote says", q.payTo);
       return identity.reason ?? "identity check failed";
     }
     if (identity.registryWallet) ok(`payTo matches registry wallet ${shortId(identity.registryWallet)}`);
     else warn(identity.reason ?? "no registry entry — paying on trust");
 
-    if (normalizeAddress(r.asset) !== normalizeAddress(config.assetId)) {
-      fail(`seller wants a different asset (${shortId(r.asset)})`);
+    if (normalizeAddress(q.asset) !== normalizeAddress(config.assetId)) {
+      fail(`seller wants a different asset (${shortId(q.asset)})`);
       return "unexpected asset";
     }
     ok("asset is the one we hold");
@@ -134,27 +134,27 @@ export async function runBuyer(opts: { fallbackUrl: string; question?: string })
     switch (e.type) {
       case "request":
         if (e.attempt === 1) banner("BUYER", "step 4", `GET ${e.url} (no payment)`);
-        else banner("BUYER", "step 8", "Retry with X-Payment header");
+        else banner("BUYER", "step 8", "Retry with X-Payment-Proof header");
         break;
-      case "payment-required":
-        ok("received HTTP 402 with an accepts[] offer");
+      case "quoted":
+        ok("received HTTP 402 with a quote");
         break;
       case "transferred":
         banner("BUYER", "step 7", "Pay — the buyer moves its OWN funds");
         detail("amount", `${e.amount} ${config.assetSymbol}`);
         detail("ix hash", e.txHash);
-        say("BUYER", "on MOI only the owner can move their own money — no facilitator custody");
+        say("BUYER", "on MOI only the owner can move their own money — nobody holds it for us");
         break;
       case "signed":
-        detail("signed value", e.authorization.value);
-        detail("names tx", e.authorization.txHash);
-        detail("resource", e.authorization.resource);
-        detail("nonce", short(e.authorization.nonce));
+        detail("signed value", e.claim.value);
+        detail("names tx", e.claim.txHash);
+        detail("resource", e.claim.resource);
+        detail("nonce", short(e.claim.nonce));
         ok(`ECDSA_S256 signature ${short(e.signature, 14, 6)}`);
         break;
       case "paid":
-        banner("BUYER", "step 13", "Receipt received");
-        detail("confirmed ix", e.receipt.transaction ?? "(none)");
+        banner("BUYER", "step 11", "Receipt received");
+        detail("confirmed ix", e.receipt.txHash);
         detail("network", e.receipt.network);
         break;
     }
@@ -169,8 +169,8 @@ export async function runBuyer(opts: { fallbackUrl: string; question?: string })
     return {
       data: result.data,
       txHash: result.txHash,
-      receiptTx: result.receipt?.transaction ?? null,
-      price: result.requirements?.maxAmountRequired ?? config.price.toString(),
+      receiptTx: result.receipt?.txHash ?? null,
+      price: result.quote?.price ?? config.price.toString(),
       bookId: choice.bookId,
     };
   } catch (err) {

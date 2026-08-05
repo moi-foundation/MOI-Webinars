@@ -57,13 +57,13 @@ async function main(): Promise<void> {
 
   const sellerId = await register(reg, buyer, seller.address, {
     name: "Bookseller",
-    description: "Sells book summaries, priced per call in native MAS0 over x402.",
+    description: "Sells book summaries, priced per call and settled in a native MAS0 asset.",
     url: config.sellerUrl,
     skillId: "sells-books",
     skillName: "Sells Books",
-    skillDesc: "Returns a summary and key ideas for a book in its catalog. Paid per call over x402.",
+    skillDesc: "Returns a summary and key ideas for a book in its catalog. Paid per call.",
     // `sells-books` is the tag the buyer searches the registry for.
-    tags: ["sells-books", "x402", "books"],
+    tags: ["sells-books", "agent-payments", "books"],
   }, config.sellerAgentId);
 
   const buyerId = await register(reg, buyer, buyer.address, {
@@ -72,8 +72,8 @@ async function main(): Promise<void> {
     url: `http://localhost:${config.buyerPort}`,
     skillId: "buys-books",
     skillName: "Buys Books",
-    skillDesc: "Chooses and pays for book summaries over x402.",
-    tags: ["buys-books", "x402"],
+    skillDesc: "Chooses and pays for book summaries, checking the payee in this registry first.",
+    tags: ["buys-books", "agent-payments"],
   }, config.buyerAgentId);
 
   const path = updateEnv({ SELLER_AGENT_ID: sellerId, BUYER_AGENT_ID: buyerId });

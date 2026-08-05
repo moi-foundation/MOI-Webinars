@@ -1,11 +1,11 @@
 // "Bookseller" — the SELLER agent. A free catalog, and one paid route.
 //
-// Note how little payment code lives here: a price, a payTo, and a facilitator URL. That is the
-// entire seller-side x402 integration.
+// Note how little payment code lives here: a price and a payTo. The seller verifies its own
+// payments in-process, so there is no second service to run.
 
 import express from "express";
-import { config, sellerAccount, banner, detail, say, ok, shortId, short } from "@demo/shared";
-import { moiPaymentMiddleware, type SellerEvent } from "./x402-middleware.js";
+import { config, sellerAccount, banner, detail, say, ok, check, shortId, short } from "@demo/shared";
+import { paywall, type SellerEvent } from "./paywall.js";
 import { produceBook } from "./data-route.js";
 import { CATALOG, findBook } from "./catalog.js";
 
@@ -25,30 +25,29 @@ export async function startSeller(): Promise<SellerHandle> {
   detail("price", `${config.price} ${config.assetSymbol} per book`);
   detail("brain", config.groqKey ? `groq:${config.groqModel}` : "canned summaries (no GROQ_API_KEY)");
   say("SELLER", "this wallet only ever RECEIVES — it never signs, so it needs no gas");
+  say("SELLER", "it verifies its own payments by reading the chain — no facilitator");
 
   const narrate = (e: SellerEvent) => {
     switch (e.type) {
-      case "payment-required":
-        banner("SELLER", "step 5", "402 Payment Required");
-        detail("price", `${e.requirements.maxAmountRequired} ${e.requirements.extra.symbol}`);
-        detail("payTo", e.requirements.payTo);
-        detail("asset", shortId(e.requirements.asset));
-        detail("agent id", e.requirements.extra.payToAgentId ?? "(none)");
+      case "quoted":
+        banner("SELLER", "step 5", "402 Payment Required — here is my quote");
+        detail("price", `${e.quote.price} ${e.quote.symbol}`);
+        detail("payTo", e.quote.payTo);
+        detail("asset", shortId(e.quote.asset));
+        detail("agent id", e.quote.payToAgentId ?? "(none)");
         break;
-      case "payment-received":
-        banner("SELLER", "step 9", "X-Payment received — asking the facilitator");
-        detail("from", e.payload.payload.authorization.from);
-        detail("their tx", e.payload.payload.authorization.txHash);
-        detail("signature", short(e.payload.payload.signature, 14, 6));
+      case "proof-received":
+        banner("SELLER", "step 9", "Payment proof received — checking it myself");
+        detail("from", e.proof.claim.from);
+        detail("their tx", e.proof.claim.txHash);
+        detail("signature", short(e.proof.signature, 14, 6));
         break;
-      case "verified":
-        if (e.response.isValid) ok("facilitator says VALID");
-        break;
-      case "confirmed":
-        if (e.response.success) ok(`facilitator CONFIRMED on chain — ix ${e.response.transaction}`);
+      case "checked":
+        for (const c of e.checks) check(c.name, c.passed, c.detail);
+        if (e.ok) ok(`payment CONFIRMED on chain — ix ${e.txHash}`);
         break;
       case "produced":
-        banner("SELLER", "step 12", "Paid — delivering the book");
+        banner("SELLER", "step 10", "Paid — delivering the book");
         break;
       case "rejected":
         say("SELLER", `refusing to deliver: ${e.reason}`);
@@ -71,7 +70,7 @@ export async function startSeller(): Promise<SellerHandle> {
   // PAID. The summary is the product.
   app.get(
     "/book/:id",
-    moiPaymentMiddleware(
+    paywall(
       seller.address,
       produceBook,
       (req) => findBook(String(req.params.id))?.title ?? String(req.params.id),
