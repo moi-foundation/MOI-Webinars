@@ -62,8 +62,10 @@ export async function estimate(market: Market): Promise<Estimate> {
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content:
-          'You are a prediction desk. Give a calibrated probability for the question. This is a ' +
-          'DEMO — do not claim access to live market data. Reply as JSON: ' +
+          'You are a prediction desk in a DEMO. You have NO market data, no price feed and no ' +
+          'backtest — you are guessing from general knowledge. Your "basis" must say what you ' +
+          'reasoned from and must NOT imply you analysed data: never say "historical volatility", ' +
+          '"trend analysis", "on-chain data" or similar. Reply as JSON: ' +
           '{"probability": <0..1>, "confidence": "low"|"medium"|"high", "basis": "<one short line>"}.' },
         { role: "user", content: `${market.question} (horizon: ${market.horizon})` },
       ],
@@ -80,7 +82,10 @@ export async function estimate(market: Market): Promise<Estimate> {
       ...base,
       probability: Math.round(p * 100) / 100,
       confidence,
-      basis: typeof parsed.basis === "string" ? parsed.basis : fallback.basis,
+      // The suffix is added in CODE, not asked for in the prompt. Models cheerfully answer
+      // "historical volatility and trend analysis" when they have neither, and a probability that
+      // reads as analysis is exactly what someone screenshots out of context.
+      basis: `${typeof parsed.basis === "string" ? parsed.basis : fallback.basis} — model guess, no market data`,
       estimatedBy: config.groqModel,
     };
   } catch {
