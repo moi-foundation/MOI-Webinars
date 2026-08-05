@@ -52,7 +52,7 @@ and walk it.
 | --- | --- |
 | `BUYER · step 1` → `scanned` / `agents selling signals` | "It was never given a URL. It scanned the registry and filtered on a skill tag." |
 | `BUYER · step 2` | "The questions are free. The answers are not. That's the seam the paywall sits on." |
-| `BUYER · step 3` → `decided by` | "It picked the drawdown market for the question. That choice is the agent's." — **only if `GROQ_API_KEY` is set.** If it says `local-fallback`, say "keyword match today; the LLM path is a key away" and move on. Don't claim a brain you're not running. |
+| `BUYER · step 3` → `decided by` | "It picked the drawdown market for the question. That choice is the agent's." Check `decided by` says the model name — if it says `local-fallback`, the key isn't loaded and you should not claim the agent reasoned. |
 | `SELLER · step 5` | "HTTP 402 — Payment Required. Reserved in 1997, basically unused until agents needed it." |
 | `BUYER · step 7` → `ix hash` | "That's a real interaction on devnet. The buyer moved its own money — on MOI nobody can move it for you." |
 | `SELLER · step 9`, the seven ticks | "The seller checked this itself. All seven are reads. Nobody was trusted." |
@@ -96,9 +96,12 @@ Type what someone shouts out. The agent finds a seller it was never told about, 
 are, pays, and answers — and the balance line drops by 1 each time.
 
 ⚠️ **Only do this with `GROQ_API_KEY` set.** Without it the agent matches keywords, and a vague
-question like *"get me the best btc prices"* falls through to `no strong match; defaulting to
-btc-100k-2026` — it buys the first market on the list. On screen. From a question someone in the
-room just gave you.
+question like *"should i be worried about a crash"* falls through to `no strong match; defaulting
+to btc-100k-2026` — it buys the wrong market, on screen, from a question someone in the room just
+gave you. The catalog says "draw down"; nobody says "draw down".
+
+With the key it is reliable: 5 questions x 5 runs each, zero drift, all four markets reachable.
+Measured, not assumed — so you can safely say "watch it pick the drawdown market" before it does.
 
 ---
 
@@ -149,6 +152,20 @@ Three things, in order:
 > — not the seller, not a middleman. The party with something to lose is the one that checks."
 
 Let the silence sit before moving on. This is the beat people remember.
+
+---
+
+### The strongest version of this beat
+
+Run the same question twice, keyless then keyed:
+
+```bash
+GROQ_API_KEY="" npm run ask -- "should i be worried about a crash"   # picks btc-100k-2026, wrong
+npm run ask -- "should i be worried about a crash"                   # picks btc-drawdown-20, right
+```
+
+Identical input, visibly different reasoning: `no strong match; defaulting to` versus `Directly
+related to crash risk`. That is what "the agent decided" actually looks like.
 
 ---
 
@@ -222,8 +239,10 @@ mock mode — if devnet is down during your slot, the video is the whole conting
 - **Don't say "search".** Registry discovery is an O(n) client-side scan.
 - **Don't claim budgets or spend limits.** Nothing here constrains what the agent may spend. That's
   session 8 — and it's a good answer to the question, not a dodge.
-- **Don't claim the LLM picked the market** unless `GROQ_API_KEY` is set. The terminal prints
-  `local-fallback` and someone will read it.
+- **Don't claim the LLM picked the market** unless `decided by` says the model name. With no key
+  it prints `local-fallback` and someone will read it.
+- **The probabilities are made up.** Say it out loud. With the model running they read as analysis
+  — `basis` is forced to end "model guess, no market data", but don't rely on anyone noticing.
 
 ## The three sentences
 

@@ -10,13 +10,19 @@
 // inlined below so there is nothing to serve from disk and nothing to go stale.
 
 import express from "express";
-import { config, buyerAccount, banner, detail, ok, say, type AgentStep, type Account } from "@demo/shared";
+import {
+  config, buyerAccount, sellerAccount, registryClient, updateAgentWallet,
+  banner, detail, ok, warn, say, type AgentStep, type Account,
+} from "@demo/shared";
 import { getAssetDriver } from "js-moi-sdk";
 import { startSeller } from "@demo/agent-seller";
 import { runBuyer } from "@demo/agent-buyer";
 import { PaymentRefused } from "@demo/agent-buyer/src/pay.js";
 
 const PORT = Number(process.env.UI_PORT ?? "4000");
+
+/** A wrong-but-well-formed address, for the "compromised listing" toggle. */
+const ATTACKER = "0x" + "de".repeat(28) + "00000000";
 
 /** Own balance only — MAS0 rejects reads of another account ("invalid access to actor"). */
 async function myBalance(account: Account): Promise<string> {
@@ -69,7 +75,27 @@ async function main(): Promise<void> {
 
     if (!question) { send("error", { message: "ask me something" }); return res.end(); }
 
+    // Repoint the seller's registry entry at an attacker, so the buyer's identity check fails for
+    // real rather than being faked in the UI. Always restored below.
+    const tamper = req.query.tamper === "1";
+    let tampered = false;
+    if (tamper) {
+      await updateAgentWallet(await registryClient(buyer, false), config.sellerAgentId!, ATTACKER);
+      tampered = true;
+      send("step", {
+        n: 0,
+        actor: "chain",
+        title: "Someone has edited the seller's registry entry",
+        thought:
+          "Its listing now points at an attacker's address. The seller itself is unchanged and " +
+          "will still ask to be paid at its real address. Watch what the buyer does.",
+        detail: [["registry now says", ATTACKER]],
+        status: "fail",
+      } satisfies AgentStep);
+    }
+
     live = send;
+    let outcome: { ok: boolean; refused?: boolean; message?: string };
     try {
       send("balance", { before: await myBalance(buyer) });
       await runBuyer({
@@ -78,14 +104,36 @@ async function main(): Promise<void> {
         onStep: (step) => send("step", step),
       });
       send("balance", { after: await myBalance(buyer) });
-      send("done", { ok: true });
+      outcome = { ok: true };
     } catch (err) {
-      const refused = err instanceof PaymentRefused;
-      send("done", { ok: false, refused, message: (err as Error).message });
-    } finally {
-      live = null;
-      res.end();
+      outcome = { ok: false, refused: err instanceof PaymentRefused, message: (err as Error).message };
     }
+    live = null;
+
+    // Undo the tamper BEFORE "done" — the page closes the stream on that event, so anything sent
+    // afterwards is written into a socket nobody is reading.
+    if (tampered) {
+      try {
+        const real = await sellerAccount();
+        await updateAgentWallet(await registryClient(buyer, false), config.sellerAgentId!, real.address);
+        send("step", {
+          n: 0, actor: "chain", title: "Registry entry restored",
+          thought: "Putting the listing back so the next run starts clean.",
+          detail: [["back to", real.address]], status: "ok",
+        } satisfies AgentStep);
+      } catch (e) {
+        warn(`FAILED to restore the registry entry: ${(e as Error).message}`);
+        warn("run `npm run demo -- --tamper` and let it finish to put it back");
+        send("step", {
+          n: 0, actor: "chain", title: "Could not restore the registry entry",
+          thought: "The next run will refuse until this is put back. Run `npm run demo -- --tamper` and let it finish.",
+          status: "fail",
+        } satisfies AgentStep);
+      }
+    }
+
+    send("done", outcome);
+    res.end();
   });
 
   await new Promise<void>((resolve) => { app.listen(PORT, "127.0.0.1", () => resolve()); });
@@ -121,6 +169,9 @@ const PAGE = `<!doctype html>
   button{background:var(--main);border:0;border-radius:12px;color:#fff;font:inherit;font-weight:600;
     padding:15px 26px;cursor:pointer}
   button:disabled{opacity:.45;cursor:default}
+  .tamper{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--mut);
+    margin:0 0 18px;cursor:pointer}
+  .tamper input{accent-color:var(--bad);width:15px;height:15px;cursor:pointer}
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px}
   .chip{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;
     padding:7px 14px;font-size:12.5px;color:var(--mut);cursor:pointer}
@@ -157,6 +208,7 @@ const PAGE = `<!doctype html>
   <h1>Ask an agent for something</h1>
   <p class="sub">It doesn't know the answer. It'll find someone who does, check who they are, and pay them.</p>
   <form id="f"><input id="q" placeholder="how likely is a big bitcoin drawdown this quarter?" autocomplete="off"/><button id="go">Ask</button></form>
+  <label class="tamper"><input type="checkbox" id="tamper"/> Simulate a compromised listing — repoint the seller's registry entry at an attacker</label>
   <div class="chips">
     <div class="chip">How likely is a big bitcoin drawdown this quarter?</div>
     <div class="chip">Will bitcoin close higher a week from now?</div>
@@ -183,7 +235,7 @@ $("#f").onsubmit=e=>{
   e.preventDefault();
   const q=$("#q").value.trim(); if(!q) return;
   feed.innerHTML=""; bal.textContent=""; $("#go").disabled=true;
-  const es=new EventSource("/ask?q="+encodeURIComponent(q));
+  const es=new EventSource("/ask?q="+encodeURIComponent(q)+($("#tamper").checked?"&tamper=1":""));
   es.addEventListener("step",m=>render(JSON.parse(m.data)));
   es.addEventListener("balance",m=>{
     const b=JSON.parse(m.data);
