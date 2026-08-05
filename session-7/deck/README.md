@@ -1,12 +1,11 @@
 # Session 7 deck
 
-`MOI_Builders_S7.pptx` — 12 slides, speaker notes on every one.
+`MOI_Builders_S7.pptx` — 8 slides, speaker notes on every one.
 Regenerate with `node build-pptx.cjs` (needs `npm install pptxgenjs` in this folder).
 
-> ⚠️ **Out of date on this branch.** The deck still teaches the **x402 + facilitator**
-> architecture, which now lives on the `claude/agent-payments-moi-x402` branch. The demo it cues up
-> no longer matches the code here: there is no facilitator, the checks are 7 not 9 and run inside
-> the seller, and the flow is 11 steps not 13. Rebuild before presenting from this branch.
+The deck deliberately does **not** carry the content — the live demo and the code walkthrough do.
+These slides frame the session, cue the two live segments, and land the closing argument. What to
+say is in [TRANSCRIPT.md](../TRANSCRIPT.md); the notes on each slide are lifted from it.
 
 ## Design
 
