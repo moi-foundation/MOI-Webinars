@@ -67,6 +67,24 @@ carries a `disclaimer` field saying so — point at it rather than letting someo
 
 ---
 
+## Optional opener — let the room drive it
+
+If you want the "agentic" idea to land before any code, take a question from the audience:
+
+```bash
+npm run ask
+```
+
+Type what someone shouts out. The agent finds a seller it was never told about, checks who they
+are, pays, and answers — and the balance line drops by 1 each time.
+
+⚠️ **Only do this with `GROQ_API_KEY` set.** Without it the agent matches keywords, and a vague
+question like *"get me the best btc prices"* falls through to `no strong match; defaulting to
+btc-100k-2026` — it buys the first market on the list. On screen. From a question someone in the
+room just gave you.
+
+---
+
 ## Loop 2 — the part that only works on MOI (≈12 min) ← **the session**
 
 Everything so far is setup for this. Slow down.

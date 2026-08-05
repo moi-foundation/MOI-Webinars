@@ -18,6 +18,7 @@
     "seller": "tsx packages/agent-seller/src/index.ts",
     "buyer": "tsx packages/agent-buyer/src/index.ts",
     "demo": "tsx scripts/demo.ts",
+    "ask": "tsx scripts/ask.ts",
     "attack-test": "tsx scripts/attack-test.ts"
   },
   "dependencies": {
