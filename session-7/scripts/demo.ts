@@ -16,7 +16,7 @@ import { PaymentRefused } from "@demo/agent-buyer/src/pay.js";
 
 const args = new Set(process.argv.slice(2));
 const TAMPER = args.has("--tamper");
-const QUESTION = "How do people justify holding power?";
+const QUESTION = "How likely is a big bitcoin drawdown this quarter?";
 
 /** A wrong-but-well-formed address to point the registry at during --tamper. */
 const ATTACKER = "0x" + "de".repeat(28) + "00000000";
@@ -62,7 +62,7 @@ async function main(): Promise<void> {
   try {
     const result = await runBuyer({ fallbackUrl: sellerSvc.url, question: QUESTION });
     summary("Payment complete", [
-      ["book", result.bookId],
+      ["market", result.marketId],
       ["buyer's transfer", result.txHash ?? "(none)"],
       ["seller confirmed", result.receiptTx ?? "(none)"],
       ["price", `${result.price} ${config.assetSymbol}`],

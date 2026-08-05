@@ -5,10 +5,13 @@
 One AI agent sells something. Another AI agent buys it. No human, no signup, no API key, no
 invoice — and the whole thing takes about a second.
 
-The seller is a **Bookseller**: it has a catalog, and for a fraction of a cent it will give you a
-real summary of any book in it.
+The seller is a **Signal Desk**: it lists a set of questions about bitcoin, and for a fraction of a
+cent it will sell you its probability for any of them.
 
-The buyer is a **Reader**: it has a question, works out which book answers it, pays, and reads.
+The buyer is a **Risk Agent**: it has a question, works out which market answers it, pays, and reads
+the number.
+
+(The probabilities are placeholders — there is no model behind them. Every response says so.)
 
 ## How the payment works
 

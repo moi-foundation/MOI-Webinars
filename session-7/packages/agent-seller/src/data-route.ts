@@ -1,15 +1,15 @@
-// THE PRODUCT. GET /book/:id -> the summary you paid for.
+// THE PRODUCT. GET /signal/:id -> the probability you paid for.
 //
 // Deliberately free of ANY payment logic — payment is middleware wrapped around this handler.
 // Adding the paywall to an existing endpoint changes the endpoint by zero lines.
 
 import type { Request } from "express";
-import { findBook } from "./catalog.js";
-import { deliverBook, type Delivery } from "./brain.js";
+import { findMarket } from "./catalog.js";
+import { estimate, type Estimate } from "./brain.js";
 
-export async function produceBook(req: Request): Promise<Delivery> {
+export async function produceEstimate(req: Request): Promise<Estimate> {
   const id = String(req.params.id ?? "");
-  const book = findBook(id);
-  if (!book) throw new Error(`no such book: ${id}`);
-  return deliverBook(book);
+  const market = findMarket(id);
+  if (!market) throw new Error(`no such market: ${id}`);
+  return estimate(market);
 }

@@ -1,26 +1,27 @@
-// The Bookseller's stock. Free to browse — you only pay to read.
+// The Signal Desk's markets. Free to browse — you only pay for the number.
 //
-// Keeping the catalog public and the CONTENT paid is the honest shape of this: discovery should
-// never cost money, otherwise the buyer can't decide what it wants.
+// The paywall sits exactly on the seam that matters: the QUESTION is public, the ANSWER is not.
+// A buyer has to be able to see what is on offer to decide whether it wants it, so listing the
+// markets costs nothing. The probability is the product.
 
-export interface Book {
+export interface Market {
   id: string;
-  title: string;
-  author: string;
-  year: number;
+  question: string;
+  /** How far out the question resolves. */
+  horizon: string;
   topics: string[];
 }
 
-export const CATALOG: Book[] = [
-  { id: "moby-dick", title: "Moby-Dick", author: "Herman Melville", year: 1851,
-    topics: ["obsession", "sea", "fate"] },
-  { id: "on-the-origin", title: "On the Origin of Species", author: "Charles Darwin", year: 1859,
-    topics: ["evolution", "science", "nature"] },
-  { id: "the-prince", title: "The Prince", author: "Niccolò Machiavelli", year: 1532,
-    topics: ["power", "politics", "strategy"] },
-  { id: "meditations", title: "Meditations", author: "Marcus Aurelius", year: 180,
-    topics: ["stoicism", "philosophy", "discipline"] },
+export const MARKETS: Market[] = [
+  { id: "btc-100k-2026", question: "Will BTC trade above $100,000 before 31 Dec 2026?",
+    horizon: "long-term", topics: ["bitcoin", "price", "target"] },
+  { id: "btc-up-7d", question: "Will BTC close higher 7 days from now?",
+    horizon: "1 week", topics: ["bitcoin", "momentum", "short-term"] },
+  { id: "btc-drawdown-20", question: "Will BTC draw down more than 20% this quarter?",
+    horizon: "1 quarter", topics: ["bitcoin", "risk", "drawdown"] },
+  { id: "btc-vol-spike", question: "Will 30-day realised volatility exceed 80% this month?",
+    horizon: "1 month", topics: ["bitcoin", "volatility", "risk"] },
 ];
 
-export const findBook = (id: string): Book | undefined =>
-  CATALOG.find((b) => b.id.toLowerCase() === id.toLowerCase());
+export const findMarket = (id: string): Market | undefined =>
+  MARKETS.find((m) => m.id.toLowerCase() === id.toLowerCase());

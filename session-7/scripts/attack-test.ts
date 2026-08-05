@@ -11,7 +11,7 @@
 // with the BUYER, so it is tested against checkSellerIdentity instead.
 //
 // Runs against real devnet, so it needs a funded buyer and a completed setup. Eleven of the twelve
-// cases make a real MAS0 transfer of PRICE_PER_BOOK, so the suite moves ~11 base units. Slower than
+// cases make a real MAS0 transfer of PRICE_PER_ESTIMATE, so the suite moves ~11 base units. Slower
 // a unit test — it is verifying real chain reads.
 
 import {
@@ -79,7 +79,7 @@ async function main(): Promise<void> {
   }
 
   const reg = await registryClient(buyer, false);
-  const resource = `${config.sellerUrl}/book/the-prince`;
+  const resource = `${config.sellerUrl}/signal/btc-drawdown-20`;
   const price = config.price;
 
   const quote: Quote = {

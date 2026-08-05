@@ -47,8 +47,8 @@ export const config = {
   get sellerAgentId(): string | null { return process.env.SELLER_AGENT_ID?.trim() || null; },
   get buyerAgentId(): string | null { return process.env.BUYER_AGENT_ID?.trim() || null; },
 
-  /** What the buyer will pay for one book, in base units. */
-  price: BigInt(opt("PRICE_PER_BOOK", "1")),
+  /** What the buyer will pay for one estimate, in base units. */
+  price: BigInt(opt("PRICE_PER_ESTIMATE", "1")),
 
   sellerUrl: opt("SELLER_URL", "http://localhost:4011"),
   sellerPort: Number(new URL(opt("SELLER_URL", "http://localhost:4011")).port || "4011"),

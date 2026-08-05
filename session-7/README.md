@@ -2,9 +2,9 @@
 
 **An agent finds another agent on MOI, and pays it — with no human, no account, and no API key.**
 
-A **Reader** agent needs a book summary. It scans the MOI agent registry for an agent that sells
-books, browses its catalog, picks one, gets an `HTTP 402`, pays in native MAS0, and receives the
-summary. About a second, no prior relationship.
+A **Risk Agent** needs a probability. It scans the MOI agent registry for an agent that sells
+signals, browses its catalog of markets, picks one, gets an `HTTP 402`, pays in native MAS0, and
+receives the estimate. About a second, no prior relationship.
 
 > Part 1 of 3. **V2 (session 8)** adds authority — an on-chain spend cap the chain enforces.
 > **V3 (session 9)** adds the full commerce flow. Nothing from later phases appears here.
@@ -24,16 +24,16 @@ the buyer walks away — a check that needs an on-chain identity to be possible 
 ## The flow
 
 ```
-buyer  registry: who sells books?          -> agent id, wallet, URL   (never handed a URL)
+buyer  registry: who sells signals?        -> agent id, wallet, URL   (never handed a URL)
 buyer  GET /catalog                        -> free. discovery must not cost money
-buyer  brain picks the book for its question
-buyer  GET /book/:id                       -> 402 + a quote
+buyer  brain picks the market for its question
+buyer  GET /signal/:id                     -> 402 + a quote
 buyer  is payTo the seller's REGISTERED wallet?   <- the MOI question
 buyer  MAS0 transfer(seller, price)        -> the buyer moves its OWN funds
 buyer  sign a claim naming that interaction hash
 buyer  GET again + X-Payment-Proof
 seller 7 read-only checks, in-process      -> confirms the transfer by reading the chain
-seller 200 + summary + X-Payment-Receipt
+seller 200 + estimate + X-Payment-Receipt
 ```
 
 ## Run order
@@ -91,7 +91,7 @@ four are not.
 
 ```
 packages/shared        config, chain, wire types (payment-proof), payment-verify, registry
-packages/agent-seller  Bookseller: catalog, Groq summaries, paywall + its own 7 checks
-packages/agent-buyer   Reader: brain, identity-check, pay
+packages/agent-seller  Signal Desk: markets, Groq estimates, paywall + its own 7 checks
+packages/agent-buyer   Risk Agent: brain, identity-check, pay
 scripts/               00 setup-asset, 01 register-agents, verify-sdk, demo, attack-test
 ```

@@ -1,4 +1,4 @@
-// "Bookseller" — the SELLER agent. A free catalog, and one paid route.
+// "Signal Desk" — the SELLER agent. A free catalog of markets, and one paid route.
 //
 // Note how little payment code lives here: a price and a payTo. The seller verifies its own
 // payments in-process, so there is no second service to run.
@@ -6,8 +6,8 @@
 import express from "express";
 import { config, sellerAccount, banner, detail, say, ok, check, shortId, short } from "@demo/shared";
 import { paywall, type SellerEvent } from "./paywall.js";
-import { produceBook } from "./data-route.js";
-import { CATALOG, findBook } from "./catalog.js";
+import { produceEstimate } from "./data-route.js";
+import { MARKETS, findMarket } from "./catalog.js";
 
 export interface SellerHandle {
   url: string;
@@ -18,12 +18,13 @@ export interface SellerHandle {
 export async function startSeller(): Promise<SellerHandle> {
   const seller = await sellerAccount();
 
-  banner("SELLER", "boot", "Bookseller online");
+  banner("SELLER", "boot", "Signal Desk online");
   detail("wallet", seller.address);
   detail("agent id", config.sellerAgentId ?? "(unregistered — run npm run setup:registry)");
-  detail("catalog", `${CATALOG.length} books`);
-  detail("price", `${config.price} ${config.assetSymbol} per book`);
-  detail("brain", config.groqKey ? `groq:${config.groqModel}` : "canned summaries (no GROQ_API_KEY)");
+  detail("catalog", `${MARKETS.length} markets`);
+  detail("price", `${config.price} ${config.assetSymbol} per estimate`);
+  detail("brain", config.groqKey ? `groq:${config.groqModel}` : "canned estimates (no GROQ_API_KEY)");
+  say("SELLER", "the probabilities are PLACEHOLDERS — no model, no market data");
   say("SELLER", "this wallet only ever RECEIVES — it never signs, so it needs no gas");
   say("SELLER", "it verifies its own payments by reading the chain — no facilitator");
 
@@ -47,7 +48,7 @@ export async function startSeller(): Promise<SellerHandle> {
         if (e.ok) ok(`payment CONFIRMED on chain — ix ${e.txHash}`);
         break;
       case "produced":
-        banner("SELLER", "step 10", "Paid — delivering the book");
+        banner("SELLER", "step 10", "Paid — delivering the estimate");
         break;
       case "rejected":
         say("SELLER", `refusing to deliver: ${e.reason}`);
@@ -57,33 +58,34 @@ export async function startSeller(): Promise<SellerHandle> {
 
   const app = express();
 
-  // FREE. Discovery must never cost money, or the buyer cannot decide what it wants.
+  // FREE. The QUESTIONS are public; only the answers cost money. A buyer that cannot see what is
+  // on offer cannot decide whether it wants it.
   app.get("/catalog", (_req, res) => {
     res.json({
-      seller: "Bookseller",
+      seller: "Signal Desk",
       agentId: config.sellerAgentId,
       price: { amount: config.price.toString(), symbol: config.assetSymbol },
-      books: CATALOG,
+      markets: MARKETS,
     });
   });
 
-  // PAID. The summary is the product.
+  // PAID. The probability is the product.
   app.get(
-    "/book/:id",
+    "/signal/:id",
     paywall(
       seller.address,
-      produceBook,
-      (req) => findBook(String(req.params.id))?.title ?? String(req.params.id),
+      produceEstimate,
+      (req) => findMarket(String(req.params.id))?.question ?? String(req.params.id),
       narrate,
     ),
   );
 
   app.get("/about", (_req, res) => {
     res.json({
-      name: "Bookseller",
+      name: "Signal Desk",
       agentId: config.sellerAgentId,
       address: seller.address,
-      sells: "book summaries",
+      sells: "probability estimates",
       catalog: "/catalog",
     });
   });

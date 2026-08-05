@@ -1,9 +1,9 @@
-// "Reader" — the BUYER agent. A pure agent loop: no human input, and no hardcoded seller URL.
+// "Risk Agent" — the BUYER agent. A pure agent loop: no human input, and no hardcoded seller URL.
 //
-//   1. DISCOVER  find an agent in the MOI registry whose skill is selling books
-//   2. BROWSE    read its free catalog
-//   3. CHOOSE    the brain picks the book that answers the question
-//   4. REQUEST   GET the book, expect 402 + a quote
+//   1. DISCOVER  find an agent in the MOI registry whose skill is selling signals
+//   2. BROWSE    read its free catalog of markets
+//   3. CHOOSE    the brain picks the market that answers the question
+//   4. REQUEST   GET the estimate, expect 402 + a quote
 //   5. CHECK     is payTo really the seller's registered wallet? (MOI-only question)
 //   6. PAY       submit our OWN MAS0 transfer, sign a claim naming it, retry
 //   7. RECEIVE   the summary + a receipt
@@ -30,23 +30,23 @@ import {
 } from "@demo/shared";
 import { payingFetch, PaymentRefused, type BuyerEvent } from "./pay.js";
 import { checkSellerIdentity } from "./identity-check.js";
-import { chooseBook, type CatalogBook } from "./brain.js";
+import { chooseMarket, type CatalogMarket } from "./brain.js";
 
 export interface BuyResult {
   data: unknown;
   txHash: string | null;
   receiptTx: string | null;
   price: string;
-  bookId: string;
+  marketId: string;
 }
 
-const DEFAULT_QUESTION = "How do people justify holding power?";
+const DEFAULT_QUESTION = "How likely is a big bitcoin drawdown this quarter?";
 
 export async function runBuyer(opts: { fallbackUrl: string; question?: string }): Promise<BuyResult> {
   const buyer = await buyerAccount();
   const question = opts.question ?? DEFAULT_QUESTION;
 
-  banner("BUYER", "boot", "Reader agent waking up");
+  banner("BUYER", "boot", "Risk Agent waking up");
   detail("wallet", buyer.address);
   detail("agent id", config.buyerAgentId ?? "(unregistered)");
   detail("question", question);
@@ -60,17 +60,19 @@ export async function runBuyer(opts: { fallbackUrl: string; question?: string })
   }
 
   // ── STEP 1: DISCOVER ────────────────────────────────────────────────────────────────────
-  banner("BUYER", "step 1", "Find a bookseller in the MOI agent registry");
+  banner("BUYER", "step 1", "Find a signal desk in the MOI agent registry");
   let sellerUrl = opts.fallbackUrl;
 
   if (registry) {
     try {
       // O(n) client-side scan — the registry has no index and no search.
-      const found = await discoverBySkill(registry, "sells-books");
-      detail("agents selling books", String(found.length));
+      const found = await discoverBySkill(registry, "sells-signals", buyer.address);
+      detail("scanned", `${found.scanned} (${found.scope})`);
+      detail("agents selling signals", String(found.matches.length));
+      if (found.scanned === 0) warn("scanned nothing — the registry query failed, not an empty registry");
       const chosen =
-        found.find((p) => p.agent_id === config.sellerAgentId) ??
-        found[0] ??
+        found.matches.find((p) => p.agent_id === config.sellerAgentId) ??
+        found.matches[0] ??
         (config.sellerAgentId ? await getProfile(registry, config.sellerAgentId) : null);
       if (chosen) {
         detail("agent id", chosen.agent_id);
@@ -80,7 +82,7 @@ export async function runBuyer(opts: { fallbackUrl: string; question?: string })
         if (chosen.url) sellerUrl = chosen.url;
         ok("seller resolved on chain — we were never handed a URL");
       } else {
-        warn(`no registered bookseller found — falling back to ${sellerUrl}`);
+        warn(`no registered signal desk found — falling back to ${sellerUrl}`);
       }
     } catch (err) {
       warn(`discovery failed (${(err as Error).message}) — falling back to ${sellerUrl}`);
@@ -90,18 +92,18 @@ export async function runBuyer(opts: { fallbackUrl: string; question?: string })
   const base = sellerUrl.replace(/\/$/, "");
 
   // ── STEP 2: BROWSE (free) ───────────────────────────────────────────────────────────────
-  banner("BUYER", "step 2", "Read the catalog (free — discovery should never cost money)");
+  banner("BUYER", "step 2", "Read the catalog (free — the questions are public, the answers are not)");
   const catalogRes = await fetch(`${base}/catalog`);
   if (!catalogRes.ok) throw new Error(`GET /catalog failed: HTTP ${catalogRes.status}`);
   const catalog = (await catalogRes.json()) as {
-    books: CatalogBook[]; price: { amount: string; symbol: string };
+    markets: CatalogMarket[]; price: { amount: string; symbol: string };
   };
-  for (const b of catalog.books) detail(b.id, `${b.title} — ${b.author} (${b.year})`);
+  for (const m of catalog.markets) detail(m.id, `${m.question}  [${m.horizon}]`);
 
   // ── STEP 3: CHOOSE ──────────────────────────────────────────────────────────────────────
-  const choice = await chooseBook(question, catalog.books);
-  const picked = catalog.books.find((b) => b.id === choice.bookId);
-  banner("BUYER", "step 3", `Chose: ${picked?.title ?? choice.bookId}`);
+  const choice = await chooseMarket(question, catalog.markets);
+  const picked = catalog.markets.find((m) => m.id === choice.marketId);
+  banner("BUYER", "step 3", `Chose: ${picked?.question ?? choice.marketId}`);
   detail("why", choice.reason);
   detail("decided by", choice.by);
 
@@ -160,18 +162,18 @@ export async function runBuyer(opts: { fallbackUrl: string; question?: string })
     }
   };
 
-  const url = `${base}/book/${encodeURIComponent(choice.bookId)}`;
+  const url = `${base}/signal/${encodeURIComponent(choice.marketId)}`;
 
   try {
     const result = await payingFetch(url, { buyer, approve, onEvent: narrate });
-    banner("BUYER", "done", "Book delivered — agent loop complete");
+    banner("BUYER", "done", "Estimate delivered — agent loop complete");
     console.log(JSON.stringify(result.data, null, 2));
     return {
       data: result.data,
       txHash: result.txHash,
       receiptTx: result.receipt?.txHash ?? null,
       price: result.quote?.price ?? config.price.toString(),
-      bookId: choice.bookId,
+      marketId: choice.marketId,
     };
   } catch (err) {
     if (err instanceof PaymentRefused) {
@@ -185,8 +187,8 @@ export async function runBuyer(opts: { fallbackUrl: string; question?: string })
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   runBuyer({ fallbackUrl: config.sellerUrl })
-    .then((r) => summary("Reader finished", [
-      ["book", r.bookId],
+    .then((r) => summary("Risk Agent finished", [
+      ["market", r.marketId],
       ["our transfer", r.txHash ?? "(none)"],
       ["confirmed ix", r.receiptTx ?? "(none)"],
       ["price", r.price],

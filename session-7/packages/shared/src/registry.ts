@@ -114,24 +114,52 @@ export function readInlineCard(cardUri: string): Record<string, unknown> | null 
 /**
  * Discovery by skill tag.
  *
- * O(n) CLIENT-SIDE SCAN: getAllAgentIds() -> getAgentProfile per id -> read each card -> filter.
- * The registry has NO index and NO search. Fine at demo scale; never describe it as semantic or
- * indexed search (spec §1.1).
+ * O(n) CLIENT-SIDE SCAN: list ids -> getAgentProfile per id -> read each card -> filter on tag.
+ * The registry has NO index and NO search. Never describe it as semantic or indexed search.
+ *
+ * ⚠️ `getAllAgentIds()` DOES NOT WORK on a registry of any size. On devnet, with ~135 agents
+ * registered, the routine reverts with `builtin.MeterExhausted` — it walks every agent and runs out
+ * of call fuel. Raising `fuel_limit` does not help. Worse, the SDK swallows the revert
+ * (`return output?.ids ?? []`), so it looks like an empty registry rather than a failed call, and
+ * discovery silently finds nothing.
+ *
+ * So we scan by OWNER instead, which is a bounded query and actually returns. That narrows the
+ * search to agents this wallet registered, which is honest for a demo — say "the agents I
+ * registered", not "every agent on MOI".
  */
 const hasTag = (card: Record<string, unknown> | null, tag: string): boolean =>
   cardSkills(card).some((sk) => (sk.tags ?? []).some((t) => t.toLowerCase() === tag.toLowerCase()));
 
+export interface Discovery {
+  matches: Profile[];
+  /** How many agents were actually scanned — 0 here means the scan failed, not that none matched. */
+  scanned: number;
+  scope: string;
+}
+
 export async function discoverBySkill(
   reg: AgentRegistry | null,
   tag: string,
-): Promise<Profile[]> {
-  if (!reg) return [];
-  const ids = await reg.getAllAgentIds();
-  const out: Profile[] = [];
+  owner?: string,
+): Promise<Discovery> {
+  if (!reg) return { matches: [], scanned: 0, scope: "no registry" };
+
+  let ids: string[] = [];
+  let scope: string;
+  if (owner) {
+    ids = await reg.getAgentsByOwner(owner);
+    scope = "agents registered by this wallet";
+  } else {
+    // Kept for completeness; expect [] on any real registry. See the warning above.
+    ids = await reg.getAllAgentIds();
+    scope = "every agent on the registry";
+  }
+
+  const matches: Profile[] = [];
   for (const id of ids) {
     const profile = await getProfile(reg, id);
     if (!profile) continue;
-    if (hasTag(readInlineCard(profile.card_uri), tag)) out.push(profile);
+    if (hasTag(readInlineCard(profile.card_uri), tag)) matches.push(profile);
   }
-  return out;
+  return { matches, scanned: ids.length, scope };
 }

@@ -18,6 +18,13 @@ import {
 import type { AgentRegistry } from "js-moi-agent-registry";
 import { updateEnv } from "./env-file.js";
 
+/**
+ * `--fresh` registers new agents even when .env already names some. Needed whenever the skill tags
+ * change: the registry has no card-update call, so an existing agent keeps its old tags forever and
+ * `discoverBySkill` silently stops finding it.
+ */
+const FRESH = process.argv.slice(2).includes("--fresh");
+
 async function register(
   reg: AgentRegistry | null,
   owner: Account,
@@ -50,31 +57,32 @@ async function register(
 
 async function main(): Promise<void> {
   banner("SETUP", "01", "Register both agents on chain");
+  if (FRESH) say("SETUP", "--fresh: ignoring any existing agent ids, registering new ones");
   const buyer = await buyerAccount();
   const seller = await sellerAccount();
   const reg = await registryClient(buyer, true);
   detail("owner (signs)", buyer.address);
 
   const sellerId = await register(reg, buyer, seller.address, {
-    name: "Bookseller",
-    description: "Sells book summaries, priced per call and settled in a native MAS0 asset.",
+    name: "Signal Desk",
+    description: "Sells probability estimates, priced per call and settled in a native MAS0 asset.",
     url: config.sellerUrl,
-    skillId: "sells-books",
-    skillName: "Sells Books",
-    skillDesc: "Returns a summary and key ideas for a book in its catalog. Paid per call.",
-    // `sells-books` is the tag the buyer searches the registry for.
-    tags: ["sells-books", "agent-payments", "books"],
-  }, config.sellerAgentId);
+    skillId: "sells-signals",
+    skillName: "Sells Signals",
+    skillDesc: "Returns a probability estimate for a market in its catalog. Paid per call.",
+    // `sells-signals` is the tag the buyer scans the registry for.
+    tags: ["sells-signals", "agent-payments", "bitcoin"],
+  }, FRESH ? null : config.sellerAgentId);
 
   const buyerId = await register(reg, buyer, buyer.address, {
-    name: "Reader",
-    description: "Autonomously finds booksellers on MOI and buys the summary it needs.",
+    name: "Risk Agent",
+    description: "Autonomously finds signal desks on MOI and buys the estimate it needs.",
     url: `http://localhost:${config.buyerPort}`,
-    skillId: "buys-books",
-    skillName: "Buys Books",
-    skillDesc: "Chooses and pays for book summaries, checking the payee in this registry first.",
-    tags: ["buys-books", "agent-payments"],
-  }, config.buyerAgentId);
+    skillId: "buys-signals",
+    skillName: "Buys Signals",
+    skillDesc: "Chooses and pays for probability estimates, checking the payee in this registry first.",
+    tags: ["buys-signals", "agent-payments"],
+  }, FRESH ? null : config.buyerAgentId);
 
   const path = updateEnv({ SELLER_AGENT_ID: sellerId, BUYER_AGENT_ID: buyerId });
   summary("Agents registered", [

@@ -50,9 +50,9 @@ and walk it.
 
 | Point at | Say |
 | --- | --- |
-| `BUYER · step 1` → `seller resolved on chain` | "It was never given a URL. It asked the registry who sells books." |
-| `BUYER · step 2` | "The catalog is free. Discovery should never cost money — otherwise you can't decide what you want." |
-| `BUYER · step 3` → `decided by` | "It picked The Prince for the question. That choice is the agent's." — **only if `GROQ_API_KEY` is set.** If it says `local-fallback`, say "keyword match today; the LLM path is a key away" and move on. Don't claim a brain you're not running. |
+| `BUYER · step 1` → `scanned` / `agents selling signals` | "It was never given a URL. It scanned the registry and filtered on a skill tag." |
+| `BUYER · step 2` | "The questions are free. The answers are not. That's the seam the paywall sits on." |
+| `BUYER · step 3` → `decided by` | "It picked the drawdown market for the question. That choice is the agent's." — **only if `GROQ_API_KEY` is set.** If it says `local-fallback`, say "keyword match today; the LLM path is a key away" and move on. Don't claim a brain you're not running. |
 | `SELLER · step 5` | "HTTP 402 — Payment Required. Reserved in 1997, basically unused until agents needed it." |
 | `BUYER · step 7` → `ix hash` | "That's a real interaction on devnet. The buyer moved its own money — on MOI nobody can move it for you." |
 | `SELLER · step 9`, the seven ticks | "The seller checked this itself. All seven are reads. Nobody was trusted." |
@@ -61,6 +61,9 @@ and walk it.
 ### The line to land
 
 > "Two strangers just transacted. Neither of them had ever heard of the other before this ran."
+
+If anyone asks about the numbers: **they are placeholders.** There is no model. Every response
+carries a `disclaimer` field saying so — point at it rather than letting someone assume otherwise.
 
 ---
 
@@ -81,7 +84,7 @@ if (normalizeAddress(registryWallet) !== normalizeAddress(quote.payTo)) {
 > "The seller said *pay me at this address*. That address is 32 bytes. It tells you **where** to
 > send money — it doesn't tell you **whose** address it is.
 >
-> So before paying, the agent goes back to the registry and asks: is this actually the bookseller's
+> So before paying, the agent goes back to the registry and asks: is this actually the Signal Desk's
 > registered wallet? Nothing in a payment protocol can answer that. It needs an identity that lives
 > somewhere both parties can check, and that's the chain."
 
@@ -125,7 +128,7 @@ Open **`verify-proof.ts`**. Don't read all seven. Show two:
 **Check 3, `key_binds_to_payer`** — and explain why it isn't redundant:
 
 > "Transfers are public. Anyone can watch the chain and see that transfer land. So what stops
-> someone else quoting *my* transaction hash and collecting the book I paid for?
+> someone else quoting *my* transaction hash and collecting the estimate I paid for?
 >
 > The proof is signed, and this check derives the participant ID back out of the public key. You
 > can't claim a payment you didn't make."
@@ -184,7 +187,7 @@ mock mode — if devnet is down during your slot, the video is the whole conting
 - **Don't say "search".** Registry discovery is an O(n) client-side scan.
 - **Don't claim budgets or spend limits.** Nothing here constrains what the agent may spend. That's
   session 8 — and it's a good answer to the question, not a dodge.
-- **Don't claim the LLM picked the book** unless `GROQ_API_KEY` is set. The terminal prints
+- **Don't claim the LLM picked the market** unless `GROQ_API_KEY` is set. The terminal prints
   `local-fallback` and someone will read it.
 
 ## The three sentences

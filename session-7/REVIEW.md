@@ -4,7 +4,7 @@ One page to orient before reading code. Full detail: [README.md](./README.md).
 
 ## What this is
 
-**V1 of 3.** A **Reader** agent finds a **Bookseller** in the MOI registry and buys a book summary
+**V1 of 3.** A **Risk Agent** finds a **Signal Desk** in the MOI registry and buys a probability estimate
 mid-HTTP-request, settled in native **MAS0**. Two plain wallets — no sub-accounts, no budget logic.
 Authority is session 8; full commerce is session 9.
 
