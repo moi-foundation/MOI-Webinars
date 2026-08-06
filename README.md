@@ -12,6 +12,7 @@ Hands-on repos for the **MOI Builders** webinar series. Each session is a self-c
 | 4 | Account-to-account native swap — MAS0 Lockup + Release (CLI + UI) **(bounty)** | [`session-4/`](./session-4) |
 | 5 | NFT Marketplace — MAS1 mint + transfer (CLI + UI) | [`session-5/`](./session-5) |
 | 6 | Context inheritance — one wallet, many agents with on-chain budgets | [`session-6/`](./session-6) |
+| 7 | Agentic Payments **V1** — an agent finds another agent on MOI and pays it (registry identity + native settlement) | [`session-7/`](./session-7) |
 
 ## Quick start
 
@@ -31,6 +32,12 @@ Session 4 needs **two** funded devnet wallets (`VITE_ALICE_MNEMONIC` / `VITE_BOB
 Session 5 needs a funded devnet wallet and `cd ui && npm install` before `npm run dev` — see [`session-5/README.md`](./session-5/README.md).
 
 Session 6 needs a funded devnet wallet and an `ANTHROPIC_API_KEY` for the real-agent `run` command (scripted `spend` works without it) — see [`session-6/README.md`](./session-6/README.md).
+
+Session 7 — **find and pay an agent** on MOI (identity check + native MAS0 settlement). It's an
+npm-workspaces TypeScript monorepo with no offline mode — every run settles on devnet, so it needs
+a funded wallet (`npm run setup:asset && npm run setup:registry && npm run demo`). Start at
+[`session-7/README.md`](./session-7/README.md), or
+[`session-7/EXPLAINER.md`](./session-7/EXPLAINER.md) for the plain-English version.
 
 ## Prerequisites
 

@@ -1,0 +1,43 @@
+{
+  "name": "moi-builders-7",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MOI Builders #7 \u2014 Agentic Payments V1: two agents, a quote, a signed on-chain payment, and an identity check against the MOI agent registry. No x402 (see the claude/agent-payments-moi-x402 branch), no context inheritance (session 8).",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "tsc --noEmit",
+    "verify-sdk": "tsx scripts/verify-sdk.ts",
+    "setup:asset": "tsx scripts/00-setup-asset.ts",
+    "setup:registry": "tsx scripts/01-register-agents.ts",
+    "seller": "tsx packages/agent-seller/src/index.ts",
+    "buyer": "tsx packages/agent-buyer/src/index.ts",
+    "demo": "tsx scripts/demo.ts",
+    "ask": "tsx scripts/ask.ts",
+    "ui": "tsx scripts/ui.ts",
+    "attack-test": "tsx scripts/attack-test.ts"
+  },
+  "dependencies": {
+    "@demo/agent-buyer": "*",
+    "@demo/agent-seller": "*",
+    "@demo/shared": "*",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "groq-sdk": "^1.5.0",
+    "js-moi-agent-registry": "0.1.1",
+    "js-moi-sdk": "^0.7.1",
+    "js-moi-utils": "^0.7.1",
+    "js-polo": "^0.1.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
