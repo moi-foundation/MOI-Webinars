@@ -6,3 +6,4 @@ dist/
 cards/
 *.log
 .DS_Store
+deck/~$*.pptx
