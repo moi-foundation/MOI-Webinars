@@ -167,46 +167,101 @@ Seven files, in demo order. Everything that makes the payment safe lives in thes
 else.
 
 **1. `packages/shared/src/registry.ts` — finds the seller.**
-The buyer's discovery layer: it walks the on-chain agent registry (an O(n) client-side scan — list
-ids, fetch each profile, decode each agent card, filter on the `sells-signals` skill tag) and
-comes back with an agent id, a registered wallet, and a service URL. Also exposes
-`readAgentWallet`, the single source of truth the identity check reads later.
+The discovery layer over the MOI agent registry. `discoverBySkill` does an O(n) client-side scan:
+list agent ids, fetch each profile, decode each agent card, filter on the `sells-signals` skill
+tag. The agent cards are stored *inline* as base64 `data:` URIs, so nothing off-chain has to be up
+for discovery to work. Two hard-won details live here: the scan goes by *owner* rather than
+`getAllAgentIds()` (which reverts with `MeterExhausted` on a real registry, and the SDK swallows
+the error so it looks like an empty registry), and profiles are fetched in batches of 6 (one at a
+time meant ~22 seconds of dead air in the demo). It also exposes `readAgentWallet` — the single
+source of truth the identity check reads later — and `updateAgentWallet`, which is how `--tamper`
+repoints the listing at an attacker.
 
 **2. `packages/agent-seller/src/index.ts` — the shopfront.**
-A plain Express server. `GET /catalog` is free — the markets, questions, and list prices are
-public. `GET /signal/:id` is the paid route, wrapped in the paywall. Notice how little payment
-code lives here: a price and a `payTo`.
+The Signal Desk: a plain Express server with three routes. `GET /catalog` is free — the markets,
+their questions, and list prices are public, because a buyer that cannot see what is on offer
+cannot decide whether it wants it. `GET /signal/:id` is the paid route, wrapped in the paywall
+middleware; per request it asks `pricing.ts` what to charge, feeding in how many copies of that
+market it has sold this run (which is why asking twice can cost more). `GET /about` is a business
+card. Notice how little payment code lives here: a price and a `payTo`. The wallet only ever
+receives — it never signs, so the seller needs no gas.
 
 **3. `packages/agent-seller/src/paywall.ts` — the tollgate.**
-The paid-route middleware, and the whole seller-side payment integration together with
-`verify-proof.ts`. No proof header attached? Reply `402` with a quote. Proof attached? Verify it,
-and either deliver the answer with an `X-Payment-Receipt` header or refuse with a reason. Also
-keeps the in-memory set of spent transfer hashes.
+An Express middleware factory — the whole seller-side payment integration is this file plus
+`verify-proof.ts`. The logic is one fork: no `X-Payment-Proof` header on the request? Build a
+quote and reply `402 Payment Required` with it as JSON. Header present? Decode it, hand it to
+`verifyProof`, and either run the wrapped handler and deliver the answer with an
+`X-Payment-Receipt` header, or refuse with another 402 naming the reason (`quote_mismatch`,
+`already_spent`, …) so the buyer learns why. It also owns the `ConsumedTransfers` set — in memory,
+which is honest for a one-process demo and stated as wrong for anything real. The product handler
+itself (`data-route.ts`) contains zero payment code; adding the paywall to an existing endpoint
+changes the endpoint by zero lines.
 
 **4. `packages/agent-seller/src/pricing.ts` + `packages/agent-buyer/src/worth.ts` — the money brains.**
-One on each side. The seller decides what to charge per request (demand so far, how hard the
-question is); the buyer decides whether that price is worth paying. Both use a model for the
-judgment call, but inside bounds the model does not control: prices are clamped to the catalog's
-band in code, and the buyer's hard ceiling is checked *before* the model is even asked — so no
-sales pitch can talk it past the limit.
+One commercial judgment on each side of the trade. The seller's `decidePrice` sets a number per
+request based on demand so far; the buyer's `worthIt` decides whether that number is acceptable.
+Both consult a model (Groq), and both keep it away from anything it must not control. On the
+seller side the model picks a price *inside a band computed in code* — list price to a demand
+ceiling, clamped after the model answers, so a confused model cannot quote 0 or 10,000. On the
+buyer side the hard ceiling (`MAX_PRICE_PER_ANSWER`, default 6) is checked with arithmetic
+*before* the model is even asked, so no seller sales pitch can talk the agent past its limit; the
+model only deliberates in the gray zone between list price and the ceiling. Both fall back to
+local logic without an API key and say which path decided.
 
 **5. `packages/agent-buyer/src/identity-check.ts` — the heart of it.**
-43 lines. Before paying, the buyer asks: is the `payTo` in this quote really the wallet this agent
-registered on chain? It reads the seller's `agent_wallet` from the registry and compares. Mismatch
-→ refuse, before any money moves. This is the one question no payment protocol can answer, and the
-reason this runs on MOI.
+43 lines, and the reason this runs on MOI. The quote carries two load-bearing fields: `payTo` (32
+anonymous bytes) and `payToAgentId` (the seller's on-chain agent id). Before paying, the buyer
+looks that agent id up in the registry, reads the wallet the agent actually registered, and
+compares it to the quote's `payTo`. Mismatch → refuse, with both addresses in the verdict — and
+nothing has been spent, because this runs before the transfer. No payment protocol can answer
+"whose address is this?"; an on-chain identity registry can.
 
 **6. `packages/agent-buyer/src/pay.ts` — the payment.**
-The paying HTTP client: GET → 402 + quote → run the buyer's checks → submit a MAS0 transfer **from
-the agent's own wallet** (on MOI nobody else can move its funds) → sign a claim naming that
-transaction → retry the GET with the claim attached as `X-Payment-Proof`.
+The buyer's paying HTTP client, `payingFetch`. The sequence: GET the resource → receive `402` +
+quote → run the `approve` callback (price judgment + identity check — the safety catch, placed
+*before* the transfer because on MOI there is no escrow and nothing to claw back) → submit a MAS0
+transfer **from the agent's own wallet** (only the owner can move its funds; nobody relays) → sign
+a claim naming that transfer's interaction hash, the resource, a nonce, and an expiry → retry the
+same GET with the claim base64'd into an `X-Payment-Proof` header → decode the
+`X-Payment-Receipt` from the response.
 
 **7. `packages/agent-seller/src/verify-proof.ts` — the seller's seven checks.**
-All read-only, all in-process: the proof is well-formed; the signature is valid; the signing key
-actually derives to the paying account (so nobody can claim a stranger's transfer); the claim
-matches the quote; it hasn't expired; the transfer really landed on chain — read off the chain,
-not taken on the buyer's word; and the transfer hash hasn't already been spent. Then the hash is
-burned: one payment buys one thing.
+All read-only, all in-process, in order: (1) the proof is well-formed; (2) the ECDSA signature
+over the canonical claim bytes is valid; (3) the public key *derives to* the paying account — the
+check that stops anyone claiming a stranger's public transfer as their own payment; (4) the claim
+matches the quote (asset, payTo, resource, value); (5) it hasn't expired; (6) the transfer really
+landed on chain — the seller fetches the interaction receipt and POLO-decodes the transfer
+calldata itself, confirming sender, beneficiary, and amount rather than taking the buyer's word;
+(7) the transfer hash hasn't already been spent. Pass all seven and the hash is burned: one
+payment buys exactly one thing.
+
+### The supporting files
+
+The plumbing the seven sit on:
+
+- **`shared/payment-proof.ts`** — the wire format: the `Quote`, `PaymentClaim`, `PaymentProof`,
+  and `Receipt` types, the base64 header codecs, and `canonicalClaim` — the byte-exact signing
+  format (field order pinned in an array, so signer and verifier can never disagree about JSON key
+  order).
+- **`shared/payment-verify.ts`** — `readTransfer`: how a MAS0 transfer is confirmed read-only.
+  Fetches the interaction receipt, checks it succeeded, pulls the operation payload off the
+  tesseract, and POLO-decodes the calldata with the SDK's own transfer schema to recover
+  beneficiary and amount. Also home to `ConsumedTransfers`, the replay guard.
+- **`shared/chain.ts` / `shared/config.ts`** — accounts (buyer and seller derived from the one
+  mnemonic at different paths), provider, raw RPC, and all env parsing.
+- **`agent-buyer/brain.ts`** — picks which market answers the question (Groq, or keyword overlap
+  without a key). Deliberately has *no say* in whether to pay — that is deterministic code.
+- **`agent-buyer/index.ts`** — the whole buyer loop in order: discover → browse → choose → request
+  → judge price → check identity → pay → receive. The best single file to read top to bottom.
+- **`agent-seller/catalog.ts`** — the four markets, each with a `listPrice` and a `maxPrice`: the
+  bounds the pricing model must live inside.
+- **`agent-seller/brain.ts`** — produces the estimate you paid for. The probabilities are
+  placeholders and every response says so in a `disclaimer` field; the "model guess, no market
+  data" suffix is appended in code, not requested from the model.
+- **`agent-seller/data-route.ts` / `price.ts`** — the product handler (zero payment code) and the
+  quote builder that attaches `payToAgentId`, the field that makes the identity check possible.
+- **`scripts/`** — `00-setup-asset` and `01-register-agents` build the world; `demo`, `ui`, `ask`,
+  `attack-test`, and `verify-sdk` run it.
 
 ## What is and isn't proven
 
