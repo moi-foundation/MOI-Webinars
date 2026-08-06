@@ -163,12 +163,50 @@ now runs once in the buyer, before funds move.
 
 ## Read the code in this order
 
-1. `packages/shared/src/payment-proof.ts` — wire format + what gets signed
-2. `packages/agent-seller/src/verify-proof.ts` — the 7 checks; this is the talk
-3. `packages/agent-buyer/src/identity-check.ts` — the MOI aha (42 lines)
-4. `packages/agent-buyer/src/pay.ts` — the client half
-5. `packages/shared/src/payment-verify.ts` — how a transfer is confirmed read-only
-6. `scripts/demo.ts` — the on-stage choreography
+Seven files, in demo order. Everything that makes the payment safe lives in these — and nowhere
+else.
+
+**1. `packages/shared/src/registry.ts` — finds the seller.**
+The buyer's discovery layer: it walks the on-chain agent registry (an O(n) client-side scan — list
+ids, fetch each profile, decode each agent card, filter on the `sells-signals` skill tag) and
+comes back with an agent id, a registered wallet, and a service URL. Also exposes
+`readAgentWallet`, the single source of truth the identity check reads later.
+
+**2. `packages/agent-seller/src/index.ts` — the shopfront.**
+A plain Express server. `GET /catalog` is free — the markets, questions, and list prices are
+public. `GET /signal/:id` is the paid route, wrapped in the paywall. Notice how little payment
+code lives here: a price and a `payTo`.
+
+**3. `packages/agent-seller/src/paywall.ts` — the tollgate.**
+The paid-route middleware, and the whole seller-side payment integration together with
+`verify-proof.ts`. No proof header attached? Reply `402` with a quote. Proof attached? Verify it,
+and either deliver the answer with an `X-Payment-Receipt` header or refuse with a reason. Also
+keeps the in-memory set of spent transfer hashes.
+
+**4. `packages/agent-seller/src/pricing.ts` + `packages/agent-buyer/src/worth.ts` — the money brains.**
+One on each side. The seller decides what to charge per request (demand so far, how hard the
+question is); the buyer decides whether that price is worth paying. Both use a model for the
+judgment call, but inside bounds the model does not control: prices are clamped to the catalog's
+band in code, and the buyer's hard ceiling is checked *before* the model is even asked — so no
+sales pitch can talk it past the limit.
+
+**5. `packages/agent-buyer/src/identity-check.ts` — the heart of it.**
+43 lines. Before paying, the buyer asks: is the `payTo` in this quote really the wallet this agent
+registered on chain? It reads the seller's `agent_wallet` from the registry and compares. Mismatch
+→ refuse, before any money moves. This is the one question no payment protocol can answer, and the
+reason this runs on MOI.
+
+**6. `packages/agent-buyer/src/pay.ts` — the payment.**
+The paying HTTP client: GET → 402 + quote → run the buyer's checks → submit a MAS0 transfer **from
+the agent's own wallet** (on MOI nobody else can move its funds) → sign a claim naming that
+transaction → retry the GET with the claim attached as `X-Payment-Proof`.
+
+**7. `packages/agent-seller/src/verify-proof.ts` — the seller's seven checks.**
+All read-only, all in-process: the proof is well-formed; the signature is valid; the signing key
+actually derives to the paying account (so nobody can claim a stranger's transfer); the claim
+matches the quote; it hasn't expired; the transfer really landed on chain — read off the chain,
+not taken on the buyer's word; and the transfer hash hasn't already been spent. Then the hash is
+burned: one payment buys one thing.
 
 ## What is and isn't proven
 
