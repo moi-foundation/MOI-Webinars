@@ -1,99 +1,118 @@
 # MOI Builders #7 — Agentic Payments (identity + payment)
 
-**An agent finds another agent on MOI, and pays it — with no human, no account, and no API key.**
+**One AI agent buys data from another AI agent, paying on the MOI blockchain — with no human, no
+account, and no API key.**
 
-A **Risk Agent** needs a probability. It scans the MOI agent registry for an agent that sells
-signals, browses its catalog of markets, picks one, gets an `HTTP 402`, pays in native MAS0, and
-receives the estimate. About a second, no prior relationship.
+The product being traded is deliberately simple. The seller offers **probability estimates** for
+four yes/no questions about bitcoin (for example: *"Will BTC trade above $100,000 before 31 Dec
+2026?"*). Each estimate costs a few units of a token. The buyer is an agent that has a question,
+finds the seller on chain, pays, and gets the number back. The estimates themselves are
+placeholders — the point of the demo is the payment and identity machinery, not the data.
 
 Plain-English walkthrough: [EXPLAINER.md](./EXPLAINER.md). Live talk script: speaker notes in
 [`deck/MOI_Builders_S7-new.pptx`](./deck/MOI_Builders_S7-new.pptx).
 
-## The aha
+## The core idea
 
-A payment protocol tells you an amount and a 32-byte address. It cannot tell you **whose address
-that is**.
+A payment protocol tells you an amount and a 32-byte address to pay. It cannot tell you **whose
+address that is** — an attacker who swaps the address in a quote is invisible to the payment
+layer.
 
-MOI can. The buyer reads the seller's `agent_wallet` from the on-chain registry and refuses to pay
-if the quote disagrees. `npm run demo -- --tamper` repoints the registry entry at an attacker and
-the buyer walks away — a check that needs an on-chain identity to be possible at all.
+MOI fixes this because every agent is registered on chain with its wallet address. Before paying,
+the buyer looks the seller up in the on-chain registry and compares the registered wallet against
+the address in the quote. If they disagree, it refuses to pay. `npm run demo -- --tamper`
+demonstrates this live: it changes the seller's registry entry to an attacker's address, and the
+buyer detects the mismatch and refuses before any money moves.
 
 ## The two agents
 
-| | Who | What it does |
+| | Name | What it does |
 | --- | --- | --- |
-| **Seller** | *Signal Desk* (`packages/agent-seller`) | An HTTP service that lists prediction markets. The questions and list prices are public; the probability estimates sit behind a paywall. It prices each request, quotes, and verifies its own payments by reading the chain. |
-| **Buyer** | *Risk Agent* (`packages/agent-buyer`) | A pure agent loop with a question to answer and a funded wallet. It is never given the seller's URL or address — everything it knows about the seller comes off the chain. |
+| **Seller** | *Signal Desk* (`packages/agent-seller`) | An HTTP server. Its list of questions and prices can be fetched by anyone for free; the probability estimates require payment. It decides its own price per request, and verifies incoming payments itself by reading the blockchain. |
+| **Buyer** | *Risk Agent* (`packages/agent-buyer`) | A program that runs one purchase end to end, with no human input. It starts with only a question and a funded wallet — it is never given the seller's URL or payment address. Everything it learns about the seller comes from the on-chain registry. |
 
-Each agent has its own wallet and its own on-chain identity in the MOI agent registry. One machine
-and one mnemonic run both in the demo, but the chain doesn't care: two identities, two independent
-decisions, one real transfer.
+Each agent has its own wallet and its own entry in the MOI agent registry. In the demo both run on
+one machine from one mnemonic (at two different derivation paths), but on chain they are two
+separate identities making one real transfer between them.
 
 ## Setup — what happens before any request
 
-Two one-time scripts put the world in place. This is the part most demos skip; here it *is* the
-point, because everything the buyer later trusts is written on chain in this step.
+Two one-time scripts create everything the demo depends on. This matters because the registry
+entry written here is exactly what the buyer will later verify the payment against.
 
-**Step 0 — create the money** (`npm run setup:asset`)
-Creates the MAS0 settlement asset (USDM) and gives the buyer a float to spend from. The asset ID
-lands in `.env` as `SETTLEMENT_ASSET_ID`.
+**Step 0 — create the payment token** (`npm run setup:asset`)
+Creates a MAS0 asset (a native MOI token, symbol `USDM`) that the agents will pay each other with,
+and gives the buyer a starting balance of 100,000 units. The asset ID is written to `.env` as
+`SETTLEMENT_ASSET_ID`.
 
 **Step 1 — register both agents** (`npm run setup:registry`)
 Writes each agent into the MOI agent registry: an **agent id**, its **wallet address**, its
-**service URL**, and a **skill card** (the seller's says `sells-signals`). Their IDs land in `.env`
-as `SELLER_AGENT_ID` / `BUYER_AGENT_ID`. This registry entry is what the buyer will later check the
-quote against — it is the seller's identity, not just its listing.
+**service URL**, and a **skill card** — a small JSON document describing what the agent offers.
+The seller's card is tagged `sells-signals`, which is the exact string the buyer will search for.
+The generated ids are written to `.env` as `SELLER_AGENT_ID` / `BUYER_AGENT_ID`. This registry
+entry is the seller's on-chain identity: the wallet address recorded here is what the buyer will
+later compare payment requests against.
 
-Then the seller starts up and waits (`npm run seller`, or `npm run demo` runs both ends for you).
+After setup, the seller runs as a web server and waits for requests (`npm run demo` starts both
+agents for you).
 
 ## The flow — from question to answer
 
 What happens on `npm run demo`, in order:
 
-1. **Discover.** The buyer scans the registry for an agent whose skill card advertises
-   `sells-signals` — an O(n) client-side walk over every registered agent. It gets back the
-   seller's agent id, **registered wallet**, and service URL. It was never handed a URL.
-2. **Browse.** `GET /catalog` — free. The markets, their questions, and list prices are public;
-   only the estimates cost money.
-3. **Choose.** The buyer's brain (Groq, or a keyword fallback without an API key) picks the market
-   that answers its question, and says why.
-4. **Request.** `GET /signal/:id` with no payment. The seller answers **HTTP 402 Payment
-   Required** plus a quote: the price for *that* market, the asset, and `payTo` — the address to
-   send funds to.
-5. **Judge the price.** Buyer policy, before anything is spent: is the quote within its ceiling,
-   and is the seller's stated reason for the price acceptable? Refusing here costs nothing.
-6. **Check the identity — the MOI step.** That `payTo` is 32 bytes; nothing in a payment protocol
-   says *whose* address it is. The buyer asks the registry for the seller's registered wallet and
-   refuses to pay if the quote disagrees (`--tamper` shows this refusal live). It also confirms the
-   quoted asset is the one it holds.
-7. **Pay.** The buyer submits its **own** MAS0 transfer of the quoted price to the seller. On MOI
-   only the owner can move their own funds — no middleman, no escrow. The result is a real
-   interaction hash on devnet.
-8. **Prove.** The buyer signs a claim naming that transfer: from, to, asset, value, the tx hash,
-   the resource being bought, a nonce, and an expiry. Then it retries the same GET with the claim
-   attached as an `X-Payment-Proof` header.
-9. **Verify.** The seller runs seven read-only checks in-process — proof is well-formed, the
-   signature is valid, the signing key actually controls the paying account, the claim matches the
-   quote, it hasn't expired, **the transfer really landed on chain** (it reads the interaction
-   itself rather than trusting the buyer), and the transfer hash hasn't already been spent. Then it
-   burns the hash so one payment buys exactly one thing.
-10. **Deliver.** `200` with the estimate, plus an `X-Payment-Receipt` header naming the confirmed
-    interaction. The buyer reads its answer. About a second, end to end.
+1. **Discover.** The buyer searches the registry for an agent whose skill card is tagged
+   `sells-signals`, by fetching every registered agent's profile and filtering client-side. It
+   gets back the seller's agent id, **registered wallet address**, and service URL. Nobody told
+   it where the seller is — it found the URL on chain.
+2. **Browse.** The buyer fetches `GET /catalog` from the seller. This route requires no payment
+   and returns the list of four questions with their prices. The paid part is the probability
+   estimate for a question, not the list itself.
+3. **Choose.** The buyer's language model (Groq; a keyword matcher if no API key is set) picks
+   which of the four questions best answers the buyer's own question, and states its reasoning.
+4. **Request.** The buyer fetches `GET /signal/:id` for the chosen question, without paying yet.
+   The seller responds with **HTTP 402 Payment Required** and a quote in the response body: the
+   price for that question, the token to pay in, and `payTo` — the wallet address to send the
+   payment to.
+5. **Judge the price.** Before spending anything, the buyer checks the quoted price against its
+   own spending limit and decides whether the price is acceptable. Refusing at this point costs
+   nothing.
+6. **Verify the seller's identity — the step that needs MOI.** The `payTo` address in the quote
+   is just 32 bytes; nothing about it says who owns it. The buyer reads the seller's registered
+   wallet from the on-chain registry and compares it to `payTo`. If they differ, it refuses to
+   pay (`--tamper` demonstrates exactly this). It also confirms the quote asks for the token it
+   actually holds.
+7. **Pay.** The buyer submits a MAS0 token transfer of the quoted price to the seller, signed
+   with its own wallet. On MOI only the owner of funds can move them — there is no intermediary
+   that pays on your behalf, and no escrow. The transfer produces a real transaction hash
+   (called an interaction hash on MOI) on devnet.
+8. **Prove the payment.** The buyer signs a statement listing what it paid: sender, recipient,
+   token, amount, the transaction hash from step 7, the URL being bought, a random nonce, and an
+   expiry time. It repeats the `GET /signal/:id` request with this signed statement attached as
+   an `X-Payment-Proof` HTTP header.
+9. **Verify the payment.** The seller runs seven checks, all reads, all inside its own process:
+   the proof is complete; the signature is valid; the signing key actually belongs to the account
+   that paid; the claimed payment matches what was quoted; it hasn't expired; **the transfer
+   really exists on chain** (the seller looks the transaction up itself rather than trusting the
+   buyer's word); and this transaction hash hasn't been used to buy something already. It then
+   records the hash as spent, so the same payment cannot be reused.
+10. **Deliver.** The seller responds `200` with the probability estimate, plus an
+    `X-Payment-Receipt` header naming the confirmed transaction. The whole exchange takes about a
+    second.
 
-The same flow, as a wire diagram:
+The same flow, message by message:
 
 ```
-buyer  registry: who sells signals?        -> agent id, wallet, URL   (never handed a URL)
-buyer  GET /catalog                        -> free. questions AND prices are public
-buyer  brain picks the market for its question
-buyer  GET /signal/:id                     -> 402 + a quote at THAT market's price
-buyer  is the price worth paying?          -> policy, before any money moves
-buyer  is payTo the seller's REGISTERED wallet?   <- the MOI question
-buyer  MAS0 transfer(seller, price)        -> the buyer moves its OWN funds
-buyer  sign a claim naming that interaction hash
-buyer  GET again + X-Payment-Proof
-seller 7 read-only checks, in-process      -> confirms the transfer by reading the chain
-seller 200 + estimate + X-Payment-Receipt
+buyer  searches registry for "sells-signals"  -> gets agent id, wallet address, URL
+buyer  GET /catalog                           -> no payment needed; the list of questions + prices
+buyer  model picks the question to buy
+buyer  GET /signal/:id                        -> 402 + quote (price, token, payTo address)
+buyer  is the price within my limit?          -> checked before any money moves
+buyer  does payTo match the seller's registered wallet?   <- the check only MOI enables
+buyer  MAS0 transfer(seller, price)           -> buyer pays from its own wallet
+buyer  signs a statement naming that transaction hash
+buyer  GET /signal/:id again + X-Payment-Proof header
+seller runs 7 read-only checks               -> confirms the transfer by reading the chain
+seller 200 + estimate + X-Payment-Receipt header
 ```
 
 ## Run it
@@ -110,18 +129,18 @@ In `.env`, fill in two things:
 
 - **`USER_MNEMONIC`** — one funded devnet mnemonic. Fund it at <https://voyage.moi.technology>
   (path `m/44'/6174'/7020'/0/0`).
-- **`GROQ_API_KEY`** — a free key from <https://console.groq.com>. This is the agents' brain;
-  without it they fall back to dumb keyword matching.
+- **`GROQ_API_KEY`** — a free key from <https://console.groq.com>. This is the language model
+  both agents use to make decisions; without it they fall back to simple keyword matching.
 
 That one mnemonic gives you **two separate accounts** — the buyer and the seller each derive their
 own wallet from it at a different derivation path (`.../0/0` and `.../0/1`). Only the buyer's needs
 funding: it signs the payment, while the seller only ever receives.
 
-Then set up the world once, and run the console:
+Then run the two setup scripts once, and start the demo:
 
 ```bash
-npm run setup:asset           # MAS0 asset + buyer float -> SETTLEMENT_ASSET_ID
-npm run setup:registry        # register both agents -> SELLER_AGENT_ID / BUYER_AGENT_ID
+npm run setup:asset           # create the payment token + buyer balance -> SETTLEMENT_ASSET_ID
+npm run setup:registry        # register both agents on chain -> SELLER_AGENT_ID / BUYER_AGENT_ID
 npm run ui                    # agent console at http://localhost:4000
 ```
 
@@ -130,36 +149,38 @@ Open <http://localhost:4000> and ask a question — every one spends real devnet
 If something fails, it is usually environment: unfunded wallet, stale `SETTLEMENT_ASSET_ID`, agents
 not registered, or devnet down. Re-run `setup:asset` / `setup:registry` as needed.
 
-## Honesty guardrails
+## Limitations, stated plainly
 
-- **Nobody holds your money.** On MOI only the owner can move their own funds. The buyer submits
-  its own transfer; the seller confirms it by reading the chain. There is no escrow and no custody.
-- **The seller verifies its own payments.** That is why there is no facilitator. A facilitator on
-  MOI could never do more than referee, and a seller can referee for itself.
-- **Registry discovery is an O(n) client-side scan** (`getAllAgentIds` → profile → card → filter).
-  No index, no search, not semantic.
-- **No spend caps or budgets here.** Nothing constrains what the agent may spend.
-- **No pay-on-delivery.** If the seller takes the money and does not deliver, the buyer loses it.
-- **The probabilities are placeholders.** Every response carries a disclaimer — the invented
-  numbers are not the point; the payment machinery is.
-- **Replay protection is in memory.** Restart the seller and spent transfer hashes are spendable
-  again. Fine for a demo, wrong for production.
+- **Nobody holds your money.** On MOI only the owner of funds can move them. The buyer submits its
+  own transfer; the seller confirms it by reading the chain. There is no escrow and no third party
+  holding funds anywhere in this demo.
+- **The seller verifies its own payments.** There is no separate verification service, because on
+  MOI such a service could only ever double-check what the seller can already read from the chain
+  itself.
+- **Registry discovery fetches and filters every agent client-side.** The registry has no search
+  or index — the buyer downloads each agent's profile and checks its tags one by one.
+- **No spend caps or budgets.** Nothing on chain constrains how much the agent may spend; its
+  limit is a number in its own code.
+- **No refunds and no delivery guarantee.** If the seller takes the payment and returns nothing,
+  the buyer has no recourse.
+- **The probability estimates are placeholders.** There is no real model or market data behind
+  them; every response carries a disclaimer saying so. The payment machinery is the real part.
+- **Replay protection is in memory only.** The seller tracks used payment hashes in a variable.
+  Restart the seller and previously used payments would be accepted again — acceptable for a demo,
+  not for production.
 
-## What each claim is enforced by
+## Where each security claim is enforced
 
 | Claim | Where |
 | --- | --- |
-| The seller is who it says it is | buyer `identity-check.ts`, **before** any money moves |
+| The seller is who it says it is | buyer's `identity-check.ts`, **before** any money moves |
 | The payer is who it says it is | `verify-proof.ts` checks 2–3 — signature, then key→account |
 | The money actually moved | `verify-proof.ts` check 6 — reads the chain, not the buyer's word |
-| One payment buys one thing | `verify-proof.ts` check 7 — the transfer hash is burned |
+| One payment buys one thing | `verify-proof.ts` check 7 — the transaction hash is recorded as spent |
 
-The signature is not decoration: transfers are public, so without binding the proof to the
-keyholder anyone watching the chain could quote a stranger's transfer and collect the goods.
-
-In the older x402 build, a facilitator asked "is `payTo` a registered agent?" — which meant the
-seller asking whether it was itself. That check only matters when the party at risk asks it, so it
-now runs once in the buyer, before funds move.
+Why the proof must be signed: transfers on a blockchain are public, so anyone can see the buyer's
+transaction hash. Without a signature tying the proof to the account that paid, a bystander could
+submit someone else's transaction hash and collect the data it paid for.
 
 ## Read the code in this order
 
@@ -182,15 +203,16 @@ the fact the identity check depends on.**
 
 ### 2. `packages/agent-seller/src/index.ts`
 
-**What it does: runs the seller — a web server where the questions are free and the answers cost
-money.**
+**What it does: runs the seller — an HTTP server with one free route (the list of questions and
+prices) and one paid route (the probability estimate itself).**
 
-- `GET /catalog` (free) lists the four markets with their questions and prices, so a buyer can
-  decide what it wants.
-- `GET /signal/:id` (paid) is the product, wrapped in the paywall. Per request it asks
-  `pricing.ts` what to charge, based on how many copies it has already sold — so asking twice can
-  cost more.
-- The seller's wallet only ever receives. It never signs, so it needs no gas.
+- `GET /catalog` requires no payment and returns the four questions with their prices, so a buyer
+  can see what is on offer before deciding.
+- `GET /signal/:id` returns the estimate and requires payment — it is wrapped in the paywall
+  middleware. On every request it asks `pricing.ts` what to charge, factoring in how many copies
+  of that estimate it has already sold — so buying the same estimate twice can cost more the
+  second time.
+- The seller's wallet only ever receives funds. It never signs a transaction, so it needs no gas.
 
 ### 3. `packages/agent-seller/src/paywall.ts`
 
@@ -205,51 +227,59 @@ and only delivers after verification passes.**
 
 ### 4. `packages/agent-seller/src/pricing.ts` + `packages/agent-buyer/src/worth.ts`
 
-**What they do: the money decisions — the seller sets the price per request, the buyer decides if
-it's worth paying. Both use a model, inside bounds the model cannot break.**
+**What they do: the two pricing decisions — the seller decides what to charge for each request,
+and the buyer decides whether that price is acceptable. Both consult a language model, but only
+within limits enforced by ordinary code.**
 
-- Seller (`decidePrice`): the model picks a price inside a band computed in code — list price up
-  to a demand ceiling — and the answer is clamped after the fact, so a confused model can't quote
-  0 or 10,000.
-- Buyer (`worthIt`): the hard ceiling (`MAX_PRICE_PER_ANSWER`, default 6) is checked with
-  arithmetic *before* the model is asked, so no sales pitch can talk the agent past its limit. The
-  model only deliberates on markups between list price and the ceiling.
+- Seller (`decidePrice`): the model chooses a price between the question's list price and a
+  ceiling that rises with demand — both bounds computed in code — and whatever the model answers
+  is clamped back into that range. A malfunctioning model cannot quote 0 or 10,000.
+- Buyer (`worthIt`): the buyer's maximum price per answer (`MAX_PRICE_PER_ANSWER`, default 6
+  units) is checked with a plain numeric comparison *before* the model is consulted, so nothing
+  the seller says can push the agent past its limit. The model only weighs in on prices between
+  the list price and that maximum.
 
 ### 5. `packages/agent-buyer/src/identity-check.ts`
 
-**What it does: the MOI step — before paying, verifies the address in the quote is really the
-wallet this seller registered on chain.**
+**What it does: before paying, verifies that the payment address in the quote is really the
+wallet this seller registered on chain. This is the check that requires MOI.**
 
-- The quote's `payTo` is 32 anonymous bytes; its `payToAgentId` is what makes it checkable. The
-  buyer reads that agent's registered wallet from the registry and compares.
-- Mismatch → refuse, showing "registry says" vs "quote says". Runs *before* the transfer, so
-  nothing has been spent.
-- An unreadable registry entry also refuses (fail closed). 43 lines total.
+- The quote carries two fields: `payTo` (the address to pay, 32 bytes that identify nobody by
+  themselves) and `payToAgentId` (the seller's registry id, which makes the address verifiable).
+  The buyer looks the agent id up in the registry and compares the registered wallet to `payTo`.
+- If they differ, the buyer refuses and reports both values ("registry says" vs "quote says").
+  This runs *before* the transfer, so nothing has been spent yet.
+- If the registry entry cannot be read at all, the buyer also refuses. 43 lines total.
 
 ### 6. `packages/agent-buyer/src/pay.ts`
 
-**What it does: the buyer's paying HTTP client — turns a 402 into a completed purchase.**
+**What it does: the buyer's HTTP client that handles the whole payment sequence — request, receive
+the 402 quote, pay on chain, prove it, and retry.**
 
-- GET → 402 + quote → run the `approve` callback (price judgment + identity check, deliberately
-  *before* the transfer: there's no escrow, so once funds move they're gone).
-- Pays with a MAS0 transfer **from the buyer's own wallet** — on MOI nobody else can move its
-  funds.
-- Signs a claim naming that transfer (from, to, value, tx hash, resource, nonce, expiry) and
-  retries the GET with it in the `X-Payment-Proof` header; returns the data plus the receipt.
+- On a 402 response, it first runs an `approve` callback containing the buyer's checks (the price
+  judgment and the identity check). This happens deliberately *before* the transfer, because there
+  is no escrow — once funds move, they cannot be recovered.
+- If approved, it submits a MAS0 token transfer **signed by the buyer's own wallet** — on MOI no
+  other party is able to move the buyer's funds.
+- It then signs a statement naming that transfer (sender, recipient, amount, transaction hash,
+  URL, nonce, expiry) and repeats the request with the statement in the `X-Payment-Proof` header.
+  On success it returns the purchased data plus the seller's receipt.
 
 ### 7. `packages/agent-seller/src/verify-proof.ts`
 
-**What it does: the seller checking its own payment — seven read-only checks, no facilitator.**
+**What it does: how the seller verifies a payment on its own, with seven checks that only read
+data — no third-party verification service involved.**
 
-1. `proof_well_formed` — claim, signature, public key all present
-2. `signature_valid` — the signature verifies over the canonical claim bytes
-3. `key_binds_to_payer` — the public key derives to the paying account; stops anyone claiming a
-   stranger's public transfer as their own
-4. `matches_quote` — asset, payTo, resource match; value covers the price
-5. `not_expired` — the claim's expiry hasn't passed
-6. `transfer_landed_on_chain` — the seller reads the interaction off the chain itself and confirms
-   sender, beneficiary, and amount — not the buyer's word
-7. `transfer_not_already_spent` — then the hash is burned: one payment buys one thing
+1. `proof_well_formed` — the claim, signature, and public key are all present
+2. `signature_valid` — the signature verifies against the claim's canonical byte form
+3. `key_binds_to_payer` — the public key mathematically derives to the account that paid; this
+   stops someone submitting another person's (publicly visible) transaction as their own payment
+4. `matches_quote` — the token, recipient, and URL match the quote, and the amount covers the price
+5. `not_expired` — the claim's expiry time hasn't passed
+6. `transfer_landed_on_chain` — the seller looks the transaction up on the blockchain itself and
+   confirms the sender, recipient, and amount — it does not take the buyer's word for any of it
+7. `transfer_not_already_spent` — this transaction hash hasn't been used for a previous purchase;
+   it is then recorded as spent, so one payment buys exactly one thing
 
 ## The supporting files
 
@@ -260,29 +290,35 @@ wallet this seller registered on chain.**
   (receipt → tesseract → decode the calldata) to recover sender, beneficiary, and amount. Also the
   replay-guard set.
 - **`shared/chain.ts`** — accounts (buyer and seller derived from the one mnemonic at different
-  paths), the devnet provider, and `identifierFromPublicKey` — the primitive behind check 3.
+  paths), the devnet connection, and `identifierFromPublicKey` — the function that derives an
+  account id from a public key, which is what verification check 3 uses.
 - **`shared/config.ts`** — env parsing; required vars throw by name.
 - **`shared/steps.ts` / `log.ts`** — the same narration twice: structured step events for the
   browser UI, banners for the terminal, emitted from the same call sites so they can't drift.
-- **`agent-buyer/brain.ts`** — picks which market answers the question (Groq, keyword fallback
-  without a key). Has no say in whether to pay — that's deterministic code.
+- **`agent-buyer/brain.ts`** — picks which of the seller's questions best matches the buyer's own
+  question (Groq, keyword fallback without a key). Has no say in whether to pay — that decision is
+  ordinary deterministic code.
 - **`agent-buyer/index.ts`** — the buyer's whole loop, top to bottom: discover → browse → choose →
   judge price → check identity → pay → receive.
-- **`agent-seller/catalog.ts`** — the four markets and their price bounds (`listPrice` /
-  `maxPrice`) — data, not model output.
-- **`agent-seller/brain.ts`** — produces the estimate. The probabilities are placeholders; every
-  response carries a `disclaimer` saying so.
-- **`agent-seller/data-route.ts` / `price.ts`** — the product handler (zero payment code) and the
-  quote builder that attaches `payToAgentId`.
+- **`agent-seller/catalog.ts`** — the four questions on offer, each with its price bounds
+  (`listPrice` / `maxPrice`). Plain data; no model involved.
+- **`agent-seller/brain.ts`** — produces the probability estimate that gets sold. The numbers are
+  placeholders; every response carries a `disclaimer` field saying so.
+- **`agent-seller/data-route.ts` / `price.ts`** — the route handler that returns the estimate
+  (it contains no payment code — payment is entirely the middleware's job) and the function that
+  builds the quote, including the `payToAgentId` field the identity check needs.
 
 ## The scripts
 
-- **`00-setup-asset.ts`** (`npm run setup:asset`) — creates the MAS0 asset and mints the buyer a
-  100,000-unit float; writes `SETTLEMENT_ASSET_ID` to `.env`. Idempotent.
+- **`00-setup-asset.ts`** (`npm run setup:asset`) — creates the MAS0 payment token and mints the
+  buyer a starting balance of 100,000 units; writes `SETTLEMENT_ASSET_ID` to `.env`. Safe to
+  re-run: it reuses an existing asset and skips minting if the balance is already there.
 - **`01-register-agents.ts`** (`npm run setup:registry`) — registers both agents on chain and
-  writes their ids to `.env`. The buyer signs both; the seller's wallet is only *named*.
-- **`demo.ts`** (`npm run demo`) — the terminal demo. `--tamper` repoints the seller's registry
-  wallet at an attacker, expects the buyer to refuse, and restores the entry afterwards.
+  writes their ids to `.env`. The buyer's wallet signs both registrations (it owns them); the
+  seller's wallet is only recorded as the payment address and never has to sign anything.
+- **`demo.ts`** (`npm run demo`) — the terminal demo. With `--tamper`, it first changes the
+  seller's registry wallet to an attacker's address, expects the buyer to detect this and refuse,
+  and restores the correct entry afterwards.
 - **`ui.ts`** (`npm run ui`) — the agent console at `http://localhost:4000`; narrates the run as
   live cards with the balance ticking down.
 - **`ask.ts`** (`npm run ask`) — free-text questions in the terminal.
@@ -291,24 +327,24 @@ wallet this seller registered on chain.**
 - **`verify-sdk.ts`** (`npm run verify-sdk`) — 63 assertions against live devnet, so the demo's
   SDK claims stay checked rather than remembered.
 
-## What is and isn't proven
+## What has been tested
 
 **Run against Voyage devnet and observed working:**
 
 | Command | Result |
 | --- | --- |
-| `npm run demo` | green — real interaction hash, real USDM moved |
-| `npm run ui` / `npm run ask` | browser console and free-text demo, model brains live |
-| `npm run demo -- --tamper` | buyer refuses, no funds move, registry restored |
-| `npm run attack-test` | 11 forgeries rejected, honest control accepted |
-| `npm run verify-sdk` | 63 assertions against live devnet |
+| `npm run demo` | passes — a real on-chain transaction, real USDM moved |
+| `npm run ui` / `npm run ask` | browser console and free-text demo work, with the model live |
+| `npm run demo -- --tamper` | buyer refuses, no funds move, registry entry restored |
+| `npm run attack-test` | all 11 forged payments rejected, the honest control accepted |
+| `npm run verify-sdk` | 63 assertions against live devnet pass |
 
 ## Layout
 
 ```
-packages/shared        config, chain, wire types (payment-proof), payment-verify, registry
-packages/agent-seller  Signal Desk: markets, Groq estimates, paywall + its own 7 checks
-packages/agent-buyer   Risk Agent: brain, identity-check, pay
-scripts/               00 setup-asset, 01 register-agents, verify-sdk, demo, attack-test
-deck/                  7-slide talk; speaker notes are the script
+packages/shared        config, chain access, payment wire format, transfer verification, registry
+packages/agent-seller  the seller: question catalog, estimates, paywall, payment verification
+packages/agent-buyer   the buyer: question matching, identity check, payment client
+scripts/               setup (asset, registration), demo, ui, ask, attack-test, verify-sdk
+deck/                  the 7-slide talk; speaker notes are the script
 ```
