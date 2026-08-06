@@ -13,8 +13,6 @@ Hands-on repos for the **MOI Builders** webinar series. Each session is a self-c
 | 5 | NFT Marketplace — MAS1 mint + transfer (CLI + UI) | [`session-5/`](./session-5) |
 | 6 | Context inheritance — one wallet, many agents with on-chain budgets | [`session-6/`](./session-6) |
 | 7 | Agentic Payments **V1** — an agent finds another agent on MOI and pays it (x402 + registry identity) | [`session-7/`](./session-7) |
-| 8 | Agentic Payments **V2** — authority: an on-chain spend cap the chain enforces | [`session-8/`](./session-8) |
-| 9 | Agentic Payments **V3** — full agentic commerce (planned) | [`session-9/`](./session-9) |
 
 ## Quick start
 
@@ -35,7 +33,12 @@ Session 5 needs a funded devnet wallet and `cd ui && npm install` before `npm ru
 
 Session 6 needs a funded devnet wallet and an `ANTHROPIC_API_KEY` for the real-agent `run` command (scripted `spend` works without it) — see [`session-6/README.md`](./session-6/README.md).
 
-Sessions 7–9 are one story in three parts: **find and pay an agent** (7), **constrain what it may spend** (8), **a full purchase with delivery** (9). Session 7 is an npm-workspaces TypeScript monorepo; session 8 still uses pnpm. Session 7 has no offline mode — every run settles on devnet, so it needs a funded wallet (`npm run setup:asset && npm run setup:registry && npm run demo`). Start at [`session-7/EXPLAINER.md`](./session-7/EXPLAINER.md) for the plain-English version, or [`session-7/REVIEW.md`](./session-7/REVIEW.md) to read the code. Session 9 is a plan only.
+Session 7 is part one of a three-part arc — **find and pay an agent** now; constraining what an
+agent may spend, and full pay-on-delivery commerce, follow in later sessions. It's an
+npm-workspaces TypeScript monorepo with no offline mode — every run settles on devnet, so it needs
+a funded wallet (`npm run setup:asset && npm run setup:registry && npm run demo`). Start at
+[`session-7/EXPLAINER.md`](./session-7/EXPLAINER.md) for the plain-English version, or
+[`session-7/REVIEW.md`](./session-7/REVIEW.md) to read the code.
 
 ## Prerequisites
 

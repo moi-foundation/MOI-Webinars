@@ -85,9 +85,7 @@ never x402's to begin with, so it survived the move unchanged.
 | `npm run verify-sdk` | 63 assertions against live devnet |
 
 **The deck and its speaker notes are current** — `deck/MOI_Builders_S7-new.pptx`, 7 slides, the
-notes are the talk. Three archived docs still describe the x402 build and carry a staleness banner:
-[SPEC.md](./SPEC.md), [SDK_NOTES.md](./SDK_NOTES.md), [VIDEO.md](./VIDEO.md). Read them as history,
-not as this branch.
+notes are the talk.
 
 ## Layout
 

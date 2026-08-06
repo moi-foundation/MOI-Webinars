@@ -1,9 +1,0 @@
-{
-  "name": "@s7/shared",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "description": "Shared types, config, MOI helpers, registry helpers and x402 wire format for Session 7.",
-  "main": "./src/index.ts",
-  "exports": { ".": "./src/index.ts" }
-}

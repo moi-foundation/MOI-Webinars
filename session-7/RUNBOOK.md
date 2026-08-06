@@ -141,5 +141,5 @@ npm run attack-test                   # 11 forgeries (~12 base units)
 npm run verify-sdk                    # SDK claims still true?
 ```
 
-Docs: [EXPLAINER](./EXPLAINER.md) plain English · [SPEC](./SPEC.md) how it works ·
-[VIDEO](./VIDEO.md) recording script · deck in [`deck/`](./deck)
+Docs: [EXPLAINER](./EXPLAINER.md) plain English · [REVIEW](./REVIEW.md) for code readers ·
+[TRANSCRIPT](./TRANSCRIPT.md) script pointer · deck in [`deck/`](./deck)
