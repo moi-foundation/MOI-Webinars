@@ -1,4 +1,10 @@
-# Session 7 — live demo plan
+# Session 7 — live demo plan (terminal variant + mechanics)
+
+**The canonical show is the deck's speaker notes + `npm run ui`** — see [TRANSCRIPT.md](./TRANSCRIPT.md).
+This file keeps the terminal-only variant (for rehearsal, or if the browser dies) and the break-glass table.
+
+Note the numbering difference: the browser shows the identity check as **card 7** (it has an extra
+price-judgment card); the terminal banners call it **step 6**. The narration below uses terminal numbers.
 
 Show code → run it → read the output. Three loops of that, each one idea.
 

@@ -54,24 +54,28 @@ DEMO_PAUSE_MS=1200 npm run demo
 - [ ] terminal at 18–20pt, dark theme, ~100 columns
 - [ ] scrollback cleared
 - [ ] no `.env`, mnemonic or API key visible on screen — check your prompt and window title
-- [ ] deck open (`deck/MOI_Builders_S7.pptx`, presenter view), demo in a second window
+- [ ] deck open (`deck/MOI_Builders_S7-new.pptx`, presenter view) — the speaker notes ARE the script
+- [ ] `npm run ui` freshly restarted (resets the demand counters), http://localhost:4000 in a browser tab
 - [ ] `--tamper` run once so you know what it looks like (it self-restores, so rerun freely)
 
 ### Shape of the session
 
-| | Minutes | What |
-| --- | --- | --- |
-| 1 | 0–5 | **Why** — agents can find each other but can't pay each other (slides 2–3) |
-| 2 | 5–12 | **How the payment works** — 402, quote, pay, prove (slides 4–6) |
-| 3 | 12–20 | **Live demo** — happy path, narrated |
-| 4 | 20–28 | **The code** — discovery, the 402, the identity check (slides 7–9) |
-| 5 | 28–34 | **Live demo** — `--tamper`. The agent refuses. |
-| 6 | 34–40 | **How it settles** — nobody holds your money (slide 10) |
-| 7 | 40–45 | **What's next + go run it** (slides 11–12), Q&A |
+Seven slides. The speaker notes carry the full script — presenter view is all you need.
+
+| | Minutes | What | Where |
+| --- | --- | --- | --- |
+| 1 | 0–3 | Hello + the hook | slides 1–2 |
+| 2 | 3–7 | The two agents, and the flow in one breath | slide 2 |
+| 3 | 7–20 | **Live demo** — happy path, then the tampered listing | slide 3 → browser |
+| 4 | 20–34 | **The code** — seven files, concepts not lines | slide 4 → editor |
+| 5 | 34–40 | Guardrails are self-imposed (env-var beat in terminal) | slide 5 |
+| 6 | 40–45 | Sessions 8–9 tease, close, Q&A | slides 6–7 |
+
 
 ### The one moment that matters
 
-Everything else is setup for **step 7 of the demo** — the identity check. Slow down there.
+Everything else is setup for **card 7 in the browser** — the identity check. Slow down there.
+(Heads-up: the terminal demo numbers it step 6 — the UI has an extra price-judgment card.)
 
 > "That `payTo` is 32 bytes. It doesn't tell you *whose* address it is. So the agent goes back to
 > the registry and asks. No payment protocol can answer that, and it's the reason this runs on MOI."

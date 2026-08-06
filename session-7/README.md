@@ -78,14 +78,16 @@ never x402's to begin with, so it survived the move unchanged.
 
 | Command | Result |
 | --- | --- |
-| `npm run demo` | green — real interaction hash, 1 USDM moved |
+| `npm run demo` | green — real interaction hash, real USDM moved |
+| `npm run ui` / `npm run ask` | the browser console and free-text demo, model brains live |
 | `npm run demo -- --tamper` | buyer refuses, no funds move, registry restored |
 | `npm run attack-test` | 11 forgeries rejected, honest control accepted |
 | `npm run verify-sdk` | 63 assertions against live devnet |
 
-**Still to do:** [SPEC.md](./SPEC.md), [SDK_NOTES.md](./SDK_NOTES.md), [VIDEO.md](./VIDEO.md) and
-the deck still describe the x402 architecture from the other branch. The code here is current; those
-four are not.
+**The deck and its speaker notes are current** — `deck/MOI_Builders_S7-new.pptx`, 7 slides, the
+notes are the talk. Three archived docs still describe the x402 build and carry a staleness banner:
+[SPEC.md](./SPEC.md), [SDK_NOTES.md](./SDK_NOTES.md), [VIDEO.md](./VIDEO.md). Read them as history,
+not as this branch.
 
 ## Layout
 
