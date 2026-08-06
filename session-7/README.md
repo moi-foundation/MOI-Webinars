@@ -98,47 +98,37 @@ seller 200 + estimate + X-Payment-Receipt
 
 ## Run it
 
-**No offline mode — every run settles on Voyage devnet.** You need one funded wallet (the buyer
-signs; the seller only receives).
+**No offline mode — every run settles on Voyage devnet.**
 
 ```bash
 cd session-7
 npm install
-cp .env.example .env          # paste ONE funded devnet mnemonic
-                              # fund at https://voyage.moi.technology
-                              # path m/44'/6174'/7020'/0/0
-
-npm run verify-sdk            # 63 assertions vs live devnet — no wallet needed
-npm run setup:asset           # MAS0 asset + buyer float -> SETTLEMENT_ASSET_ID
-npm run setup:registry        # register both agents -> SELLER_AGENT_ID / BUYER_AGENT_ID
-npm run demo                  # happy path — real interaction hash at the end
+cp .env.example .env
 ```
 
-Useful variants:
+In `.env`, fill in two things:
+
+- **`USER_MNEMONIC`** — one funded devnet mnemonic. Fund it at <https://voyage.moi.technology>
+  (path `m/44'/6174'/7020'/0/0`).
+- **`GROQ_API_KEY`** — a free key from <https://console.groq.com>. This is the agents' brain;
+  without it they fall back to dumb keyword matching.
+
+That one mnemonic gives you **two separate accounts** — the buyer and the seller each derive their
+own wallet from it at a different derivation path (`.../0/0` and `.../0/1`). Only the buyer's needs
+funding: it signs the payment, while the seller only ever receives.
+
+Then set up the world once, and run the console:
 
 ```bash
-DEMO_PAUSE_MS=1200 npm run demo   # ~25s, narratable (default run is ~1.2s)
-npm run demo -- --tamper          # attacker wallet in registry → buyer refuses, no funds move
-npm run attack-test               # 11 forgeries rejected + honest control (~12 base units)
-npm run ui                        # browser console at http://localhost:4000
-npm run ask                       # free-text questions in the terminal (needs GROQ_API_KEY)
+npm run setup:asset           # MAS0 asset + buyer float -> SETTLEMENT_ASSET_ID
+npm run setup:registry        # register both agents -> SELLER_AGENT_ID / BUYER_AGENT_ID
+npm run ui                    # agent console at http://localhost:4000
 ```
 
+Open <http://localhost:4000> and ask a question — every one spends real devnet money.
+
 If something fails, it is usually environment: unfunded wallet, stale `SETTLEMENT_ASSET_ID`, agents
-not registered, or devnet down. Re-run `setup:asset` / `setup:registry` as needed. If you Ctrl-C a
-`--tamper` run mid-flight, run it again and let it finish — it restores the registry on the way out.
-
-## Why there is no x402 here
-
-There was. It lives on the **`claude/agent-payments-moi-x402`** branch and it works — same demo,
-same identity check, roughly twice the code and a separate facilitator service to run.
-
-What that branch buys is interoperability: because it speaks the x402 wire format, any x402 client
-can pay that seller and that buyer can pay any x402 server. Reach for it if that matters to you.
-
-This branch trades that away for a protocol you can read in one sitting. Two messages: the seller
-quotes, the buyer pays and proves it. The part worth keeping — the registry identity check — was
-never x402's to begin with, so it survived the move unchanged.
+not registered, or devnet down. Re-run `setup:asset` / `setup:registry` as needed.
 
 ## Honesty guardrails
 
