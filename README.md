@@ -12,7 +12,7 @@ Hands-on repos for the **MOI Builders** webinar series. Each session is a self-c
 | 4 | Account-to-account native swap — MAS0 Lockup + Release (CLI + UI) **(bounty)** | [`session-4/`](./session-4) |
 | 5 | NFT Marketplace — MAS1 mint + transfer (CLI + UI) | [`session-5/`](./session-5) |
 | 6 | Context inheritance — one wallet, many agents with on-chain budgets | [`session-6/`](./session-6) |
-| 7 | Agentic Payments **V1** — an agent finds another agent on MOI and pays it (x402 + registry identity) | [`session-7/`](./session-7) |
+| 7 | Agentic Payments **V1** — an agent finds another agent on MOI and pays it (registry identity + native settlement) | [`session-7/`](./session-7) |
 
 ## Quick start
 
