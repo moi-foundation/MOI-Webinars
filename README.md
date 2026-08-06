@@ -33,12 +33,11 @@ Session 5 needs a funded devnet wallet and `cd ui && npm install` before `npm ru
 
 Session 6 needs a funded devnet wallet and an `ANTHROPIC_API_KEY` for the real-agent `run` command (scripted `spend` works without it) — see [`session-6/README.md`](./session-6/README.md).
 
-Session 7 is part one of a three-part arc — **find and pay an agent** now; constraining what an
-agent may spend, and full pay-on-delivery commerce, follow in later sessions. It's an
+Session 7 — **find and pay an agent** on MOI (identity check + native MAS0 settlement). It's an
 npm-workspaces TypeScript monorepo with no offline mode — every run settles on devnet, so it needs
 a funded wallet (`npm run setup:asset && npm run setup:registry && npm run demo`). Start at
-[`session-7/EXPLAINER.md`](./session-7/EXPLAINER.md) for the plain-English version, or
-[`session-7/REVIEW.md`](./session-7/REVIEW.md) to read the code.
+[`session-7/README.md`](./session-7/README.md), or
+[`session-7/EXPLAINER.md`](./session-7/EXPLAINER.md) for the plain-English version.
 
 ## Prerequisites
 

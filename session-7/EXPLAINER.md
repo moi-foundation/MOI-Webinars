@@ -37,9 +37,8 @@ MOI answers both.
 looks the seller up on-chain and checks: *is the address in this quote actually the seller's
 registered address?* If not, it refuses. An attacker who swaps the address gets caught.
 
-**Should this agent be spending?** That one is session 8 — agents get a spending cap the chain
-itself enforces. This session deliberately stops at identity, so there's one idea to take away
-rather than three.
+**Should this agent be spending?** Out of scope here — this session stops at identity, so there's
+one idea to take away.
 
 ## The one honest wrinkle
 
@@ -51,7 +50,7 @@ The seller looks that transaction up on the chain and confirms it: right amount,
 really sent by whoever is claiming it, and not already spent on something else.
 
 Nobody holds anybody's money at any point. There is also nothing protecting the buyer if the seller
-takes the payment and delivers nothing — that's session 9.
+takes the payment and delivers nothing — fire-and-forget on purpose for this session.
 
 ## Try it
 
@@ -84,7 +83,7 @@ The payment is the easy half. MOI is the part that makes it safe to pay a *stran
 
 ---
 
-More depth: [REVIEW.md](./REVIEW.md) (what to check) · [README.md](./README.md) (how to run it)
+More depth: [README.md](./README.md).
 
 There is also an **x402** version of this same demo on the `claude/agent-payments-moi-x402` branch.
 It speaks a public standard, so anyone's agent could pay this seller — at the cost of about twice
