@@ -19,7 +19,7 @@ We ran this live at MOI Builders Session 7. Two AI agents, built on [Groq](https
 
 ## The problem: paying a stranger
 
-Moving money is the easy part — blockchains have settled peer-to-peer value since [Bitcoin's genesis block in January 2009](https://en.bitcoin.it/wiki/Genesis_block). The hard part is the judgement wrapped around it. When you buy from someone you've never dealt with, you run three quick checks almost without noticing. Does the shop look real? Is the price within what you'll pay? And if nothing arrives, do you have any way to get your money back?
+Moving money is the easy part — blockchains have settled peer-to-peer value since 2009. The hard part is the judgement wrapped around it. When you buy from someone you've never dealt with, you run three quick checks almost without noticing. Does the shop look real? Is the price within what you'll pay? And if nothing arrives, do you have any way to get your money back?
 
 Take the human out and all three disappear. And you do have to take the human out — an agent buying a fraction-of-a-cent answer can't wait for someone to click approve, because at that size the approval usually costs more than the thing being bought. So each instinct has to become something a machine can check. This session answers the first one: **how does an agent know who it's paying?**
 
