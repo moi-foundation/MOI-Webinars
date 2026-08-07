@@ -18,9 +18,6 @@ const args = new Set(process.argv.slice(2));
 const TAMPER = args.has("--tamper");
 const QUESTION = "How likely is a big bitcoin drawdown this quarter?";
 
-/** A wrong-but-well-formed address to point the registry at during --tamper. */
-const ATTACKER = "0x" + "de".repeat(28) + "00000000";
-
 async function main(): Promise<void> {
   banner("DEMO", "0", "MOI Builders #7 — an agent finds another agent, and pays it");
   detail("mode", TAMPER ? "--tamper (identity attack)" : "happy path");
@@ -46,6 +43,12 @@ async function main(): Promise<void> {
     detail(`${label} agent`, `${p.agent_id}  [${p.status}]`);
     detail(`${label} wallet`, addr0x(p.agent_wallet));
   }
+
+  // The "attacker" is the buyer's own address: any wallet that is not the seller's works, but it
+  // MUST be a valid, existing identifier — a made-up hex string (e.g. 0xdede…) is rejected by the
+  // node as an invalid identifier, which makes the restore below permanently unmineable and bricks
+  // the agent's registry entry.
+  const ATTACKER = buyer.address;
 
   let restoreWallet = false;
   if (TAMPER) {

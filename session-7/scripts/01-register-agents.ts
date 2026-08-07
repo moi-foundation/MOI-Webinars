@@ -64,24 +64,24 @@ async function main(): Promise<void> {
   detail("owner (signs)", buyer.address);
 
   const sellerId = await register(reg, buyer, seller.address, {
-    name: "Signal Desk",
-    description: "Sells probability estimates, priced per call and settled in a native MAS0 asset.",
+    name: "Probability Book Desk",
+    description: "Sells bitcoin probability books (short paid estimates), settled in a native MAS0 asset.",
     url: config.sellerUrl,
-    skillId: "sells-signals",
-    skillName: "Sells Signals",
-    skillDesc: "Returns a probability estimate for a market in its catalog. Paid per call.",
-    // `sells-signals` is the tag the buyer scans the registry for.
-    tags: ["sells-signals", "agent-payments", "bitcoin"],
+    skillId: "sells-books",
+    skillName: "Sells Books",
+    skillDesc: "Returns a bitcoin probability book for a market in its catalog. Paid per call.",
+    // `sells-books` is the tag the buyer scans the registry for (matches agent_132 on this wallet).
+    tags: ["sells-books", "agent-payments", "bitcoin"],
   }, FRESH ? null : config.sellerAgentId);
 
   const buyerId = await register(reg, buyer, buyer.address, {
     name: "Risk Agent",
-    description: "Autonomously finds signal desks on MOI and buys the estimate it needs.",
+    description: "Autonomously finds probability-book desks on MOI and buys the book it needs.",
     url: `http://localhost:${config.buyerPort}`,
-    skillId: "buys-signals",
-    skillName: "Buys Signals",
-    skillDesc: "Chooses and pays for probability estimates, checking the payee in this registry first.",
-    tags: ["buys-signals", "agent-payments"],
+    skillId: "buys-books",
+    skillName: "Buys Books",
+    skillDesc: "Chooses and pays for probability books, checking the payee in this registry first.",
+    tags: ["buys-books", "agent-payments"],
   }, FRESH ? null : config.buyerAgentId);
 
   const path = updateEnv({ SELLER_AGENT_ID: sellerId, BUYER_AGENT_ID: buyerId });

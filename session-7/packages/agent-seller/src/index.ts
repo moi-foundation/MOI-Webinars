@@ -19,7 +19,7 @@ export interface SellerHandle {
 export async function startSeller(opts?: { onEvent?: (e: SellerEvent) => void }): Promise<SellerHandle> {
   const seller = await sellerAccount();
 
-  banner("SELLER", "boot", "Signal Desk online");
+  banner("SELLER", "boot", "Probability Book Desk online");
   detail("wallet", seller.address);
   detail("agent id", config.sellerAgentId ?? "(unregistered — run npm run setup:registry)");
   detail("catalog", `${MARKETS.length} markets`);
@@ -72,14 +72,14 @@ export async function startSeller(opts?: { onEvent?: (e: SellerEvent) => void })
   // on offer cannot decide whether it wants it.
   app.get("/catalog", (_req, res) => {
     res.json({
-      seller: "Signal Desk",
+      seller: "Probability Book Desk",
       agentId: config.sellerAgentId,
       symbol: config.assetSymbol,
       markets: catalogJson(),
     });
   });
 
-  // PAID. The probability is the product.
+  // PAID. Each market is sold as a short probability "book" (estimate + basis).
   app.get(
     "/signal/:id",
     paywall(
@@ -104,10 +104,10 @@ export async function startSeller(opts?: { onEvent?: (e: SellerEvent) => void })
 
   app.get("/about", (_req, res) => {
     res.json({
-      name: "Signal Desk",
+      name: "Probability Book Desk",
       agentId: config.sellerAgentId,
       address: seller.address,
-      sells: "probability estimates",
+      sells: "bitcoin probability books",
       catalog: "/catalog",
     });
   });

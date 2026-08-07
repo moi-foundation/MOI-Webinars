@@ -68,13 +68,13 @@ export async function runBuyer(
   }
 
   // ── STEP 1: DISCOVER ────────────────────────────────────────────────────────────────────
-  banner("BUYER", "step 1", "Find a signal desk in the MOI agent registry");
+  banner("BUYER", "step 1", "Find a probability-book desk in the MOI agent registry");
   steps.emit({
     actor: "buyer",
     title: "I don't know the answer to this",
     thought:
       `"${question}" is not something I can answer myself. I need to find an agent that sells ` +
-      "this kind of estimate. I'll scan the MOI agent registry for the skill tag `sells-signals`.",
+      "bitcoin probability books. I'll scan the MOI agent registry for the skill tag `sells-books`.",
     status: "working",
   });
   let sellerUrl = opts.fallbackUrl;
@@ -82,9 +82,9 @@ export async function runBuyer(
   if (registry) {
     try {
       // O(n) client-side scan — the registry has no index and no search.
-      const found = await discoverBySkill(registry, "sells-signals", buyer.address);
+      const found = await discoverBySkill(registry, "sells-books", buyer.address);
       detail("scanned", `${found.scanned} (${found.scope})`);
-      detail("agents selling signals", String(found.matches.length));
+      detail("agents selling books", String(found.matches.length));
       if (found.scanned === 0) warn("scanned nothing — the registry query failed, not an empty registry");
       const chosen =
         found.matches.find((p) => p.agent_id === config.sellerAgentId) ??
@@ -119,7 +119,7 @@ export async function runBuyer(
           status: "ok",
         });
       } else {
-        warn(`no registered signal desk found — falling back to ${sellerUrl}`);
+        warn(`no registered book desk found — falling back to ${sellerUrl}`);
       }
     } catch (err) {
       warn(`discovery failed (${(err as Error).message}) — falling back to ${sellerUrl}`);

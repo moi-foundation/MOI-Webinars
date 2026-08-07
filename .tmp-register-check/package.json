@@ -1,0 +1,10 @@
+{
+  "name": "register-check",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "js-moi-agent-registry": "^0.1.1",
+    "js-moi-sdk": "^0.7.1"
+  }
+}
