@@ -1,4 +1,5 @@
-// The seller checks its own payments. Seven checks, all read-only, all in-process.
+// The seller checks its own payments. Seven checks, all in-process — every check is a read;
+// the only write is burning the transfer hash afterwards so it cannot buy twice.
 //
 // In the x402 version this lived in a separate facilitator service and there were nine checks.
 // Two are gone, and their absence is the point:

@@ -256,7 +256,7 @@ function render(s){
   }).join("")+'</dl>';
   if(s.checks) h+=s.checks.map(c=>'<div class="chk"><i class="'+(c.passed?"p":"f")+'">'+(c.passed?"✓":"✗")+'</i><b>'+esc(c.name)+'</b><span>'+esc(c.detail)+'</span></div>').join("");
   if(s.data!==undefined) h+='<pre>'+esc(JSON.stringify(s.data,null,2))+'</pre>';
-  d.innerHTML=h; feed.appendChild(d); d.scrollIntoView({behavior:"smooth",block:"end"});
+  d.innerHTML=h; feed.appendChild(d);
 }
 // The work is bursty — the registry scan takes ~10s and emits one step, then the catalog and the
 // choice land milliseconds apart. Rendering as fast as events arrive makes half the run appear at
@@ -284,7 +284,7 @@ function finish(r){
   d.className="end "+(r.ok?"ok":"no");
   d.textContent=r.ok?"Done — the agent found a seller, verified it, paid it, and got the answer."
     :(r.refused?"Agent refused to pay. No money moved.":"Failed: "+r.message);
-  feed.appendChild(d); d.scrollIntoView({behavior:"smooth",block:"end"});
+  feed.appendChild(d);
   $("#go").disabled=false;
 }
 

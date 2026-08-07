@@ -10,9 +10,9 @@
 // checks, no server to stand up. The last case is different in kind: the registry check now lives
 // with the BUYER, so it is tested against checkSellerIdentity instead.
 //
-// Runs against real devnet, so it needs a funded buyer and a completed setup. Eleven of the twelve
-// cases make a real MAS0 transfer at the cheapest market's price, so the suite moves ~11 base
-// a unit test — it is verifying real chain reads.
+// Runs against real devnet, so it needs a funded buyer and a completed setup. Ten of the twelve
+// cases make a real MAS0 transfer at the cheapest market's price, so the suite moves ~10 base
+// units. Slower than a unit test — it is verifying real chain reads.
 
 import {
   config, NETWORK,
@@ -71,7 +71,7 @@ async function main(): Promise<void> {
   if (!sellerAgentId) throw new Error("SELLER_AGENT_ID unset — run `npm run setup:registry` first.");
 
   const reg = await registryClient(buyer, false);
-  // The cheapest market on purpose — the suite makes ~11 real transfers and this is not the thing
+  // The cheapest market on purpose — the suite makes ~10 real transfers and this is not the thing
   // being tested. Price comes from the catalog, same as it would for a real buyer.
   const market = findMarket("btc-100k-2026")!;
   const resource = `${config.sellerUrl}/signal/${market.id}`;
