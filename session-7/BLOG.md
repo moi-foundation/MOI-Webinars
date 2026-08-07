@@ -1,18 +1,29 @@
+---
+title: "How AI Agents Pay Each Other — A Working Demo on MOI"
+description: "Two AI agents transact on MOI with no human, no accounts, no payment processor. How agentic payments work: on-chain identity, HTTP 402, and a real settled transaction."
+author: "Adithya Ganesh"
+authorRole: "Ecosystem, Sarva Labs"
+slug: "how-ai-agents-pay-each-other-moi"
+tags: [agentic payments, AI agents, MOI, HTTP 402, on-chain identity, x402]
+---
+
 # How AI Agents Pay Each Other — A Working Demo on MOI
 
-> **TL;DR — What are agentic payments?** Agentic payments are transactions initiated, priced, verified and settled by AI agents without a human in the loop. In the working demo below, a buyer agent finds a seller through [MOI](https://moi.technology)'s on-chain agent registry, verifies that the payment address really belongs to that agent, pays from its own wallet in a native on-chain asset, and the seller confirms the payment by reading the chain — no accounts, no API keys, and no payment processor anywhere. Every transaction in this post is real and publicly verifiable on [MOI's Voyage devnet explorer](https://voyage.moi.technology).
+## What are agentic payments?
+
+**Agentic payments** are transactions initiated, priced, verified and settled by AI agents, with no human in the loop. In the working demo below, a buyer agent finds a seller through [MOI](https://moi.technology)'s on-chain agent registry, verifies that the payment address really belongs to that agent, and pays from its own wallet in a native on-chain asset. The seller confirms the payment by reading the chain — no accounts, no API keys, and no payment processor anywhere. Every transaction in this post is real and publicly verifiable on [MOI's Voyage devnet explorer](https://voyage.moi.technology).
 
 We ran this live at MOI Builders Session 7. Two AI agents, built on [Groq](https://groq.com) running [Llama 3.3 70B](https://console.groq.com/docs/models), doing business with each other on [MOI](https://moi.technology) — and the entire codebase is open in the [MOI-Webinars repo](https://github.com/moi-foundation/MOI-Webinars). This post is the write-up: what we built, how the payment actually works, and the one problem we deliberately left open.
 
 ## The problem: paying a stranger
 
-Moving money is the easy part — blockchains have done that for the better part of two decades. The hard part is everything a human does *without thinking* when they buy from someone they've never met. You glance at the shop and decide it looks real. You keep a rough number in your head that you won't go past. And you assume that if nothing turns up, there's some way to get your money back.
+Moving money is the easy part — blockchains have settled peer-to-peer value since [Bitcoin's genesis block in January 2009](https://bitcoin.org/bitcoin.pdf). The hard part is everything a human does *without thinking* when they buy from someone they've never met. You glance at the shop and decide it looks real. You keep a rough number in your head that you won't go past. And you assume that if nothing turns up, there's some way to get your money back.
 
 Take the human out, and all three instincts disappear. And you *have* to take the human out — an agent buying a fraction-of-a-cent answer can't wait for a person to click approve, because the approval costs more than the purchase. So each instinct has to become something a machine can check. This session answers the first one: **how does an agent know who it's paying?**
 
 ## The two agents
 
-**The seller — a Probability Book Desk.** It sells bitcoin probability books: you ask a yes-or-no question about the future — *will bitcoin drop twenty percent this quarter?* — and it sells you back a number. It sets its own price per answer, watching how much demand each question is getting and marking prices up when one runs hot, inside arithmetic bounds it cannot break.
+**The seller — a Probability Book Desk.** It sells bitcoin probability books: you ask a yes-or-no question about the future — *will bitcoin drop twenty percent this quarter?* — and it sells you back a number. It sets its own price per answer, watching how much demand each question is getting and marking prices up when one runs hot. The markup happens inside arithmetic bounds the model cannot break.
 
 **The buyer — a Risk Agent.** It has a question it can't answer and a wallet of its own. It's been instructed not to guess at things it doesn't know, but to search the [MOI agent registry](https://www.npmjs.com/package/js-moi-agent-registry) for an agent capable of the task. It decides which listing answers its question, and it judges for itself whether the quoted price is worth paying.
 
@@ -41,7 +52,7 @@ Here's one of the real transactions from our runs — paid by the buyer agent, v
 
 This is the heart of the session, and it's forty-two lines of code.
 
-A payment address is thirty-two bytes. It tells you **where** to send money. It tells you absolutely nothing about **whose** address it is. That gap between *where* and *whose* is where real-world payment fraud lives — business email compromise, which is mostly swapped payment details on real invoices, cost victims $2.9 billion in 2023 according to the [FBI's Internet Crime Complaint Center](https://www.ic3.gov/AnnualReport/Reports). The invoice is genuine; the account number isn't.
+A payment address is thirty-two bytes. It tells you **where** to send money. It tells you absolutely nothing about **whose** address it is. That gap between *where* and *whose* is where real-world payment fraud lives. Business email compromise — mostly swapped payment details on genuine invoices — cost victims $2.9 billion in 2023, according to the [FBI's Internet Crime Complaint Center](https://www.ic3.gov/AnnualReport/Reports). The invoice is real; the account number isn't.
 
 So before paying, the buyer asks the chain a different question: *what wallet did this agent actually register?*
 
@@ -55,15 +66,15 @@ One comparison, run **before** the transfer — not after. The ordering is the e
 
 > **A payment protocol can tell you where. Only a registry can tell you whose.**
 
-That's the MOI-specific piece. The check works because the seller's identity lives somewhere both parties can read *without asking each other* — the seller wrote its wallet on the chain when it registered, the buyer reads it at purchase time, and no API or trust relationship exists between them.
+That's the MOI-specific piece. The check works because the seller's identity lives somewhere both parties can read *without asking each other*. The seller wrote its wallet on the chain when it registered; the buyer reads it at purchase time; no API or trust relationship exists between them.
 
 ## Payment without a processor
 
 There are exactly two signatures in this system, both the buyer's.
 
-The **first signature moves the money**: the buyer's wallet signs a MAS0 transfer via [js-moi-sdk](https://www.npmjs.com/package/js-moi-sdk) (using [ECDSA over secp256k1](https://en.bitcoin.it/wiki/Secp256k1) — the same curve Bitcoin uses) and submits it to the chain itself. The **second signature proves the payment belongs to this purchase**: transfers on a public chain are visible to everyone, so without a signed claim binding the transaction to the buyer and the resource, anyone could quote a stranger's transaction hash and collect the goods it paid for.
+The **first signature moves the money**: the buyer's wallet signs a MAS0 transfer via [js-moi-sdk](https://www.npmjs.com/package/js-moi-sdk) (using [ECDSA over secp256k1](https://en.bitcoin.it/wiki/Secp256k1) — the same curve Bitcoin uses) and submits it to the chain itself. The **second signature proves the payment belongs to this purchase**. Transfers on a public chain are visible to everyone — so without a signed claim binding the transaction to the buyer and the resource, anyone could quote a stranger's transaction hash and collect the goods it paid for.
 
-On the other side, the seller trusts none of it. It reads the transaction off the chain — receipt, then the raw operation, decoded with [js-polo](https://www.npmjs.com/package/js-polo) — and checks the sender, the recipient, the amount, the expiry, and that this transfer hasn't already bought something. Seven checks, all reads. We fired eleven kinds of forged payment at this verifier — tampered amounts, foreign keys, invented transactions, replays — and each was rejected for its own specific reason.
+On the other side, the seller trusts none of it. It reads the transaction off the chain — receipt, then the raw operation, decoded with [js-polo](https://www.npmjs.com/package/js-polo) — and checks the sender, the recipient, the amount, the expiry, and that this transfer hasn't already bought something. Seven checks, all reads. We fired eleven kinds of forged payment at this verifier — tampered amounts, foreign keys, invented transactions, replays — and each was rejected for its own specific reason. The full attack suite ships in the [session repo](https://github.com/moi-foundation/MOI-Webinars), so the methodology is inspectable, not asserted.
 
 **There is no payment processor in this system. The chain is the settlement record, and both sides simply read it.**
 
