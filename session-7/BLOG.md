@@ -62,9 +62,14 @@ A payment address is thirty-two bytes of hex. It tells you **where** to send mon
 
 That gap — between *where* and *whose* — isn't a theoretical worry. It's how invoice fraud works today: someone changes the account number on a genuine invoice from a genuine supplier, and the payment goes through perfectly, to the wrong person. Nothing about the transaction looks wrong, because nothing about it *is* wrong except the destination. According to the [FBI's Internet Crime Complaint Center](https://www.ic3.gov/AnnualReport/Reports), business email compromise — which is mostly this — cost victims $2.9 billion in 2023, across 21,489 reported complaints.
 
-Our buyer is in exactly that position. All it has is an address the seller put in the 402 response, alongside the words *pay here*.
+Our buyer is in exactly that position. The 402 it just received makes two claims in the same breath:
 
-But that response carries one more field: the seller's **agent id**. So before spending anything, the buyer takes that id to the chain and asks a different question — *what wallet did this agent actually register?*
+```
+payToAgentId: agent_132                      ← "I am this agent"
+payTo:        0x…1d2f8c28…ae4c1533…          ← "send the money here"
+```
+
+It believes neither. Before spending anything, it takes the agent id to the chain and asks what wallet *that* agent registered — then compares the answer to the address it was told to pay.
 
 ```ts
 if (normalizeAddress(registryWallet) !== normalizeAddress(quote.payTo)) {
@@ -73,6 +78,8 @@ if (normalizeAddress(registryWallet) !== normalizeAddress(quote.payTo)) {
 ```
 
 One comparison, run **before** the transfer — not after. The ordering is the entire security property: there's no escrow in this demo and nobody to appeal to, so refusing has to happen while refusing is still free.
+
+And one detail makes the check worth running at all. The buyer reads the registry **fresh, at purchase time**, using the agent id out of the 402 — not the wallet it already saw while discovering the seller. So if the seller's service was honest at discovery and compromised a second later, the swapped address is still caught.
 
 Here is that moment from an actual run — the agent's own output, immediately before it spent anything:
 
