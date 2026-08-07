@@ -19,29 +19,33 @@ We ran this live at MOI Builders Session 7. Two AI agents, built on [Groq](https
 
 ## The problem: paying a stranger
 
-Moving money is the easy part — blockchains have settled peer-to-peer value since [Bitcoin's genesis block in January 2009](https://en.bitcoin.it/wiki/Genesis_block). The hard part is everything a human does *without thinking* when they buy from someone they've never met. You glance at the shop and decide it looks real. You keep a rough number in your head that you won't go past. And you assume that if nothing turns up, there's some way to get your money back.
+Moving money is the easy part — blockchains have settled peer-to-peer value since [Bitcoin's genesis block in January 2009](https://en.bitcoin.it/wiki/Genesis_block). The hard part is the judgement wrapped around it. When you buy from someone you've never dealt with, you run three quick checks almost without noticing. Does the shop look real? Is the price within what you'll pay? And if nothing arrives, do you have any way to get your money back?
 
-Take the human out, and all three instincts disappear. And you *have* to take the human out — an agent buying a fraction-of-a-cent answer can't wait for a person to click approve, because the approval costs more than the purchase. So each instinct has to become something a machine can check. This session answers the first one: **how does an agent know who it's paying?**
+Take the human out and all three disappear. And you do have to take the human out — an agent buying a fraction-of-a-cent answer can't wait for someone to click approve, because at that size the approval usually costs more than the thing being bought. So each instinct has to become something a machine can check. This session answers the first one: **how does an agent know who it's paying?**
 
 ## The two agents
 
 **The seller — a Probability Desk.** It sells bitcoin probabilities: you ask a yes-or-no question about the future — *will bitcoin drop twenty percent this quarter?* — and it sells you back a number. It sets its own price per answer, watching how much demand each question is getting and marking prices up when one runs hot. The markup happens inside arithmetic bounds the model cannot break.
 
-**The buyer — a Risk Agent.** It has a question it can't answer and a wallet of its own. It's been instructed not to guess at things it doesn't know, but to search the [MOI agent registry](https://www.npmjs.com/package/js-moi-agent-registry) for an agent capable of the task. It decides which listing answers its question, and it judges for itself whether the quoted price is worth paying.
+**The buyer — a Risk Agent.** It has a question it can't answer — *how likely is a big bitcoin drawdown this quarter?* — and a wallet of its own. It's been instructed not to guess at things it doesn't know, but to search the [MOI agent registry](https://www.npmjs.com/package/js-moi-agent-registry) for an agent capable of the task. It decides which listing answers its question, and it judges for itself whether the quoted price is worth paying.
 
 Both brains run on [Groq](https://groq.com). The prices quoted and the choices made are model decisions happening during the run — not a script. And crucially: the two agents have never met. No shared URL, no API key, no account. The only thing they have in common is that both are registered on MOI, which means each has **an on-chain identity with a wallet recorded against it** — a record either one can read straight off the chain, without asking the other for anything.
 
 ## How the purchase works, end to end
 
-1. **Discover.** The buyer walks the agent registry client-side — there is no index and no search — pulling each agent's on-chain profile and dereferencing the agent card it points to, until it finds one advertising the skill it needs. The chain stores the identity, the wallet and a pointer; the capabilities live in the card. Back comes an agent id, the wallet that agent registered, and a service URL. Nobody handed it an address.
-2. **Browse.** It fetches the seller's catalog over plain HTTP — free, deliberately. The questions and opening prices are public; only the answers cost money. A buyer can't decide what it wants if looking costs something.
+1. **Discover.** The buyer starts from a capability, not a company. It's looking for an agent whose registered skill tag is `sells-books` — the string our seller chose to describe what it does.
+
+   There's no search endpoint to ask. The registry stores records, not an index: no query language, no "find agents where skill = X". So finding means walking it — list the agent ids, pull each one's on-chain profile, open the agent card that profile points to, and keep whichever advertises that tag. The chain holds the identity, the wallet and the pointer; the capabilities themselves live in the card.
+
+   Out comes an agent id, the wallet that agent registered, and a service URL — none of which we configured anywhere.
+2. **Browse.** It fetches the seller's catalog over plain HTTP, and browsing costs nothing. Back comes a menu: *will bitcoin draw down more than twenty percent this quarter?* from 3 units, *will it close higher seven days from now?* from 2, and a couple more. The questions and the opening prices are public — only the answers are paid for. That split is deliberate, because a buyer can't decide what it wants if reading the menu already costs money.
 3. **Choose.** The buyer's model reads the question and the catalog together and picks the market that actually answers it — we typed "crash," a word that appears nowhere in the catalog, and it reasoned its way to the drawdown market.
-4. **Get billed.** The seller responds with [HTTP 402 Payment Required](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402) — a status code reserved in the HTTP spec ([RFC 9110 §15.5.3](https://www.rfc-editor.org/rfc/rfc9110#status.402)) since 1997 and essentially unused, because until now nothing needed to charge a machine per request. The 402 body is a complete, machine-readable offer: price, asset, the wallet to pay, the seller's agent id, and a time-to-live.
+4. **Get billed.** The seller responds with [HTTP 402 Payment Required](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402) — a status code reserved in the HTTP spec ([RFC 9110 §15.5.3](https://www.rfc-editor.org/rfc/rfc9110#status.402)) since 1997 and essentially unused, because until now nothing needed to charge a machine per request. The 402 body is a complete, machine-readable offer: the price, which asset it wants, the wallet to pay, the seller's agent id, and a time-to-live — how long that quote stays good before the buyer has to ask again.
 5. **Judge the price.** The buyer weighs the quote against the list price, its own hard ceiling, and the seller's justification — which it treats as a sales pitch, skeptically.
 6. **Check the identity — the step that matters.** More on this below.
-7. **Pay.** The buyer signs and submits a real transfer of [MAS0](https://moi.technology) — a protocol-native asset, created by an operation rather than deployed as contract bytecode — from its own wallet. Value on MOI moves only under the holder's own signature: either the holder signs the transfer, or it previously signed a capped, expiring allowance naming a spender. Our agents never grant one, so nothing in this system is holding or relaying the money.
+7. **Pay.** The buyer signs and submits a real transfer of [MAS0](https://moi.technology) — a protocol-native asset, created by an operation rather than deployed as contract bytecode — from its own wallet. Value on MOI moves only under the holder's own signature: either the holder signs the transfer itself, or it has previously signed a capped, expiring allowance naming a specific spender. Our agents never grant one, so nothing in this system is holding or relaying the money. (We checked rather than assumed: an unapproved attempt to pull funds from another account moves nothing.)
 8. **Prove it.** It signs a claim binding that exact transaction to this exact purchase, and retries the same request with the proof in a header.
-9. **The seller verifies everything itself.** Seven read-only checks — no payment processor in the middle.
+9. **The seller checks that proof itself.** It doesn't take the buyer's word for any of it. It pulls the named transaction off the chain and reads it back: right sender, right recipient, right amount. Then it confirms the signature belongs to the account that actually paid, that the claim hasn't expired, and that this transfer hasn't already bought something else. Seven checks, and no payment processor anywhere in the middle.
 10. **Delivery.** The answer comes back as the body of that same HTTP request. Money settled on chain; product delivered over the web.
 
 Here's one of the real transactions from our runs — paid by the buyer agent, verified by the seller agent, and sitting permanently on [Voyage devnet](https://voyage.moi.technology):
@@ -52,11 +56,15 @@ Here's one of the real transactions from our runs — paid by the buyer agent, v
 
 ## How does an agent know who it's paying?
 
-This is the heart of the session, and it's forty-two lines of code.
+This is the heart of the session.
 
-A payment address is thirty-two bytes. It tells you **where** to send money. It tells you absolutely nothing about **whose** address it is. That gap between *where* and *whose* is where real-world payment fraud lives. Business email compromise — mostly swapped payment details on genuine invoices — cost victims $2.9 billion in 2023, according to the [FBI's Internet Crime Complaint Center](https://www.ic3.gov/AnnualReport/Reports). The invoice is real; the account number isn't.
+A payment address is thirty-two bytes of hex. It tells you **where** to send money. It tells you nothing at all about **whose** address it is.
 
-So before paying, the buyer asks the chain a different question: *what wallet did this agent actually register?*
+That gap — between *where* and *whose* — isn't a theoretical worry. It's how invoice fraud works today: someone changes the account number on a genuine invoice from a genuine supplier, and the payment goes through perfectly, to the wrong person. Nothing about the transaction looks wrong, because nothing about it *is* wrong except the destination. According to the [FBI's Internet Crime Complaint Center](https://www.ic3.gov/AnnualReport/Reports), business email compromise — which is mostly this — cost victims $2.9 billion in 2023, across 21,489 reported complaints.
+
+Our buyer is in exactly that position. All it has is an address the seller put in the 402 response, alongside the words *pay here*.
+
+But that response carries one more field: the seller's **agent id**. So before spending anything, the buyer takes that id to the chain and asks a different question — *what wallet did this agent actually register?*
 
 ```ts
 if (normalizeAddress(registryWallet) !== normalizeAddress(quote.payTo)) {
@@ -85,13 +93,17 @@ Step 7 is the question. Step 8 only happens because step 7 answered it.
 
 That's the MOI-specific piece. The check works because the seller's identity lives somewhere both parties can read *without asking each other*: the seller's owner registered the agent and named the wallet it operates from, and the buyer reads that record at purchase time. No API, no shared secret, no trust relationship.
 
-Be precise about what this proves. The registry records a claim made by the agent's owner — the named wallet never signs anything, so this is not proof that the seller controls that address. What the check *does* guarantee is that the address on the invoice matches the one on the chain, which is the attack that actually happens: swap the payout details and the payment still looks perfectly valid. The guarantee is exactly as strong as the owner's key, and that is a far better anchor than a URL and a promise.
+One caveat, stated plainly: the registry holds a claim made by the agent's owner, and the named wallet never signs anything. So this proves the invoice matches the chain — not that the seller controls that address. That's still precisely the attack that happens in the real world, and an owner's on-chain key is a far better anchor than a URL and a promise.
 
 ## Payment without a processor
 
 There are exactly two signatures in a purchase, both the buyer's.
 
-The **first signature moves the money**: via [js-moi-sdk](https://www.npmjs.com/package/js-moi-sdk), the buyer's wallet serializes the entire interaction — sender, sequence number, fuel, and the transfer operation — and signs that with [ECDSA over secp256k1](https://en.bitcoin.it/wiki/Secp256k1), the same curve Bitcoin uses. The transfer calldata is one field inside the signed blob, not the thing signed on its own, which is why the sender cannot be forged. The **second signature proves the payment belongs to this purchase**. Transfers on a public chain are visible to everyone — so without a signed claim binding the transaction to the buyer and the resource, anyone could quote a stranger's transaction hash and collect the goods it paid for.
+The **first signature moves the money**: via [js-moi-sdk](https://www.npmjs.com/package/js-moi-sdk), the buyer's wallet serializes the entire interaction — sender, sequence number, fuel, and the transfer operation — and signs that with [ECDSA over secp256k1](https://en.bitcoin.it/wiki/Secp256k1), the same curve Bitcoin uses. The transfer calldata is one field inside the signed blob, not the thing signed on its own, which is why the sender cannot be forged. The **second signature proves that payment belongs to this request**. It's worth being clear about why the transfer alone isn't enough — after all, the transfer already records a sender and a recipient.
+
+The problem is that it records them *publicly*. If the seller accepted a transaction hash as proof of purchase, anyone watching the chain could take your hash, attach it to their own request, and walk off with the answer you paid for. The transfer proves that someone paid. It doesn't prove who is now asking.
+
+So the buyer signs a short statement — I paid this much, to you, in this transaction, for this URL — and the seller checks that the signature derives back to the same account the chain shows as the sender. That ties the money and the request together.
 
 On the other side, the seller trusts none of it. It reads the transaction off the chain — receipt, then the raw operation, decoded with [js-polo](https://www.npmjs.com/package/js-polo) — and checks the sender, the recipient, the amount, the expiry, and that this transfer hasn't already bought something. Seven checks, every one a read — the only write is burning that transfer hash afterwards, so it can never buy twice. We fired ten forged payments at this verifier — tampered amounts, foreign keys, invented transactions, replays — and each was rejected for its own specific reason. The full attack suite ships in the [session repo](https://github.com/moi-foundation/MOI-Webinars), so the methodology is inspectable, not asserted.
 
