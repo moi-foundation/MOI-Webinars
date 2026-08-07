@@ -21,7 +21,7 @@
       "mainEntityOfPage": "https://moi.technology/blog/how-ai-agents-pay-each-other-moi",
       "image": "REPLACE-WITH-ABSOLUTE-OG-IMAGE-URL",
       "datePublished": "REPLACE-WITH-PUBLISH-DATE (e.g. 2026-08-08)",
-      "keywords": "agentic payments, AI agents, MOI, HTTP 402, on-chain identity, x402, agent registry",
+      "keywords": "agentic payments, AI agents, MOI, HTTP 402, on-chain identity, agent registry",
       "about": [
         { "@type": "Thing", "name": "Agentic payments" },
         { "@type": "Thing", "name": "AI agents" },

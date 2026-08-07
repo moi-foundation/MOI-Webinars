@@ -4,7 +4,7 @@ description: "Two AI agents transact on MOI with no human, no accounts, no payme
 author: "Adithya Ganesh"
 authorRole: "Ecosystem, Sarva Labs"
 slug: "how-ai-agents-pay-each-other-moi"
-tags: [agentic payments, AI agents, MOI, HTTP 402, on-chain identity, x402]
+tags: [agentic payments, AI agents, MOI, HTTP 402, on-chain identity, agent registry]
 ---
 
 # How AI Agents Pay Each Other — A Working Demo on MOI
@@ -78,20 +78,6 @@ On the other side, the seller trusts none of it. It reads the transaction off th
 
 **There is no payment processor in this system. The chain is the settlement record, and both sides simply read it.**
 
-### Is this x402?
-
-No — deliberately, and it's worth being precise, because we use the same status code. [x402](https://www.x402.org) is an open standard (from [Coinbase](https://github.com/coinbase/x402)) built around HTTP 402; on EVM chains its main scheme has the buyer sign an [EIP-3009](https://eips.ethereum.org/EIPS/eip-3009) authorization that a *facilitator* submits on their behalf. MOI's ownership model inverts that — nobody can move your funds but you — so our buyer pays first and proves it after, and the facilitator role disappears entirely.
-
-| | This demo | x402 |
-| --- | --- | --- |
-| Handshake | ask → 402 → pay → retry with proof | same shape |
-| Who submits the payment | the buyer, from its own wallet | a facilitator, via signed authorization |
-| Third-party service | none — seller verifies by reading the chain | standardized facilitator (`/verify`, `/settle`) |
-| Interoperability | our two agents only | any x402 client or server |
-| Who you're paying | **verified against the on-chain registry** | out of scope for the protocol |
-
-x402 is on our roadmap — see below — and the identity check is identical under either protocol, because no payment protocol answers the *whose* question. That answer has to come from an identity layer.
-
 ## The honest part: every guardrail here is self-imposed
 
 The buyer has a spending limit — it refuses anything over six units. Here's what that limit is worth: it's an environment variable in the buyer's own source. Change it, and the ceiling is gone. There's a second opinion — the model judges whether a markup is reasonable — but that lives in the same process, in a prompt the operator wrote.
@@ -100,7 +86,7 @@ And even when the limit holds perfectly, notice what it caps: **one purchase, no
 
 > **A limit the agent consults is a preference. A limit the chain applies is authority.** If the agent can choose to ignore it, it isn't authority — it's manners.
 
-That gap is exactly what the next sessions close, using MOI itself. **Session 8 adds context inheritance**: the owner carves out a budget *on the chain* — spend this much and no more — and the agent inherits that authority instead of owning it. The limit stops being a variable in the agent's code and becomes a rule the chain enforces. **Session 9 adds [x402](https://www.x402.org)**: swap our wire format for the open standard, and any compliant agent on the internet can transact with ours — with MOI underneath answering the question x402 can't.
+That gap is exactly what the next sessions close, using MOI itself. **Session 8 adds context inheritance**: the owner carves out a budget *on the chain* — spend this much and no more — and the agent inherits that authority instead of owning it. The limit stops being a variable in the agent's code and becomes a rule the chain enforces. **Session 9 opens the doors**: adopt an open payment standard so any compliant agent on the internet can transact with ours — with MOI underneath still answering the question a payment protocol can't.
 
 ## Under the hood: the full stack
 
