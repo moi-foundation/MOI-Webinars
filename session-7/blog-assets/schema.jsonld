@@ -55,7 +55,7 @@
         {
           "@type": "Question",
           "name": "What happens if the seller takes the money and doesn't deliver?",
-          "acceptedAnswer": { "@type": "Answer", "text": "You lose it — the same as handing over cash. Escrow-style pay-on-delivery is native to MOI (lockup and release) and on the roadmap beyond these sessions." }
+          "acceptedAnswer": { "@type": "Answer", "text": "You lose it — the same as handing over cash. MOI exposes built-in lockup and release primitives that a pay-on-delivery flow could be built on, and that is on the roadmap beyond these sessions." }
         },
         {
           "@type": "Question",
