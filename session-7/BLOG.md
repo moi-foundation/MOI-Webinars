@@ -58,9 +58,13 @@ Here's one of the real transactions from our runs — paid by the buyer agent, v
 
 This is the heart of the session.
 
-A payment address is thirty-two bytes of hex. It tells you **where** to send money. It tells you nothing at all about **whose** address it is.
+A payment address is thirty-two bytes of hex. It tells you **where** to send money.
 
-That gap — between *where* and *whose* — isn't a theoretical worry. It's how invoice fraud works today: someone changes the account number on a genuine invoice from a genuine supplier, and the payment goes through perfectly, to the wrong person. Nothing about the transaction looks wrong, because nothing about it *is* wrong except the destination. According to the [FBI's Internet Crime Complaint Center](https://www.ic3.gov/AnnualReport/Reports), business email compromise — which is mostly this — cost victims $2.9 billion in 2023, across 21,489 reported complaints.
+It tells you nothing about **whose** address it is.
+
+That gap isn't theoretical. It's how invoice fraud works today. Someone changes the account number on a real invoice from a real supplier, and the payment goes through perfectly — to the wrong person. Nothing about it looks wrong, because nothing about it *is* wrong except the destination.
+
+According to the [FBI's Internet Crime Complaint Center](https://www.ic3.gov/AnnualReport/Reports), business email compromise — which is mostly this — cost victims $2.9 billion in 2023, across 21,489 reported complaints.
 
 Our buyer is in exactly that position. The 402 it just received makes two claims in the same breath:
 
@@ -106,13 +110,33 @@ One caveat, stated plainly: the registry holds a claim made by the agent's owner
 
 There are exactly two signatures in a purchase, both the buyer's.
 
-The **first signature moves the money**: via [js-moi-sdk](https://www.npmjs.com/package/js-moi-sdk), the buyer's wallet serializes the entire interaction — sender, sequence number, fuel, and the transfer operation — and signs that with [ECDSA over secp256k1](https://en.bitcoin.it/wiki/Secp256k1), the same curve Bitcoin uses. The transfer calldata is one field inside the signed blob, not the thing signed on its own, which is why the sender cannot be forged. The **second signature proves that payment belongs to this request**, and it's worth being precise about why the transfer alone isn't enough — after all, the transfer already records a sender and a recipient.
+The **first signature moves the money**. Via [js-moi-sdk](https://www.npmjs.com/package/js-moi-sdk), the buyer's wallet serializes the entire interaction — sender, sequence number, fuel, and the transfer operation — and signs that with [ECDSA over secp256k1](https://en.bitcoin.it/wiki/Secp256k1), the same curve Bitcoin uses. The transfer calldata is one field inside the signed blob, not the thing signed on its own, which is why the sender cannot be forged.
 
-The problem is that it records them *publicly*. Picture an attacker who never pays for anything, watching the seller's wallet for incoming transfers — something anyone can do on a public chain. The moment our buyer's payment lands, they copy the hash into a request of their own. A seller that accepted a bare hash would read the chain, find a real transfer of the right amount to itself, and hand over the answer for free. Worse: because the seller burns each hash so one payment can't buy twice, the buyer who *actually* paid would then be told its payment was already spent.
+The **second signature proves that payment belongs to this request**. That one needs explaining, because the transfer already records a sender and a recipient. So why isn't it enough?
 
-The obvious objection is that the attacker's address wouldn't match the one on the transfer. But the seller never learns the attacker's address. An HTTP request doesn't arrive *from a wallet* — it arrives over a connection, and nothing about a connection identifies an on-chain account. The only address in the request is the one the sender typed into it. So the attacker types the buyer's, copied off the same public chain as the hash, and nothing contradicts them. Attaching a public key doesn't help either: public keys are public, and the buyer's appears in every proof it has ever sent.
+Because it records them *publicly*.
 
-The signature is the one thing that can't be copied, because producing it requires the private key. So the buyer signs a short statement — *I paid this much, to you, in this transaction, for this URL* — and the seller checks it in two moves: verify the signature against the public key on the proof, which proves the sender holds that key right now for this exact message; then derive a participant identifier from that key and check it equals the account the chain recorded as the sender. Only now does an impostor have to produce an address of their own — and the moment they do, it doesn't match.
+Picture an attacker who never pays for anything. They watch the seller's wallet for incoming transfers — something anyone can do on a public chain. The moment our buyer's payment lands, they copy the hash into a request of their own.
+
+A seller that accepted a bare hash would read the chain, find a real transfer of the right amount to itself, and hand over the answer. Free.
+
+Worse: the seller burns each hash so one payment can't buy twice. So the buyer that *actually* paid gets told its payment was already spent.
+
+The obvious objection is that the attacker's address wouldn't match the transfer. But the seller never learns the attacker's address.
+
+An HTTP request doesn't arrive *from a wallet*. It arrives over a connection, and nothing about a connection identifies an on-chain account. The only address in the request is the one the sender typed into it.
+
+So the attacker types the buyer's — copied off the same public chain as the hash. Nothing contradicts them.
+
+Sending a public key doesn't help either. Public keys are public; the buyer's appears in every proof it has ever sent.
+
+A signature is the one thing that can't be copied, because making one requires the private key.
+
+So the buyer signs a short statement: *I paid this much, to you, in this transaction, for this URL.*
+
+The seller checks it in two moves. First it verifies the signature against the public key on the proof — that proves the sender holds that key, right now, for this exact message. Then it derives an address from that key and checks it equals the sender the chain recorded.
+
+Now an impostor has to produce an address of their own. And the moment they do, it doesn't match.
 
 On the other side, the seller trusts none of it. It reads the transaction off the chain — receipt, then the raw operation, decoded with [js-polo](https://www.npmjs.com/package/js-polo) — and checks the sender, the recipient, the amount, the expiry, and that this transfer hasn't already bought something. Seven checks, every one a read — the only write is burning that transfer hash afterwards, so it can never buy twice. We fired ten forged payments at this verifier — tampered amounts, foreign keys, invented transactions, replays — and each was rejected for its own specific reason. The full attack suite ships in the [session repo](https://github.com/moi-foundation/MOI-Webinars), so the methodology is inspectable, not asserted.
 
