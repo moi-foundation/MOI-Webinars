@@ -9,6 +9,8 @@ tags: [agentic payments, AI agents, MOI, HTTP 402, on-chain identity, agent regi
 
 # How AI Agents Pay Each Other — A Working Demo on MOI
 
+![Two AI agents that have never met — a Risk Agent buyer and a Probability Desk seller — connected only by the MOI agent registry and a native MAS0 asset.](./blog-assets/hero-two-agents.png)
+
 ## What are agentic payments?
 
 **Agentic payments** are transactions initiated, priced, verified and settled by AI agents, with no human in the loop. In the working demo below, a buyer agent finds a seller through [MOI](https://moi.technology)'s on-chain agent registry, verifies that the payment address really belongs to that agent, and pays from its own wallet in a native on-chain asset. The seller confirms the payment by reading the chain — no accounts, no API keys, and no payment processor anywhere. Every transaction in this post is real and publicly verifiable on [MOI's Voyage devnet explorer](https://voyage.moi.technology).
@@ -63,6 +65,21 @@ if (normalizeAddress(registryWallet) !== normalizeAddress(quote.payTo)) {
 ```
 
 One comparison, run **before** the transfer — not after. The ordering is the entire security property: there's no escrow in this demo and nobody to appeal to, so refusing has to happen while refusing is still free.
+
+Here is that moment from an actual run — the agent's own output, immediately before it spent anything:
+
+```
+── BUYER · step 7 ──────────────────────────────────────────────
+   Is this seller who it claims to be?
+   payTo    0x000000001d2f8c28d0d0b2e48c6c343fc4fa95f31b4df7daae4c153300000000
+   ✓ payTo matches registry wallet 0x…1d2f8c28…ae4c1533…
+   ✓ asset is the one we hold
+
+── BUYER · step 8 ──────────────────────────────────────────────
+   Pay — the buyer moves its OWN funds
+```
+
+Step 7 is the question. Step 8 only happens because step 7 answered it.
 
 > **A payment protocol can tell you where. Only a registry can tell you whose.**
 
