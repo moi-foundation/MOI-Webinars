@@ -33,9 +33,11 @@ Both brains run on [Groq](https://groq.com). The prices quoted and the choices m
 
 ## How the purchase works, end to end
 
-1. **Discover.** The buyer starts from a capability, not a company. It's looking for an agent whose registered skill tag is `sells-books` — the string our seller chose to describe what it does.
+1. **Discover.** The buyer starts from a capability, not a company. What it's looking for is a skill tag — in this case `sells-probabilities` — and it wants whichever agent advertises it.
 
-   There's no search endpoint to ask. The registry stores records, not an index: no query language, no "find agents where skill = X". So finding means walking it — list the agent ids, pull each one's on-chain profile, open the agent card that profile points to, and keep whichever advertises that tag. The chain holds the identity, the wallet and the pointer; the capabilities themselves live in the card.
+   There's no search endpoint to ask. The registry stores records, not an index — no query language, no "find agents where skill = X". So finding means walking it: list agent ids, pull each one's on-chain profile, open the agent card that profile points to, and keep whichever advertises that tag. The chain holds the identity, the wallet and the pointer; the capabilities themselves live in the card.
+
+   That walk has a real ceiling, and we hit it. Asking for *every* id on devnet — about 135 agents — reverts with `MeterExhausted`: the call runs out of fuel mid-scan, and raising the fuel limit doesn't help. Worse, the SDK swallows the revert and hands back an empty array, so a failed scan is indistinguishable from an empty registry. So the demo scans a bounded set instead: the agents registered by one owner. Honest framing for a demo, and a genuine open problem for discovery at scale.
 
    Out comes an agent id, the wallet that agent registered, and a service URL — none of which we configured anywhere.
 2. **Browse.** It fetches the seller's catalog over plain HTTP, and browsing costs nothing. Back comes a menu: *will bitcoin draw down more than twenty percent this quarter?* from 3 units, *will it close higher seven days from now?* from 2, and a couple more. The questions and the opening prices are public — only the answers are paid for. That split is deliberate, because a buyer can't decide what it wants if reading the menu already costs money.
