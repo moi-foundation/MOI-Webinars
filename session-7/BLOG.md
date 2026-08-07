@@ -110,7 +110,7 @@ One caveat, stated plainly: the registry holds a claim made by the agent's owner
 
 There are exactly two signatures in a purchase, both the buyer's.
 
-The **first signature moves the money**. Via [js-moi-sdk](https://www.npmjs.com/package/js-moi-sdk), the buyer's wallet serializes the entire interaction — sender, sequence number, fuel, and the transfer operation — and signs that with [ECDSA over secp256k1](https://en.bitcoin.it/wiki/Secp256k1), the same curve Bitcoin uses. The transfer calldata is one field inside the signed blob, not the thing signed on its own, which is why the sender cannot be forged.
+The **first signature moves the money**. Via [js-moi-sdk](https://www.npmjs.com/package/js-moi-sdk), the buyer's wallet serializes the entire interaction — sender, sequence number, fuel, and the transfer operation — and signs that with [ECDSA](https://csrc.nist.gov/pubs/fips/186-5/final) over [secp256k1](https://en.bitcoin.it/wiki/Secp256k1), the same curve Bitcoin uses. The transfer calldata is one field inside the signed blob, not the thing signed on its own, which is why the sender cannot be forged.
 
 The **second signature proves that payment belongs to this request**. That one needs explaining, because the transfer already records a sender and a recipient. So why isn't it enough?
 
@@ -149,6 +149,12 @@ The buyer has a spending limit — it refuses anything over six units. Here's wh
 And even when the limit holds perfectly, notice what it caps: **one purchase, not the wallet**. Nothing tracks the total. An agent with a six-unit limit and a ninety-nine-thousand-unit balance can empty the wallet six units at a time, with every individual payment fully "compliant."
 
 > **A limit the agent consults is a preference. A limit the chain applies is authority.** If the agent can choose to ignore it, it isn't authority — it's manners.
+
+This isn't only our problem. Gartner expects over 40% of agentic AI projects to be canceled by the end of 2027, and lists inadequate risk controls beside cost and unclear value among the reasons ([Gartner, June 2025](https://www.gartner.com/en/newsroom/press-releases/2025-06-25-gartner-predicts-over-40-percent-of-agentic-ai-projects-will-be-canceled-by-end-of-2027)). It expects 40% of enterprises to demote or decommission autonomous agents over governance gaps — the kind found only after something has already gone wrong in production.
+
+[Forbes, covering that research](https://www.forbes.com/sites/robertszczerba/2026/07/07/why-40-of-agentic-ai-projects-may-be-canceled-by-2027/), framed it as agents crossing from suggestion into action faster than companies are building the controls to govern that action.
+
+Which is our sentence, arriving from the enterprise side. Ours is just smaller and more specific: the control exists — it's in the wrong place.
 
 That gap is exactly what the next sessions close, using MOI itself. **Session 8 adds context inheritance**: the owner carves out a budget *on the chain* — spend this much and no more — and the agent inherits that authority instead of owning it. The limit stops being a variable in the agent's code and becomes a rule the chain enforces. **Session 9 opens the doors**: adopt an open payment standard so any compliant agent on the internet can transact with ours — with MOI underneath still answering the question a payment protocol can't.
 
