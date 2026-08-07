@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 400" role="img" aria-labelledby="chartTitle chartDesc" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <title id="chartTitle">The entire payment layer is 698 lines of TypeScript</title>
+  <desc id="chartDesc">Horizontal bar chart of lines of code per component: registry discovery 171, seller verification 135, pay and prove 135, wire format 125, 402 paywall 90, and the identity check just 42 lines.</desc>
+  <text x="24" y="36" font-size="20" font-weight="700" fill="#6B7280">The entire payment layer: 698 lines</text>
+  <text x="24" y="58" font-size="13" fill="#9AA0AE">Lines of TypeScript per component — MOI Builders session 7</text>
+
+  <!-- rows: y start 92, row height 44, bar h 22, label col 250, max bar width 420 for 171 -->
+  <g font-size="13" fill="#8A8F9C">
+    <text x="24" y="106">registry.ts — discovery by skill</text>
+    <rect x="250" y="92" width="420" height="22" rx="4" fill="#8B8AF0" opacity="0.85"/>
+    <text x="678" y="108" font-weight="700" fill="#8A8F9C">171</text>
+
+    <text x="24" y="150">verify-proof.ts — the seller's 7 checks</text>
+    <rect x="250" y="136" width="332" height="22" rx="4" fill="#8B8AF0" opacity="0.85"/>
+    <text x="590" y="152" font-weight="700" fill="#8A8F9C">135</text>
+
+    <text x="24" y="194">pay.ts — pay, then prove it</text>
+    <rect x="250" y="180" width="332" height="22" rx="4" fill="#8B8AF0" opacity="0.85"/>
+    <text x="590" y="196" font-weight="700" fill="#8A8F9C">135</text>
+
+    <text x="24" y="238">payment-proof.ts — the wire format</text>
+    <rect x="250" y="224" width="307" height="22" rx="4" fill="#8B8AF0" opacity="0.85"/>
+    <text x="565" y="240" font-weight="700" fill="#8A8F9C">125</text>
+
+    <text x="24" y="282">paywall.ts — the 402 tollgate</text>
+    <rect x="250" y="268" width="221" height="22" rx="4" fill="#8B8AF0" opacity="0.85"/>
+    <text x="479" y="284" font-weight="700" fill="#8A8F9C">90</text>
+
+    <text x="24" y="326" font-weight="700" fill="#3CCB8E">identity-check.ts — who am I paying?</text>
+    <rect x="250" y="312" width="103" height="22" rx="4" fill="#3CCB8E"/>
+    <text x="361" y="328" font-weight="700" fill="#3CCB8E">42</text>
+  </g>
+
+  <text x="24" y="372" font-size="11" fill="#9AA0AE">Source: session-7, moi-foundation/MOI-Webinars (github.com/moi-foundation/MOI-Webinars) — counted August 2026</text>
+</svg>

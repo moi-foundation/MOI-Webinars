@@ -1,0 +1,73 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BlogPosting",
+      "@id": "https://moi.technology/blog/how-ai-agents-pay-each-other-moi#article",
+      "headline": "How AI Agents Pay Each Other — A Working Demo on MOI",
+      "description": "Two AI agents transact on MOI with no human, no accounts, no payment processor. How agentic payments work: on-chain identity, HTTP 402, and a real settled transaction.",
+      "author": {
+        "@type": "Person",
+        "name": "Adithya Ganesh",
+        "jobTitle": "Ecosystem, Sarva Labs",
+        "worksFor": { "@id": "#org" }
+      },
+      "publisher": {
+        "@type": "Organization",
+        "@id": "#org",
+        "name": "Sarva Labs",
+        "url": "https://moi.technology"
+      },
+      "mainEntityOfPage": "https://moi.technology/blog/how-ai-agents-pay-each-other-moi",
+      "image": "REPLACE-WITH-ABSOLUTE-OG-IMAGE-URL",
+      "datePublished": "REPLACE-WITH-PUBLISH-DATE (e.g. 2026-08-08)",
+      "keywords": "agentic payments, AI agents, MOI, HTTP 402, on-chain identity, x402, agent registry",
+      "about": [
+        { "@type": "Thing", "name": "Agentic payments" },
+        { "@type": "Thing", "name": "AI agents" },
+        { "@type": "Thing", "name": "MOI blockchain" }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://moi.technology/blog/how-ai-agents-pay-each-other-moi#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What are agentic payments?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Payments where software agents decide, execute and verify the transaction themselves — discovery of the counterparty, pricing, identity verification, settlement and delivery, with no human approval per transaction." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can an AI agent have its own crypto wallet?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes — each agent in this demo has its own on-chain account and key, derived and held by the software. In this demo both keys derive from one operator's seed, so the agents have their own addresses, not yet their own authority. Authority the agent inherits, rather than a key it simply holds, is what MOI's context inheritance adds." }
+        },
+        {
+          "@type": "Question",
+          "name": "What is HTTP 402 used for?",
+          "acceptedAnswer": { "@type": "Answer", "text": "402 Payment Required has been reserved in the HTTP specification since 1997 for telling a client that a resource costs money. Machine-to-machine payments are the first use case that genuinely needs it." }
+        },
+        {
+          "@type": "Question",
+          "name": "What stops an AI agent from overspending?",
+          "acceptedAnswer": { "@type": "Answer", "text": "In this demo, only the agent's own code: a per-purchase ceiling it sets for itself, removable with one environment variable, and no cap on cumulative spend. On-chain, chain-enforced budgets — authority the agent inherits rather than grants itself — are the subject of the next session." }
+        },
+        {
+          "@type": "Question",
+          "name": "What happens if the seller takes the money and doesn't deliver?",
+          "acceptedAnswer": { "@type": "Answer", "text": "You lose it — the same as handing over cash. Escrow-style pay-on-delivery is native to MOI (lockup and release) and on the roadmap beyond these sessions." }
+        },
+        {
+          "@type": "Question",
+          "name": "Are the bitcoin probabilities real forecasts?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. The numbers are model-generated placeholders with no market data behind them, and every response says so in its payload. The demo is about the payment rails; swapping in a real model changes none of the payment machinery." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I run this myself?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes — one funded MOI devnet wallet covers everything. Clone the MOI-Webinars repository, fund a wallet at the Voyage faucet, and npm run ui gives you the live console. There is a bounty for rebuilding the demo." }
+        }
+      ]
+    }
+  ]
+}

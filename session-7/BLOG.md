@@ -17,7 +17,7 @@ We ran this live at MOI Builders Session 7. Two AI agents, built on [Groq](https
 
 ## The problem: paying a stranger
 
-Moving money is the easy part — blockchains have settled peer-to-peer value since [Bitcoin's genesis block in January 2009](https://bitcoin.org/bitcoin.pdf). The hard part is everything a human does *without thinking* when they buy from someone they've never met. You glance at the shop and decide it looks real. You keep a rough number in your head that you won't go past. And you assume that if nothing turns up, there's some way to get your money back.
+Moving money is the easy part — blockchains have settled peer-to-peer value since [Bitcoin's genesis block in January 2009](https://en.bitcoin.it/wiki/Genesis_block). The hard part is everything a human does *without thinking* when they buy from someone they've never met. You glance at the shop and decide it looks real. You keep a rough number in your head that you won't go past. And you assume that if nothing turns up, there's some way to get your money back.
 
 Take the human out, and all three instincts disappear. And you *have* to take the human out — an agent buying a fraction-of-a-cent answer can't wait for a person to click approve, because the approval costs more than the purchase. So each instinct has to become something a machine can check. This session answers the first one: **how does an agent know who it's paying?**
 
@@ -104,6 +104,10 @@ That gap is exactly what the next sessions close, using MOI itself. **Session 8 
 
 ## Under the hood: the full stack
 
+The entire payment layer — discovery, wire format, paywall, payment, proof, and verification — is **698 lines of TypeScript across six files**, and the check the whole session is about is the smallest of them:
+
+![Horizontal bar chart: the payment layer is 698 lines of TypeScript across six files — registry discovery 171, seller verification 135, payment 135, wire format 125, paywall 90, and the identity check just 42 lines.](./blog-assets/chart-payment-layer-loc.svg)
+
 Everything is open source in the [session-7 folder of MOI-Webinars](https://github.com/moi-foundation/MOI-Webinars):
 
 - **[MOI](https://moi.technology)** — the chain; identity, registry, and settlement. Devnet explorer & faucet: [voyage.moi.technology](https://voyage.moi.technology)
@@ -143,7 +147,7 @@ Yes — one funded devnet wallet covers everything. Clone the [repo](https://git
 
 ---
 
-*Built at [Sarva Labs](https://sarvalabs.com) for the MOI Builders series. Earlier sessions cover the pieces this one stands on: [the agent registry](https://github.com/moi-foundation/MOI-Webinars/tree/main/session-3), [native assets and swaps](https://github.com/moi-foundation/MOI-Webinars/tree/main/session-4), and [on-chain agent budgets](https://github.com/moi-foundation/MOI-Webinars/tree/main/session-6).*
+*Built at [Sarva Labs](https://www.sarva.ai) for the MOI Builders series. Earlier sessions cover the pieces this one stands on: [the agent registry](https://github.com/moi-foundation/MOI-Webinars/tree/main/session-3), [native assets and swaps](https://github.com/moi-foundation/MOI-Webinars/tree/main/session-4), and [on-chain agent budgets](https://github.com/moi-foundation/MOI-Webinars/tree/main/session-6).*
 
 <!-- ──────────────────────────────────────────────────────────────────────────
 PUBLISHING CHECKLIST (delete before publish)
