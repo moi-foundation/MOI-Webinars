@@ -1,6 +1,3 @@
-<<< UPLOAD IMAGE: blog-assets/hero-two-agents.png >>>
-Caption: Two AI agents that have never met — a Risk Agent buyer and a Probability Desk seller — connected only by the MOI agent registry and a native MAS0 asset.
-
 ## What are agentic payments?
 
 **Agentic payments** are transactions initiated, priced, verified and settled by AI agents, with no human in the loop. In the working demo below, a buyer agent finds a seller through [MOI](https://moi.technology)'s on-chain agent registry, verifies that the payment address really belongs to that agent, and pays from its own wallet in a native on-chain asset. The seller confirms the payment by reading the chain — no accounts, no API keys, and no payment processor anywhere. Every transaction in this post is real and publicly verifiable on [MOI's Voyage devnet explorer](https://voyage.moi.technology).
@@ -182,10 +179,7 @@ That gap is exactly what the next sessions close, using MOI itself. **Session 8 
 
 ## Under the hood: the full stack
 
-The entire payment layer — discovery, wire format, paywall, payment, proof, and verification — is **713 lines of TypeScript across six files**, and the check the whole session is about is the smallest of them:
-
-<<< UPLOAD IMAGE: blog-assets/chart-payment-layer-loc.png >>>
-Caption: The payment layer is 713 lines of TypeScript across six files — and the identity check is the smallest at 56.
+The entire payment layer — discovery, wire format, paywall, payment, proof, and verification — is **713 lines of TypeScript across six files**. Registry discovery is the biggest at 171 lines. The check this whole session is about is the smallest at 56.
 
 Everything is open source in the [session-7 folder of MOI-Webinars](https://github.com/moi-foundation/MOI-Webinars):
 

@@ -35,14 +35,23 @@ Not urgent today. Just don't discover it six months in.
       and no payment processor.
 - [ ] Paste the body from `MEDIUM.md`
 
-### 2. Images — upload, don't link
+### 2. Images — none, by decision
 
-Both slots are marked `<<< UPLOAD IMAGE: … >>>` in `MEDIUM.md`. Delete the
-marker line after uploading and use the caption underneath it.
+Publishing text-only for now. `MEDIUM.md` has no image slots, and the chart's
+numbers were folded into the prose so nothing dangles.
 
-- [ ] `blog-assets/hero-two-agents.png`
-- [ ] `blog-assets/chart-payment-layer-loc.png` ← **the PNG, not the SVG.**
-      Medium does not accept SVG.
+Two consequences, neither blocking:
+
+- Medium picks the social-card image itself, which with no images means your
+  avatar or nothing. Link previews on X and LinkedIn will be plain.
+- Medium's feed favours stories with a visual, so reach will be lower than it
+  would be with a cover.
+
+Both assets stay in the repo, current and correct, if you want them later:
+
+- `hero-two-agents.png` — needs the "Probability **Book** Desk" wording fixed
+  and the slide chrome removed before it should be used
+- `chart-payment-layer-loc.png` — clean, accurate, ready to drop in as-is
 
 ### 3. Check what survived the paste
 
