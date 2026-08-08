@@ -12,7 +12,7 @@
 | moi.technology, voyage, sdk docs, repo, groq, express | VERIFIED | all HTTP 200 |
 | sarvalabs.com | FIXED | domain does not resolve → relinked to www.sarva.ai (official site) |
 | tx hash 0x13393fc7… | INTERNAL | our own devnet transaction; verifiable on Voyage |
-| 42 lines / 698 lines / seven checks / eleven forgeries | INTERNAL VERIFIED | counted from repo at time of writing; attack suite linked |
+| 56 lines / 713 lines / seven checks / ten forgeries | INTERNAL VERIFIED | recounted after the payToAgentId fix; attack suite linked |
 
 Unfetched utility links (nodejs.org, typescriptlang.org, MDN SSE, tsx, dotenv, aistudio, forms.gle): low-risk, spot-check at publish.
 
@@ -36,7 +36,7 @@ Claims checked against `js-moi-asset`, `js-moi-agent-registry`, `js-moi-sdk`,
 | "ECDSA over secp256k1" | **TRUE** | `ecdsa.ts:24-31`. Enriched: the WHOLE interaction is POLO-serialized and signed (BLAKE2b-256 digest), not the payload alone. |
 | "native MAS0 asset" | **TRUE** | `ASSET_CREATE`/`ASSET_INVOKE` are first-class OpTypes; no manifest, no bytecode (contrast MASX). Clarified so it isn't read as the fuel token. |
 | cited tx `0x13393fc7…` | **TRUE** | Read back off-chain: `Transfer`, buyer → seller, amount 3. |
-| identity-check.ts is 42 lines; snippet verbatim; runs before transfer | **TRUE** | pay.ts:70 approve → :71 throw → :78/79 transfer built. Nothing on-chain constructed before line 78. |
+| identity-check.ts is 56 lines; snippet verbatim; runs before transfer | **TRUE** | pay.ts:70 approve → :71 throw → :78/79 transfer built. Nothing on-chain constructed before line 78. |
 
 Known, left alone (code churn before publish): `verify-proof.ts:1` repeats the
 "all read-only" wording, and `attack-test.ts:13-14` has a stale transfer count.

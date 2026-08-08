@@ -36,7 +36,7 @@ Before paying, the buyer asks the one question no payment protocol can answer:
 
 that address is 32 bytes. It says WHERE to send money. It says nothing about WHOSE address it is.
 
-So it checks the chain: is this the wallet this agent registered? That check is 42 lines.
+So it checks the chain: is this the wallet this agent registered? That check is 56 lines.
 
 **6/**
 This isn't a toy threat. Swapped payment details on genuine invoices — business email compromise — cost victims $2.9B in 2023 (FBI IC3).
@@ -88,7 +88,7 @@ There's a bounty for rebuilding it — one devnet wallet covers the whole thing.
 
 Demo from a builder session I ran this week. Two agents, both with Groq/Llama 3.3 brains: a seller that prices its product per request based on demand, and a buyer that discovers it by skill tag on MOI's agent registry, judges the quote, and pays from its own wallet.
 
-The part I think is actually interesting for this sub: the identity check. The seller's 402 response says "pay this address" — and an address tells you nothing about who owns it. So before paying, the buyer reads what wallet that agent *registered* on-chain and refuses on mismatch. It's 42 lines, it runs before the transfer, and it's the difference between "agent that can pay" and "agent that's safe to let pay."
+The part I think is actually interesting for this sub: the identity check. The seller's 402 response says "pay this address" — and an address tells you nothing about who owns it. So before paying, the buyer reads what wallet that agent *registered* on-chain and refuses on mismatch. It's 56 lines, it runs before the transfer, and it's the difference between "agent that can pay" and "agent that's safe to let pay."
 
 Also being upfront about the limits: the buyer's spending cap is an env var in its own code — it caps per-purchase, not total, so it could drain its own wallet without ever "breaking" the rule. That gap (self-imposed vs chain-enforced limits) is the thing we're working on next.
 

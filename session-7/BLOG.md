@@ -166,9 +166,9 @@ That gap is exactly what the next sessions close, using MOI itself. **Session 8 
 
 ## Under the hood: the full stack
 
-The entire payment layer — discovery, wire format, paywall, payment, proof, and verification — is **698 lines of TypeScript across six files**, and the check the whole session is about is the smallest of them:
+The entire payment layer — discovery, wire format, paywall, payment, proof, and verification — is **713 lines of TypeScript across six files**, and the check the whole session is about is the smallest of them:
 
-![Horizontal bar chart: the payment layer is 698 lines of TypeScript across six files — registry discovery 171, seller verification 135, payment 135, wire format 125, paywall 90, and the identity check just 42 lines.](./blog-assets/chart-payment-layer-loc.svg)
+![Horizontal bar chart: the payment layer is 713 lines of TypeScript across six files — registry discovery 171, seller verification 136, payment 135, wire format 125, paywall 90, and the identity check just 56 lines.](./blog-assets/chart-payment-layer-loc.svg)
 
 Everything is open source in the [session-7 folder of MOI-Webinars](https://github.com/moi-foundation/MOI-Webinars):
 
