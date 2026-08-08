@@ -78,6 +78,8 @@ export async function runBuyer(
     status: "working",
   });
   let sellerUrl = opts.fallbackUrl;
+  // What discovery settled on, so step 7 can check the quote names that same agent.
+  let discoveredAgentId: string | null = null;
 
   if (registry) {
     try {
@@ -96,6 +98,7 @@ export async function runBuyer(
         detail("agent wallet", addr0x(chosen.agent_wallet));
         detail("service url", chosen.url);
         if (chosen.url) sellerUrl = chosen.url;
+        discoveredAgentId = chosen.agent_id;
         ok("seller resolved on chain — we were never handed a URL");
 
         const card = readInlineCard(chosen.card_uri);
@@ -229,7 +232,7 @@ export async function runBuyer(
     banner("BUYER", "step 7", "Is this seller who it claims to be?");
     detail("payTo", q.payTo);
 
-    const identity = await checkSellerIdentity(registry, q);
+    const identity = await checkSellerIdentity(registry, q, discoveredAgentId);
     if (!identity.ok) {
       fail("payTo does NOT match the seller's on-chain registry wallet");
       detail("registry says", identity.registryWallet ?? "(unreadable)");

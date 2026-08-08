@@ -64,11 +64,7 @@ A payment address is thirty-two bytes of hex. It tells you **where** to send mon
 
 It tells you nothing about **whose** address it is.
 
-That gap isn't theoretical. It's how invoice fraud works today. Someone changes the account number on a real invoice from a real supplier, and the payment goes through perfectly — to the wrong person. Nothing about it looks wrong, because nothing about it *is* wrong except the destination.
-
-According to the [FBI's Internet Crime Complaint Center](https://www.ic3.gov/AnnualReport/Reports), business email compromise — which is mostly this — cost victims $2.9 billion in 2023, across 21,489 reported complaints.
-
-Our buyer is in exactly that position. The 402 it just received makes two claims in the same breath:
+Our buyer sits right in that gap. The 402 it just received makes two claims in the same breath:
 
 ```
 payToAgentId: agent_132                      ← "I am this agent"
@@ -106,7 +102,15 @@ Step 7 is the question. Step 8 only happens because step 7 answered it.
 
 That's the MOI-specific piece. The check works because the seller's identity lives somewhere both parties can read *without asking each other*: the seller's owner registered the agent and named the wallet it operates from, and the buyer reads that record at purchase time. No API, no shared secret, no trust relationship.
 
-One caveat, stated plainly: the registry holds a claim made by the agent's owner, and the named wallet never signs anything. So this proves the invoice matches the chain — not that the seller controls that address. That's still precisely the attack that happens in the real world, and an owner's on-chain key is a far better anchor than a URL and a promise.
+A fair question at this point: why is `payTo` in the 402 at all? The registry already knows the seller's wallet. The buyer could ignore the quote's address entirely, pay the registered one, and this whole class of problem would vanish.
+
+It's there because that's the shape of a payment protocol. The invoice names the payee, and that's what makes the 402 self-contained — a client that has never heard of MOI can still act on it.
+
+Note also that whoever edits that invoice needn't be the seller. A compromised server, a stale config after a redeploy, or a hijacked DNS record all produce the same wrong address with the seller entirely honest throughout. The 402 is a network response, not an identity record, and it should not be trusted like one.
+
+Say instead "the registry is the payee, ignore the invoice," and you've made the chain mandatory. That's a legitimate design — arguably a stronger one. It's a different bet.
+
+The check is the bridge between those two worlds. It lets the 402 stay ordinary HTTP, self-contained and portable, while refusing to let it be the authority on who owns what.
 
 ## Payment without a processor
 
