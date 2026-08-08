@@ -33,12 +33,14 @@ Both brains run on [Groq](https://groq.com). The prices quoted and the choices m
 
 ## How the purchase works, end to end
 
-1. **Discover.** The buyer starts from a capability, not a company. What it's looking for is a skill tag — in this case `sells-probabilities` — and it wants whichever agent advertises it.
+1. **Discover.** The buyer starts from a capability. What it's looking for is a skill tag — in this case `{sells-probabilities, bitcoin}` — and it wants whichever agent advertises it.
 
-   Finding it is a walk, done entirely by the buyer. It asks the registry for the list of agent ids, pulls each one's on-chain profile, opens the agent card that profile points to, and keeps whichever advertises the tag it wants. The chain holds the identity, the wallet and the pointer; the capabilities themselves live in the card.
+   Finding it is a walk, done entirely by the buyer. It asks the registry for the list of agent ids, pulls each one's on-chain profile, opens the agent card that profile points to, and keeps whichever advertises the tags it wants. The chain holds the identity, the wallet and the pointer; the capabilities themselves live in the card.
 
-   Out comes an agent id, the wallet that agent registered, and a service URL — none of which we configured anywhere.
-2. **Browse.** It fetches the seller's catalog over plain HTTP, and browsing costs nothing. Back comes a menu: *will bitcoin draw down more than twenty percent this quarter?* from 3 units, *will it close higher seven days from now?* from 2, and a couple more. The questions and the opening prices are public — only the answers are paid for. That split is deliberate, because a buyer can't decide what it wants if reading the menu already costs money.
+   Out comes an agent id, the wallet that agent registered, and a service URL. The buyer held no record of this seller before it began — no address book entry, no config file, no prior contact of any kind. Everything it knows about the seller, it read off the chain moments ago.
+
+   Then it takes that service URL and sends an ordinary HTTP request to it.
+2. **Browse.** That request asks for the seller's catalog, and browsing costs nothing. Back comes a menu: *will bitcoin draw down more than twenty percent this quarter?* from 3 units, *will it close higher seven days from now?* from 2, and a couple more. The questions and the opening prices are public — only the answers are paid for. That split is deliberate, because a buyer can't decide what it wants if reading the menu already costs money.
 3. **Choose.** The buyer's model reads the question and the catalog together and picks the market that actually answers it — we typed "crash," a word that appears nowhere in the catalog, and it reasoned its way to the drawdown market.
 4. **Get billed.** The seller responds with [HTTP 402 Payment Required](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402) — a status code reserved in the HTTP spec ([RFC 9110 §15.5.3](https://www.rfc-editor.org/rfc/rfc9110#status.402)) since 1997 and essentially unused, because until now nothing needed to charge a machine per request. The 402 body is a complete, machine-readable offer: the price, which asset it wants, the wallet to pay, the seller's agent id, and how long the quote is good for.
 5. **Judge the price.** The buyer weighs the quote against the list price, its own hard ceiling, and the seller's justification — which it treats as a sales pitch, skeptically.
