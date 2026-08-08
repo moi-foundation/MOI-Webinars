@@ -1,83 +1,87 @@
-# Publish checklist — moi.technology canonical, Medium mirror
+# Publish checklist — Medium only
 
-Order matters. Do these in sequence.
-
----
-
-## 0. Before anything: the rendering blocker
-
-The SEO audit found moi.technology serves a **652-byte shell on every route** —
-100% client-side rendered, no server HTML.
-
-Googlebot renders JavaScript and will probably cope. **Perplexity, ChatGPT and
-most other AI crawlers do not.** They fetch the HTML and read what's there.
-
-If the blog page renders client-side, they'll see an empty shell, and every
-point of the 80/100 citation-readiness score is theoretical. The schema won't
-be read either — it has to be in the served HTML, not injected after hydration.
-
-**So: confirm the blog route is server-rendered or pre-rendered before
-publishing.** Fetch it with `curl` and look for the article text. If the body
-comes back empty, fix that first — nothing else on this list matters until it's
-done.
-
-```bash
-curl -s https://moi.technology/blog/<slug> | grep -c "agentic payments"
-```
-
-Zero means the crawlers see nothing.
+Paste-ready body: **`MEDIUM.md`** (frontmatter stripped, H1 removed, image
+slots marked).
 
 ---
 
-## 1. Publish on moi.technology FIRST
+## The one thing to decide now, not later
 
-Canonical goes live before the mirror. If Medium indexes first, it outranks the
-original and the canonical fight is already lost.
+Publishing on Medium first means **Medium becomes the canonical version** —
+it's the only version that exists, so Google indexes it as the original.
 
-- [ ] Page is server-rendered (see step 0)
-- [ ] Slug: `how-ai-agents-pay-each-other-moi`
-- [ ] Upload both images, replace the relative paths in the post:
-      - `./blog-assets/hero-two-agents.png`
-      - `./blog-assets/chart-payment-layer-loc.svg` (or the `.png` — both are current)
-- [ ] Self-referencing `<link rel="canonical">` on the page
-- [ ] Open Graph + Twitter Card tags (the audit found none site-wide)
+If moi.technology publishes this post later, it arrives as the duplicate.
+Medium has the authority, the index position, and the backlinks. The site
+version loses to its own mirror.
 
-## 2. Schema — moi.technology only
+Two ways to avoid that, both decided **before** you publish:
 
-Medium strips custom JSON-LD, so this only applies here.
+- **Accept it.** Medium is the home for this one. Fine for a session write-up,
+  and Medium is well-crawled by AI engines — the citation work isn't wasted.
+- **Plan the handoff.** When moi.technology goes live, set the canonical link
+  on the Medium story (Story Settings → Advanced → customize canonical link)
+  to point at the site version. Do it the same day the site version ships.
 
-- [ ] Replace `CANONICAL_URL` in `schema.jsonld` with the live URL
-- [ ] Paste into the page head:
+Not urgent today. Just don't discover it six months in.
 
-```html
-<script type="application/ld+json">
-  … contents of schema.jsonld …
-</script>
-```
+---
 
-- [ ] Validate at https://validator.schema.org/
-- [ ] Confirm it's in the **served** HTML, not injected client-side
+## Steps
 
-Worth ~6 points of citation readiness. It's the largest single item left.
+### 1. Story setup
 
-## 3. Then mirror to Medium
+- [ ] **Title:** How AI Agents Pay Each Other — A Working Demo on MOI
+- [ ] **Subtitle:** Two AI agents transact on MOI with no human, no accounts,
+      and no payment processor.
+- [ ] Paste the body from `MEDIUM.md`
 
-Use **Import a story**, not copy-paste — the importer sets `rel=canonical` back
-to the original automatically. Copy-paste does not, and you end up competing
-with yourself.
+### 2. Images — upload, don't link
 
-- [ ] Import from the live moi.technology URL
-- [ ] Confirm the canonical points home (Story Settings → Advanced)
-- [ ] **Re-upload the chart as PNG** — Medium does not accept SVG
-      (`chart-payment-layer-loc.png`, 1520×800, already rendered)
-- [ ] Check the code blocks survived the import
+Both slots are marked `<<< UPLOAD IMAGE: … >>>` in `MEDIUM.md`. Delete the
+marker line after uploading and use the caption underneath it.
 
-## 4. Social
+- [ ] `blog-assets/hero-two-agents.png`
+- [ ] `blog-assets/chart-payment-layer-loc.png` ← **the PNG, not the SVG.**
+      Medium does not accept SVG.
 
-- [ ] Replace `CANONICAL_URL` in `social-pack.md` (appears in all three posts)
-- [ ] Decide the `$2.9 billion` question: the X thread, LinkedIn and Reddit
-      posts still lead on the BEC figure that was cut from the blog. Not wrong,
-      but the hook no longer matches the post.
+### 3. Check what survived the paste
+
+Medium's editor mangles some markdown. Verify:
+
+- [ ] **5 code blocks** render as code, not paragraphs (the 402 fields, the
+      identity check, the terminal output, the two-signature snippet, and the
+      transaction hash)
+- [ ] The numbered walkthrough kept its numbering, including the indented
+      sub-paragraphs under step 1
+- [ ] The blockquote pull-quotes are still blockquotes
+- [ ] Bold and italics survived, especially *where* / *whose*
+
+### 4. Tags — pick 5, Medium's limit
+
+The post has six in frontmatter. Suggested five, balancing reach against
+precision:
+
+`AI Agents` · `Agentic AI` · `Blockchain` · `Payments` · `Web3`
+
+Keep `MOI`, `HTTP 402` and `on-chain identity` out — near-zero follower counts
+on Medium, so they cost you a slot and return nothing.
+
+### 5. Social
+
+- [ ] Replace `CANONICAL_URL` in `social-pack.md` with the Medium URL
+      (appears in the X thread, LinkedIn post and Reddit post)
+- [ ] Decide the `$2.9 billion` question: all three posts still lead on the BEC
+      figure that was cut from the blog. Not wrong, but the hook no longer
+      matches what the post argues.
+
+---
+
+## Not applicable to Medium
+
+- **schema.jsonld** — Medium strips custom JSON-LD. Keep the file for whenever
+  the site version happens.
+- **The client-side-rendering blocker** — that was a moi.technology problem.
+  Medium serves real HTML and is crawled fine.
 
 ---
 
@@ -91,6 +95,6 @@ with yourself.
 | External links | 27 unique, all resolving |
 | Line counts | recounted, accurate as of this commit |
 
-The 69 is depressed by two artifacts: "no JSON-LD" (fixed at step 2) and a
-readability penalty for being *too* easy to read (Flesch 86.9 vs a 60–70
-target). Neither is a real defect.
+The 69 is depressed by two artifacts: "no JSON-LD" (not fixable on Medium, and
+not a real defect there) and a readability penalty for being *too* easy to read
+(Flesch 86.9 against a 60–70 target).
