@@ -112,7 +112,7 @@ One caveat, stated plainly: the registry holds a claim made by the agent's owner
 
 There are exactly two signatures in a purchase, both the buyer's.
 
-The **first signature moves the money**. Via [js-moi-sdk](https://www.npmjs.com/package/js-moi-sdk), the buyer's wallet serializes the entire interaction — sender, sequence number, fuel, and the transfer operation — and signs that with [ECDSA](https://csrc.nist.gov/pubs/fips/186-5/final) over [secp256k1](https://en.bitcoin.it/wiki/Secp256k1), the same curve Bitcoin uses. The transfer calldata is one field inside the signed blob, not the thing signed on its own, which is why the sender cannot be forged.
+The **first signature moves the money**. Via [js-moi-sdk](https://www.npmjs.com/package/js-moi-sdk), the buyer's wallet serializes the entire interaction — sender, sequence number, fuel, and the transfer operation — and signs that with [ECDSA](https://csrc.nist.gov/pubs/fips/186-5/final) over [secp256k1](https://en.bitcoin.it/wiki/Secp256k1), the same curve Bitcoin uses. Because the sender is inside what gets signed, it can't be forged.
 
 The **second signature proves that payment belongs to this request**. That one needs explaining, because the transfer already records a sender and a recipient. So why isn't it enough?
 
