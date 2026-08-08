@@ -100,7 +100,7 @@ Step 7 is the question. Step 8 only happens because step 7 answered it.
 
 > **A payment protocol can tell you where. Only a registry can tell you whose.**
 
-That's the MOI-specific piece. The check works because the seller's identity lives somewhere both parties can read *without asking each other*: the seller's owner registered the agent and named the wallet it operates from, and the buyer reads that record at purchase time. No API, no shared secret, no trust relationship.
+The check works because the seller's identity lives somewhere both parties can read *without asking each other*. The seller's owner registered the agent and named the wallet it operates from; the buyer reads that record at purchase time. No API, no shared secret, no trust relationship — neither agent ever has to take the other's word for anything.
 
 A fair question at this point: why is `payTo` in the 402 at all? The registry already knows the seller's wallet. The buyer could ignore the quote's address entirely, pay the registered one, and this whole class of problem would vanish.
 
