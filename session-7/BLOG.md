@@ -108,6 +108,8 @@ It's there because that's the shape of a payment protocol. The invoice names the
 
 Note also that whoever edits that invoice needn't be the seller. A compromised server, a stale config after a redeploy, or a hijacked DNS record all produce the same wrong address with the seller entirely honest throughout. The 402 is a network response, not an identity record, and it should not be trusted like one.
 
+The reverse holds as well. The URL in that registry record was chosen by the agent's owner, so it can point anywhere — including at a service built from the start to take payment and return nonsense. The registry binds an identity to a wallet; it does not vouch for what that identity does with your money. This check proves the payment reached the agent the buyer picked. It says nothing about whether picking that agent was wise.
+
 Say instead "the registry is the payee, ignore the invoice," and you've made the chain mandatory. That's a legitimate design — arguably a stronger one. It's a different bet.
 
 The check is the bridge between those two worlds. It lets the 402 stay ordinary HTTP, self-contained and portable, while refusing to let it be the authority on who owns what.
