@@ -146,6 +146,30 @@ The seller checks it in two moves. First it verifies the signature against the p
 
 Now an impostor has to produce an address of their own. And the moment they do, it doesn't match.
 
+Both signatures, as they appear in the buyer — error handling and event emission trimmed, otherwise verbatim from [pay.ts](https://github.com/moi-foundation/MOI-Webinars):
+
+```ts
+// 1. the buyer moves its OWN funds. On MOI nobody else can.
+const asset  = new MAS0AssetLogic(quote.asset, buyer.wallet);
+const ix     = await asset.transfer(quote.payTo, Number(price)).send();
+const txHash = ix.hash;
+
+// 2. sign a claim naming that exact transfer, for this exact resource
+const claim = {
+  from:  buyer.address,      to:       quote.payTo,
+  asset: quote.asset,        value:    price.toString(),
+  txHash,                    resource: quote.resource,
+  nonce: randomNonce(),      expiresAt: nowSeconds() + quote.ttlSeconds,
+};
+const signature = await buyer.wallet.sign(
+  canonicalClaimBytes(claim),
+  buyer.keyId,
+  buyer.wallet.signingAlgorithms.ecdsa_secp256k1,
+);
+```
+
+Note what the claim binds together: the payer, the payee, the amount, **the transaction**, and **the resource** — with an expiry. That's the whole answer to "who is asking, and for what."
+
 On the other side, the seller trusts none of it. It reads the transaction off the chain — receipt, then the raw operation, decoded with [js-polo](https://www.npmjs.com/package/js-polo) — and checks the sender, the recipient, the amount, the expiry, and that this transfer hasn't already bought something. Seven checks, every one a read — the only write is recording that transfer hash afterwards, so it can never buy twice. We fired ten forged payments at this verifier — tampered amounts, foreign keys, invented transactions, replays — and each was rejected for its own specific reason. The full attack suite ships in the [session repo](https://github.com/moi-foundation/MOI-Webinars), so the methodology is inspectable, not asserted.
 
 **There is no payment processor in this system. The chain is the settlement record, and both sides simply read it.**
