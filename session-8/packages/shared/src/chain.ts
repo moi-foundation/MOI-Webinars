@@ -41,6 +41,12 @@ export async function loadAccount(label: string, derivationPath: string): Promis
 /** The funded wallet. This is the only account that needs gas. */
 export const buyerAccount = () => loadAccount("buyer", config.derivationPath);
 /** Receive-only. Never signs, never needs gas. */
+/**
+ * The AGENT's wallet — session 8. Holds no settlement asset; spends the owner's under an
+ * allowance. Needs fuel to sign, nothing more.
+ */
+export const agentAccount = (): Promise<Account> => loadAccount("agent", config.agentDerivationPath);
+
 export const sellerAccount = () => loadAccount("seller", config.sellerDerivationPath);
 
 /**

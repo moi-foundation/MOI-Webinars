@@ -23,11 +23,11 @@ Session 7's buyer had a spending limit. It refused anything over six units, and 
 
 Here is what that limit actually was:
 
-```
-MAX_PRICE_PER_ANSWER=6
+```ts
+export const SOFT_LIMIT = BigInt(process.env.MAX_PRICE_PER_ANSWER ?? "6");
 ```
 
-An environment variable, in the agent's own source, read by the agent, honoured by the agent. Change one line and the ceiling is gone.
+Not a config file. Not a setting anyone reviewed. A default baked into the agent's own source, read by the agent and honoured by the agent. It was never even set in the environment — the six is the fallback. Change one line and the ceiling is gone.
 
 It had a second problem, quieter and worse. Look at what it caps: **one purchase**. Nothing tracked the total. An agent with a six-unit limit and a ninety-nine-thousand-unit balance could empty the wallet six units at a time, with every single payment fully compliant.
 

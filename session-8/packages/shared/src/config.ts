@@ -59,4 +59,17 @@ export const config = {
 
   /** How long a quote, and the signed claim that answers it, stay valid. */
   authTtlSeconds: Number(opt("AUTH_TTL_SECONDS", "120")),
+
+  // ── session 8: authority ──────────────────────────────────────────────────────────────
+  /**
+   * The AGENT's own wallet. It holds no float — it spends the OWNER's balance under an
+   * allowance, so it needs fuel and nothing else.
+   */
+  agentDerivationPath: opt("AGENT_DERIVATION_PATH", "m/44'/6174'/7020'/0/42"),
+  /** Total the owner is willing to let the agent spend, in base units. Enforced by the chain. */
+  agentAllowance: BigInt(opt("AGENT_ALLOWANCE", "5")),
+  /** How long the grant stays valid. The chain enforces the expiry, not us. */
+  allowanceTtlSeconds: Number(opt("ALLOWANCE_TTL_SECONDS", "3600")),
+  /** The AgentBudget logic — the readable ledger. Optional: the allowance works without it. */
+  get logicIdOrNull(): string | null { return process.env.BUDGET_LOGIC_ID?.trim() || null; },
 } as const;
