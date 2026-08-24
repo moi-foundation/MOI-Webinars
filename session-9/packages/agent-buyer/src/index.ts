@@ -29,7 +29,7 @@ import {
   readInlineCard,
   cardSkills,
   StepEmitter,
-  type Quote,
+  type PaymentRequirements,
   type StepSink,
 } from "@demo/shared";
 import { payingFetch, PaymentRefused, type BuyerEvent } from "./pay.js";
@@ -166,7 +166,20 @@ export async function runBuyer(
   });
 
   // ── policy applied before any money moves ───────────────────────────────────────────────
-  const approve = async (q: Quote): Promise<string | null> => {
+  const approve = async (r: PaymentRequirements): Promise<string | null> => {
+    // One shim, so everything below reads the same as session 8. x402 renames the fields; it
+    // does not change what they mean.
+    const q = {
+      price: r.maxAmountRequired,
+      listPrice: r.extra.listPrice,
+      symbol: r.extra.symbol,
+      asset: r.asset,
+      payTo: r.payTo,
+      payToAgentId: r.extra.payToAgentId,
+      resource: r.resource,
+      priceReason: undefined as string | undefined,
+      pricedBy: undefined as string | undefined,
+    };
     banner("BUYER", "step 6", "Is this price worth paying?");
     detail("asking price", `${q.price} ${q.symbol}`);
     detail("list price", `${q.listPrice ?? "?"} ${q.symbol}`);
@@ -232,7 +245,7 @@ export async function runBuyer(
     banner("BUYER", "step 7", "Is this seller who it claims to be?");
     detail("payTo", q.payTo);
 
-    const identity = await checkSellerIdentity(registry, q, discoveredAgentId);
+    const identity = await checkSellerIdentity(registry, q as never, discoveredAgentId);
     if (!identity.ok) {
       fail("payTo does NOT match the seller's on-chain registry wallet");
       detail("registry says", identity.registryWallet ?? "(unreadable)");
@@ -279,22 +292,22 @@ export async function runBuyer(
     switch (e.type) {
       case "request":
         if (e.attempt === 1) banner("BUYER", "step 4", `GET ${e.url} (no payment)`);
-        else banner("BUYER", "step 9", "Retry with X-Payment-Proof header");
+        else banner("BUYER", "step 9", "Retry with the X-PAYMENT header");
         break;
-      case "quoted":
-        ok("received HTTP 402 with a quote");
+      case "payment-required":
+        ok(`received HTTP 402 — x402 envelope, scheme ${e.requirements.scheme}`);
         break;
       case "transferred":
-        banner("BUYER", "step 8", "Pay — the buyer moves its OWN funds");
+        banner("BUYER", "step 8", "Pay — pulled from the OWNER's balance, under the cap");
         detail("amount", `${e.amount} ${config.assetSymbol}`);
         detail("ix hash", e.txHash);
-        say("BUYER", "on MOI only the owner can move their own money — nobody holds it for us");
+        say("BUYER", "I hold no float. This is the owner's money, under an allowance I cannot raise.");
         steps.emit({
           actor: "chain",
-          title: "Paid — on chain, from my own wallet",
+          title: "Paid — on chain, from the owner's balance",
           thought:
-            "On MOI only the owner can move their own funds, so I signed and submitted this " +
-            "myself. Nobody held the money for me.",
+            "I hold no float of my own. This came out of the owner's balance, under a capped " +
+            "allowance recorded on chain. If it were over the cap, the chain would have refused.",
           detail: [
             ["amount", `${e.amount} ${config.assetSymbol}`],
             ["from", buyer.address],
@@ -304,15 +317,15 @@ export async function runBuyer(
         });
         break;
       case "signed":
-        detail("signed value", e.claim.value);
-        detail("names tx", e.claim.txHash);
-        detail("resource", e.claim.resource);
-        detail("nonce", short(e.claim.nonce));
+        detail("signed value", e.authorization.value);
+        detail("names tx", e.authorization.txHash);
+        detail("resource", e.authorization.resource);
+        detail("nonce", short(e.authorization.nonce));
         ok(`ECDSA_S256 signature ${short(e.signature, 14, 6)}`);
         break;
       case "paid":
         banner("BUYER", "step 12", "Receipt received");
-        detail("confirmed ix", e.receipt.txHash);
+        detail("confirmed ix", e.receipt.transaction ?? "(none)");
         detail("network", e.receipt.network);
         break;
     }
@@ -321,7 +334,10 @@ export async function runBuyer(
   const url = `${base}/signal/${encodeURIComponent(choice.marketId)}`;
 
   try {
-    const result = await payingFetch(url, { buyer, approve, onEvent: narrate });
+    const owner = await buyerAccount();   // holds the float; the agent only spends it
+    const result = await payingFetch(url, {
+      buyer, benefactor: owner.address, approve, onEvent: narrate,
+    });
     banner("BUYER", "done", "Estimate delivered — agent loop complete");
     console.log(JSON.stringify(result.data, null, 2));
     steps.emit({
@@ -334,8 +350,8 @@ export async function runBuyer(
     return {
       data: result.data,
       txHash: result.txHash,
-      receiptTx: result.receipt?.txHash ?? null,
-      price: result.quote?.price ?? config.price.toString(),
+      receiptTx: result.receipt?.transaction ?? null,
+      price: result.requirements?.maxAmountRequired ?? config.price.toString(),
       marketId: choice.marketId,
     };
   } catch (err) {

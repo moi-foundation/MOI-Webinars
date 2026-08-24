@@ -17,14 +17,15 @@
 import {
   config, NETWORK,
   loadAccount, buyerAccount, sellerAccount,
-  canonicalClaimBytes, randomNonce, nowSeconds,
+  canonicalAuthorizationBytes, randomNonce, nowSeconds,
+  SCHEME, X402_NETWORK, X402_VERSION,
   ConsumedTransfers,
   updateAgentWallet, registryClient,
   banner, detail, ok, fail, summary,
-  type Account, type PaymentClaim, type PaymentProof, type Quote,
+  type Account, type PaymentAuthorization, type PaymentPayload, type PaymentRequirements,
 } from "@demo/shared";
 import { MAS0AssetLogic, getAssetDriver } from "js-moi-sdk";
-import { verifyProof } from "@demo/agent-seller/src/verify-proof.js";
+import { verifyPayment } from "@demo/agent-seller/src/verify-proof.js";
 import { findMarket } from "@demo/agent-seller/src/catalog.js";
 import { checkSellerIdentity } from "@demo/agent-buyer/src/identity-check.js";
 
@@ -51,13 +52,20 @@ async function realTransfer(from: Account, to: string, amount: bigint): Promise<
 
 let failures = 0;
 
-async function sign(signer: Account, claim: PaymentClaim): Promise<PaymentProof> {
+async function sign(signer: Account, authorization: PaymentAuthorization): Promise<PaymentPayload> {
   const sigAlgo = signer.wallet.signingAlgorithms.ecdsa_secp256k1;
   return {
-    claim,
-    publicKey: signer.publicKey,
-    keyId: signer.keyId,
-    signature: await signer.wallet.sign(canonicalClaimBytes(claim), signer.keyId, sigAlgo),
+    x402Version: X402_VERSION,
+    scheme: SCHEME,
+    network: X402_NETWORK,
+    payload: {
+      publicKey: signer.publicKey,
+      keyId: signer.keyId,
+      signature: await signer.wallet.sign(
+        canonicalAuthorizationBytes(authorization), signer.keyId, sigAlgo,
+      ),
+      authorization,
+    },
   };
 }
 
@@ -86,23 +94,24 @@ async function main(): Promise<void> {
     );
   }
 
-  const quote: Quote = {
-    price: price.toString(),
-    symbol: config.assetSymbol,
-    asset: config.assetId,
-    payTo: seller.address,
-    payToAgentId: sellerAgentId,
+  const requirements: PaymentRequirements = {
+    scheme: SCHEME,
+    network: X402_NETWORK,
+    maxAmountRequired: price.toString(),
     resource,
     description: "test",
-    network: NETWORK,
-    ttlSeconds: 120,
+    mimeType: "application/json",
+    payTo: seller.address,
+    maxTimeoutSeconds: 120,
+    asset: config.assetId,
+    extra: { symbol: config.assetSymbol, payToAgentId: sellerAgentId },
   };
 
   // Shared across cases so the replay test sees the same spent-set the others populated.
   const consumed = new ConsumedTransfers();
 
-  const attack = async (name: string, expected: string, proof: PaymentProof): Promise<void> => {
-    const out = await verifyProof({ seller, consumed, proof, quote, consume: false });
+  const attack = async (name: string, expected: string, payload: PaymentPayload): Promise<void> => {
+    const out = await verifyPayment({ seller, consumed, payload, requirements, consume: false });
     if (out.ok) { fail(`${name} — ACCEPTED (should have been rejected!)`); failures++; return; }
     if (out.reason !== expected) {
       fail(`${name} — rejected as "${out.reason}", expected "${expected}"`);
@@ -113,12 +122,14 @@ async function main(): Promise<void> {
   };
 
   /** A fresh, genuine on-chain transfer + a matching claim. */
-  const honest = async (): Promise<PaymentClaim> => {
+  const honest = async (): Promise<PaymentAuthorization> => {
     const txHash = await realTransfer(buyer, seller.address, price);
+    const now = nowSeconds();
     return {
       from: buyer.address, to: seller.address, asset: config.assetId,
       value: price.toString(), txHash, resource,
-      nonce: randomNonce(), expiresAt: nowSeconds() + 120,
+      nonce: randomNonce(),
+      validAfter: String(now - 5), validBefore: String(now + 120),
     };
   };
 
@@ -128,8 +139,8 @@ async function main(): Promise<void> {
 
   // 0. CONTROL. Without this, a verifier that rejects everything would pass the suite.
   {
-    const out = await verifyProof({
-      seller, consumed, proof: await sign(buyer, await honest()), quote, consume: false,
+    const out = await verifyPayment({
+      seller, consumed, payload: await sign(buyer, await honest()), requirements, consume: false,
     });
     if (out.ok) ok("control: an honest payment IS accepted");
     else { fail(`control: honest payment rejected as ${out.reason}`); failures++; }
@@ -139,7 +150,7 @@ async function main(): Promise<void> {
   {
     const claim = await honest();
     const p = await sign(buyer, claim);
-    p.claim = { ...claim, value: "0" };
+    p.payload.authorization = { ...claim, value: "0" };
     await attack("tampered amount", "invalid_signature", p);
   }
 
@@ -147,7 +158,7 @@ async function main(): Promise<void> {
   {
     const claim = await honest();
     const p = await sign(buyer, claim);
-    p.claim = { ...claim, to: attacker.address };
+    p.payload.authorization = { ...claim, to: attacker.address };
     await attack("redirected payee", "invalid_signature", p);
   }
 
@@ -157,7 +168,7 @@ async function main(): Promise<void> {
   {
     const claim = await honest();
     const p = await sign(buyer, claim);
-    p.claim = { ...claim, from: "0x" + "11".repeat(28) + "00000000" };
+    p.payload.authorization = { ...claim, from: "0x" + "11".repeat(28) + "00000000" };
     await attack("impersonated payer", "invalid_signature", p);
   }
 
@@ -172,22 +183,23 @@ async function main(): Promise<void> {
   {
     const claim = await honest();
     await attack("expired claim", "payment_expired",
-      await sign(buyer, { ...claim, expiresAt: nowSeconds() - 300 }));
+      await sign(buyer, { ...claim, validBefore: String(nowSeconds() - 300) }));
   }
 
   // 5. Claim signed for a DIFFERENT resource.
   {
     const claim = await honest();
-    await attack("claim for another resource", "quote_mismatch",
+    await attack("claim for another resource", "requirements_mismatch",
       await sign(buyer, { ...claim, resource: "http://evil.test/other" }));
   }
 
   // 6. Underpayment — honestly signed, but for less than asked.
   {
     const txHash = await realTransfer(buyer, seller.address, price);
-    await attack("underpayment", "quote_mismatch", await sign(buyer, {
+    await attack("underpayment", "requirements_mismatch", await sign(buyer, {
       from: buyer.address, to: seller.address, asset: config.assetId,
-      value: "0", txHash, resource, nonce: randomNonce(), expiresAt: nowSeconds() + 120,
+      value: "0", txHash, resource, nonce: randomNonce(),
+      validAfter: String(nowSeconds() - 5), validBefore: String(nowSeconds() + 120),
     }));
   }
 
@@ -196,7 +208,8 @@ async function main(): Promise<void> {
     await attack("invented transfer hash", "transfer_not_found", await sign(buyer, {
       from: buyer.address, to: seller.address, asset: config.assetId,
       value: price.toString(), txHash: "0x" + "ab".repeat(32),
-      resource, nonce: randomNonce(), expiresAt: nowSeconds() + 120,
+      resource, nonce: randomNonce(),
+      validAfter: String(nowSeconds() - 5), validBefore: String(nowSeconds() + 120),
     }));
   }
 
@@ -209,14 +222,15 @@ async function main(): Promise<void> {
     await attack("someone else's transfer", "transfer_mismatch", await sign(buyer, {
       from: buyer.address, to: seller.address, asset: config.assetId,
       value: price.toString(), txHash, resource,
-      nonce: randomNonce(), expiresAt: nowSeconds() + 120,
+      nonce: randomNonce(),
+      validAfter: String(nowSeconds() - 5), validBefore: String(nowSeconds() + 120),
     }));
   }
 
   // 9. Replay — redeem a genuine payment twice. The second must be refused.
   {
     const p = await sign(buyer, await honest());
-    const first = await verifyProof({ seller, consumed, proof: p, quote, consume: true });
+    const first = await verifyPayment({ seller, consumed, payload: p, requirements, consume: true });
     if (!first.ok) {
       fail(`replay setup: first redemption failed (${first.reason})`); failures++;
     } else {
@@ -229,7 +243,7 @@ async function main(): Promise<void> {
   {
     await updateAgentWallet(reg, sellerAgentId, "0x" + "de".repeat(28) + "00000000");
     try {
-      const verdict = await checkSellerIdentity(reg, quote);
+      const verdict = await checkSellerIdentity(reg, requirements as never);
       if (verdict.ok) { fail("registry tamper — buyer would have PAID an attacker!"); failures++; }
       else ok("registry says a different wallet → buyer refuses before paying");
     } finally {

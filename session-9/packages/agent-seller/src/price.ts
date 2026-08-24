@@ -1,12 +1,15 @@
-// What the seller charges for the thing being requested.
+// What the seller charges — now expressed as an x402 PaymentRequirements.
 //
-// The price comes from the CATALOG, not from config — each market carries its own. `config.price`
-// is only the fallback for a route with no catalog entry behind it.
+// Same numbers as session 8, different envelope. The price still comes from the CATALOG, not from
+// config, because each market carries its own.
 //
-// `payToAgentId` is the other load-bearing field. Without it `payTo` is 32 anonymous bytes and the
-// buyer has no way to tell the real Signal Desk from someone who edited the listing.
+// `extra.payToAgentId` is the field that matters most and the one x402 has no place for. The spec
+// tells a client WHERE to send money. It has no opinion on WHOSE address that is. So the seller's
+// agent id rides in `extra`, which the spec types as an open record — a compliant parser reads
+// what it knows and ignores the rest, and a MOI-aware buyer gets what it needs to check the
+// registry before paying.
 
-import { config, NETWORK, type Quote } from "@demo/shared";
+import { config, SCHEME, X402_NETWORK, type PaymentRequirements } from "@demo/shared";
 
 export interface Priced {
   question: string;
@@ -16,19 +19,31 @@ export interface Priced {
   pricedBy: string;
 }
 
-export function buildQuote(resource: string, payTo: string, item: Priced): Quote {
+export function buildRequirements(
+  resource: string,
+  payTo: string,
+  item: Priced,
+): PaymentRequirements {
   return {
-    price: item.price.toString(),
-    listPrice: item.listPrice.toString(),
-    priceReason: item.priceReason,
-    pricedBy: item.pricedBy,
-    symbol: config.assetSymbol,
-    asset: config.assetId,
-    payTo,
-    ...(config.sellerAgentId ? { payToAgentId: config.sellerAgentId } : {}),
+    scheme: SCHEME,
+    network: X402_NETWORK,
+    maxAmountRequired: item.price.toString(),
     resource,
     description: `Probability estimate for: ${item.question}`,
-    network: NETWORK,
-    ttlSeconds: config.authTtlSeconds,
+    mimeType: "application/json",
+    payTo,
+    maxTimeoutSeconds: config.authTtlSeconds,
+    asset: config.assetId,
+    extra: {
+      symbol: config.assetSymbol,
+      ...(config.sellerAgentId ? { payToAgentId: config.sellerAgentId } : {}),
+      listPrice: item.listPrice.toString(),
+    },
   };
 }
+
+/** Kept for the console narration — the seller still explains its markup out loud. */
+export const priceNarration = (item: Priced): { reason: string; by: string } => ({
+  reason: item.priceReason,
+  by: item.pricedBy,
+});

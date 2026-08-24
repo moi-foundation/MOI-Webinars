@@ -33,6 +33,17 @@ export const NETWORK = "moi-voyage-devnet";
 
 export const FUEL_LIMIT = Number(opt("FUEL_LIMIT", "20000"));
 
+// ── session 9: the x402 envelope ───────────────────────────────────────────────────────────
+/**
+ * Our scheme id. x402 ships exactly one, "exact", whose settlement is a detached EVM transfer
+ * authorization. MOI cannot express that, so we name our own. Declaring a scheme is what the
+ * field is for — it is not a fork.
+ */
+export const SCHEME = "moi-transfer";
+/** Our network id. x402's enum is 16 EVM and Solana chains; none of them are this one. */
+export const X402_NETWORK = "moi-voyage-devnet";
+export const X402_VERSION = 1;
+
 export const config = {
   get mnemonic(): string { return req("USER_MNEMONIC"); },
   /** The BUYER's wallet — the funded one. It signs the payment, so it needs gas. */

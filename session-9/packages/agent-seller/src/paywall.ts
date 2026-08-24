@@ -1,26 +1,33 @@
-// The paid-route middleware. Quote, verify, deliver.
+// The paid-route middleware, speaking x402.
 //
-// The whole seller-side payment integration is this file plus verify-proof.ts. There is no
-// facilitator to run, no facilitator URL to configure, and no second process to keep alive.
+// Session 8's paywall answered 402 with a quote of our own invention. This one answers with a
+// spec-shaped body: { x402Version, accepts: [...] }, and reads the standard X-PAYMENT header.
+//
+// What did NOT change is who verifies. There is still no facilitator. The seller reads the chain
+// itself, exactly as in session 7, because on MOI a third party cannot settle on your behalf and a
+// third party that only CHECKS is a dependency rather than a service.
+//
+// So: standard envelope, native settlement, self-verification.
 
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 import {
   sellerAccount,
   ConsumedTransfers,
-  decodeProof,
-  encodeReceipt,
-  NETWORK,
+  decodePaymentHeader,
+  encodePaymentResponseHeader,
+  paymentRequiredBody,
+  X402_NETWORK,
   type Account,
   type CheckResult,
-  type PaymentProof,
-  type Quote,
+  type PaymentPayload,
+  type PaymentRequirements,
 } from "@demo/shared";
-import { buildQuote, type Priced } from "./price.js";
-import { verifyProof } from "./verify-proof.js";
+import { buildRequirements, type Priced } from "./price.js";
+import { verifyPayment } from "./verify-proof.js";
 
 export type SellerEvent =
-  | { type: "quoted"; quote: Quote }
-  | { type: "proof-received"; proof: PaymentProof }
+  | { type: "payment-required"; requirements: PaymentRequirements }
+  | { type: "payment-received"; payload: PaymentPayload }
   | { type: "checked"; checks: CheckResult[]; ok: boolean; txHash?: string }
   | { type: "produced" }
   | { type: "rejected"; reason: string };
@@ -28,12 +35,11 @@ export type SellerEvent =
 export function paywall(
   payTo: string,
   produce: (req: Request) => Promise<unknown>,
-  /** What is being sold on this request, and what the seller has decided to charge for it. */
   resolve: (req: Request) => Promise<Priced>,
   onEvent?: (e: SellerEvent) => void,
 ): RequestHandler {
   // In-memory, which is honest for a demo: one process, one run. A real seller would persist this,
-  // because forgetting a spent transfer is how you get charged once and deliver twice.
+  // because forgetting a spent transfer is how you get paid once and deliver twice.
   const consumed = new ConsumedTransfers();
   const emit = (e: SellerEvent) => onEvent?.(e);
   let seller: Account | null = null;
@@ -41,45 +47,45 @@ export function paywall(
   return async function handler(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const resource = `${req.protocol}://${req.get("host")}${req.originalUrl.split("?")[0]}`;
-      const quote = buildQuote(resource, payTo, await resolve(req));
+      const requirements = buildRequirements(resource, payTo, await resolve(req));
 
-      // ── nothing attached: quote them ────────────────────────────────────────────────────
-      const header = req.header("X-Payment-Proof");
+      // ── nothing attached: answer 402 with what we accept ────────────────────────────────
+      const header = req.header("X-PAYMENT");
       if (!header) {
-        emit({ type: "quoted", quote });
-        res.status(402).json(quote);
+        emit({ type: "payment-required", requirements });
+        res.status(402).json(paymentRequiredBody([requirements]));
         return;
       }
 
-      let proof: PaymentProof;
+      let payload: PaymentPayload;
       try {
-        proof = decodeProof(header);
+        payload = decodePaymentHeader(header);
       } catch {
-        emit({ type: "rejected", reason: "malformed X-Payment-Proof header" });
-        res.status(402).json({ ...quote, error: "malformed_proof" });
+        emit({ type: "rejected", reason: "malformed X-PAYMENT header" });
+        res.status(402).json(paymentRequiredBody([requirements], "invalid_payload"));
         return;
       }
-      emit({ type: "proof-received", proof });
+      emit({ type: "payment-received", payload });
 
       // `verify` needs no private key, but Account owns the wallet that exposes it.
       seller ??= await sellerAccount();
 
-      const outcome = await verifyProof({ seller, consumed, proof, quote, consume: true });
+      const outcome = await verifyPayment({ seller, consumed, payload, requirements, consume: true });
       emit({ type: "checked", checks: outcome.checks, ok: outcome.ok, txHash: outcome.txHash });
 
       if (!outcome.ok) {
         emit({ type: "rejected", reason: outcome.reason ?? "invalid" });
-        res.status(402).json({ ...quote, error: outcome.reason });
+        res.status(402).json(paymentRequiredBody([requirements], outcome.reason));
         return;
       }
 
       const data = await produce(req);
       emit({ type: "produced" });
 
-      res.setHeader("X-Payment-Receipt", encodeReceipt({
-        paid: true,
-        txHash: outcome.txHash!,
-        network: NETWORK,
+      res.setHeader("X-PAYMENT-RESPONSE", encodePaymentResponseHeader({
+        success: true,
+        transaction: outcome.txHash!,
+        network: X402_NETWORK,
         payer: outcome.payer!,
       }));
       res.status(200).json({ data });

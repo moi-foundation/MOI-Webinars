@@ -34,20 +34,20 @@ export async function startSeller(opts?: { onEvent?: (e: SellerEvent) => void })
     // Anything watching from outside the terminal sees the same events, unfiltered.
     opts?.onEvent?.(e);
     switch (e.type) {
-      case "quoted":
-        banner("SELLER", "step 5", "402 Payment Required — here is my quote");
-        detail("price", `${e.quote.price} ${e.quote.symbol}  (list ${e.quote.listPrice})`);
-        detail("why this price", e.quote.priceReason ?? "(none)");
-        detail("priced by", e.quote.pricedBy ?? "(none)");
-        detail("payTo", e.quote.payTo);
-        detail("asset", shortId(e.quote.asset));
-        detail("agent id", e.quote.payToAgentId ?? "(none)");
+      case "payment-required":
+        banner("SELLER", "step 5", "402 Payment Required — x402 envelope, our scheme");
+        detail("scheme", `${e.requirements.scheme} / ${e.requirements.network}`);
+        detail("price", `${e.requirements.maxAmountRequired} ${e.requirements.extra.symbol}` +
+          `  (list ${e.requirements.extra.listPrice ?? "?"})`);
+        detail("payTo", e.requirements.payTo);
+        detail("asset", shortId(e.requirements.asset));
+        detail("agent id", e.requirements.extra.payToAgentId ?? "(none)");
         break;
-      case "proof-received":
-        banner("SELLER", "step 10", "Payment proof received — checking it myself");
-        detail("from", e.proof.claim.from);
-        detail("their tx", e.proof.claim.txHash);
-        detail("signature", short(e.proof.signature, 14, 6));
+      case "payment-received":
+        banner("SELLER", "step 10", "X-PAYMENT received — checking it myself");
+        detail("from", e.payload.payload.authorization.from);
+        detail("their tx", e.payload.payload.authorization.txHash);
+        detail("signature", short(e.payload.payload.signature, 14, 6));
         break;
       case "checked":
         for (const c of e.checks) check(c.name, c.passed, c.detail);

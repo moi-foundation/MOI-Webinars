@@ -1,5 +1,9 @@
-// The seller checks its own payments. Seven checks, all in-process — every check is a read;
-// the only write is burning the transfer hash afterwards so it cannot buy twice.
+// The seller checks its own payments. Seven checks, all in-process — every check is a read; the
+// only write is recording the transfer hash afterwards so it cannot buy twice.
+//
+// SESSION 9: the envelope is now x402's, so this takes a PaymentPayload and PaymentRequirements
+// instead of our own Proof and Quote. The CHECKS are unchanged — a standard wire format does not
+// change what has to be true for a payment to be real.
 //
 // In the x402 version this lived in a separate facilitator service and there were nine checks.
 // Two are gone, and their absence is the point:
@@ -14,7 +18,7 @@
 // that a transfer happened would make the whole thing decorative.
 
 import {
-  canonicalClaimBytes,
+  canonicalAuthorizationBytes,
   nowSeconds,
   normalizeAddress,
   identifierFromPublicKey,
@@ -22,8 +26,8 @@ import {
   type Account,
   type ConsumedTransfers,
   type CheckResult,
-  type PaymentProof,
-  type Quote,
+  type PaymentPayload,
+  type PaymentRequirements,
 } from "@demo/shared";
 
 export interface VerifyOutcome {
@@ -35,16 +39,17 @@ export interface VerifyOutcome {
   checks: CheckResult[];
 }
 
-export async function verifyProof(args: {
+export async function verifyPayment(args: {
   /** Any account — used only for its `verify`, which needs no key material. */
   seller: Account;
   consumed: ConsumedTransfers;
-  proof: PaymentProof;
-  quote: Quote;
+  payload: PaymentPayload;
+  requirements: PaymentRequirements;
   /** Burn the transfer so it cannot buy twice. False when only inspecting. */
   consume: boolean;
 }): Promise<VerifyOutcome> {
-  const { seller, consumed, proof, quote } = args;
+  const { seller, consumed, payload, requirements } = args;
+  const inner = payload?.payload;
   const checks: CheckResult[] = [];
   const add = (name: string, passed: boolean, detail: string) => {
     checks.push({ name, passed, detail });
@@ -53,18 +58,18 @@ export async function verifyProof(args: {
   const bail = (reason: string): VerifyOutcome => ({ ok: false, reason, checks });
 
   // ── 1. shape ────────────────────────────────────────────────────────────────────────────
-  const claim = proof?.claim;
-  if (!claim || !proof.signature || !proof.publicKey) {
-    add("proof_well_formed", false, "missing claim, signature or publicKey");
+  const claim = inner?.authorization;
+  if (!claim || !inner?.signature || !inner?.publicKey) {
+    add("payload_well_formed", false, "missing authorization, signature or publicKey");
     return bail("invalid_proof");
   }
-  add("proof_well_formed", true, "claim + signature + publicKey present");
+  add("payload_well_formed", true, "authorization + signature + publicKey present");
 
   // ── 2. signature ────────────────────────────────────────────────────────────────────────
   let signatureOk = false;
   try {
     signatureOk = seller.wallet.verify(
-      canonicalClaimBytes(claim), proof.signature, proof.publicKey,
+      canonicalAuthorizationBytes(claim), inner.signature, inner.publicKey,
     );
   } catch { signatureOk = false; }
   if (!add("signature_valid", signatureOk, "ECDSA_S256 over the canonical claim")) {
@@ -75,7 +80,7 @@ export async function verifyProof(args: {
   // Participant identifiers are derived from public keys, so this proves the signer really owns
   // the account being debited. A valid signature alone could still merely CLAIM someone else's
   // `from` — which is exactly how you would steal a stranger's transfer.
-  const derived = identifierFromPublicKey(proof.publicKey);
+  const derived = identifierFromPublicKey(inner.publicKey);
   const keyOk = derived === claim.from.toLowerCase();
   if (!add("key_binds_to_payer", keyOk,
     keyOk ? `publicKey derives to ${claim.from}`
@@ -85,28 +90,33 @@ export async function verifyProof(args: {
 
   // ── 4. the claim matches what we quoted ─────────────────────────────────────────────────
   const mismatches: string[] = [];
-  if (normalizeAddress(claim.asset) !== normalizeAddress(quote.asset)) mismatches.push("asset");
-  if (normalizeAddress(claim.to) !== normalizeAddress(quote.payTo)) mismatches.push("payTo");
-  if (claim.resource !== quote.resource) mismatches.push("resource");
+  if (normalizeAddress(claim.asset) !== normalizeAddress(requirements.asset)) mismatches.push("asset");
+  if (normalizeAddress(claim.to) !== normalizeAddress(requirements.payTo)) mismatches.push("payTo");
+  if (claim.resource !== requirements.resource) mismatches.push("resource");
   let value: bigint;
   try { value = BigInt(claim.value); } catch { return bail("invalid_proof"); }
-  if (value < BigInt(quote.price)) mismatches.push("value");
-  if (!add("matches_quote", mismatches.length === 0,
+  if (value < BigInt(requirements.maxAmountRequired)) mismatches.push("value");
+  if (!add("matches_requirements", mismatches.length === 0,
     mismatches.length === 0
-      ? `${claim.value} ${quote.symbol} for ${quote.resource}`
-      : `mismatch: ${mismatches.join(", ")}`)) return bail("quote_mismatch");
+      ? `${claim.value} ${requirements.extra.symbol} for ${requirements.resource}`
+      : `mismatch: ${mismatches.join(", ")}`)) return bail("requirements_mismatch");
 
   // ── 5. freshness ────────────────────────────────────────────────────────────────────────
   const now = nowSeconds();
-  if (!add("not_expired", now <= claim.expiresAt,
-    now > claim.expiresAt ? `expired ${now - claim.expiresAt}s ago` : `valid for another ${claim.expiresAt - now}s`)) {
+  const after = Number(claim.validAfter);
+  const before = Number(claim.validBefore);
+  const fresh = now >= after && now <= before;
+  if (!add("not_expired", fresh,
+    now > before ? `expired ${now - before}s ago`
+      : now < after ? `not valid for another ${after - now}s`
+      : `valid for another ${before - now}s`)) {
     return bail("payment_expired");
   }
 
   // ── 6. did the money actually move? read the chain ──────────────────────────────────────
   // The buyer submitted its own transfer. We confirm it independently rather than trusting it.
   let facts;
-  try { facts = await readTransfer(claim.txHash, quote.asset); }
+  try { facts = await readTransfer(claim.txHash, requirements.asset); }
   catch (err) {
     add("transfer_landed_on_chain", false, (err as Error).message);
     return bail("transfer_not_found");
