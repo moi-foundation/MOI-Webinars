@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "MOI Builders #7 \u2014 Agentic Payments V1: two agents, a quote, a signed on-chain payment, and an identity check against the MOI agent registry. No x402 (see the claude/agent-payments-moi-x402 branch), no context inheritance (session 8).",
+  "description": "MOI Builders #7 — Agentic Payments V1: two agents, a quote, a signed on-chain payment, and an identity check against the MOI agent registry. No x402 (see the claude/agent-payments-moi-x402 branch), no context inheritance (session 8).",
   "engines": {
     "node": ">=20"
   },
@@ -20,7 +20,9 @@
     "demo": "tsx scripts/demo.ts",
     "ask": "tsx scripts/ask.ts",
     "ui": "tsx scripts/ui.ts",
-    "attack-test": "tsx scripts/attack-test.ts"
+    "attack-test": "tsx scripts/attack-test.ts",
+    "preflight": "tsx scripts/preflight.ts",
+    "spike:allowance": "tsx scripts/spike-allowance.ts"
   },
   "dependencies": {
     "@demo/agent-buyer": "*",
