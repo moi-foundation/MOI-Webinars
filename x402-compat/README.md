@@ -58,62 +58,100 @@ surface it.
 
 ---
 
-## 3. The steps
+## 3. What has to happen, in order
 
-### Step 1 — Register `moi:` with CASA
+Everything below, start to finish. Each step lists what it needs and what "done" looks like.
+
+### Step 1 — Decide what identifies a MOI network
+
+CAIP-2 names a chain as `namespace:reference`. We need the reference half.
+
+MOI has no chain id, and being account-centric it has no genesis hash either, so the two usual
+answers are both unavailable. The draft proposes short names — `moi:devnet`, `moi:mainnet` —
+following Stellar.
+
+**Needs:** a decision from the protocol team.
+**Done when:** the format is agreed. Everything downstream depends on this string.
+
+### Step 2 — Add a way to ask a node which network it is
+
+CAIP-2 requires a section showing how a client *verifies* the reference against a live node.
+Ethereum has `eth_chainId`. Stellar returns `network_passphrase`. Aptos returns `chain_id`.
+
+MOI has nothing — all 36 RPC methods were checked. `net.Version` gives the software version,
+`net.Info` gives the node's own peer id.
+
+This matters more on MOI than elsewhere: participant identifiers are derived from public keys, so
+the same address exists on every MOI network. Point a client at the wrong endpoint and the
+interaction may simply succeed, on the wrong chain.
+
+**Needs:** a small protocol change — something like `net.Network` returning `{"network":"devnet"}`,
+and a node release carrying it.
+**Done when:** a `curl` against a public endpoint returns the reference from step 1.
+
+### Step 3 — Register the namespace with CASA
 
 A spec document submitted to `ChainAgnostic/namespaces`. Draft is written: `caip2-submission/`.
 
-- Median **24 days** to merge. **91 of the last 100** PRs merged.
-- Nobody has been rejected on merit. The one chain that failed did so because its author stopped
-  replying for 587 days.
-- **The risk is going quiet, not being refused. Name an owner before filing.**
+**Needs:** steps 1 and 2; a named owner with a GitHub handle; a `discussions-to` URL.
+**Expect:** median 24 days. 91 of the last 100 PRs merged. Nobody has been rejected on merit — the
+one chain that failed did so because its author stopped replying for 587 days.
+**Done when:** the `moi/` folder is merged and `moi:` is a real identifier.
 
-### Step 2 — Publish the adapter
+### Step 4 — Write the x402 scheme spec
 
-x402 v2 has a core that knows payments and a small adapter per chain. Ethereum, Solana, Stellar,
-Aptos, NEAR, XRPL and five others have one. MOI needs one.
+x402 requires new chains to land in **three separate PRs**, and this is the first: a specification
+only, at `specs/schemes/exact/scheme_exact_moi.md`. It documents the payload, the verification
+logic and the settlement logic.
 
-Draft is written and typechecks: `moi-x402/`. It answers three questions —
+**Needs:** step 3 — a spec naming a made-up network won't be merged.
+**Done when:** merged into `x402-foundation/x402`.
 
-- how a buyer pays on MOI
-- how a seller checks a payment arrived
-- how a third party would settle one *(optional — nobody has to run it)*
+### Step 5 — Build and test the mechanism package
 
-All three already existed across sessions 7–9. This is repackaging, not new logic.
+The second PR: `typescript/packages/mechanisms/moi`, implementing `SchemeNetworkClient`,
+`SchemeNetworkServer` and `SchemeNetworkFacilitator`.
 
-### Step 3 — Get listed
+The implementation is written and typechecks against `@x402/core@2.23.0` — see `moi-x402/`. What is
+missing is everything around it.
+
+**Needs:** unit, integration and e2e tests; a funded devnet wallet to run them; GPG-signed commits;
+AI assistance disclosed in the PR description; a changeset for the changelog.
+**Done when:** merged and published as `@x402/moi`.
+
+### Step 6 — Port the demos onto it
+
+Sessions 7–9 target x402 **v1**, which is deprecated. Rewriting them against the published package
+proves it works for someone who isn't us — if our own demos can't run on it in two lines, nobody
+else's will.
+
+**Needs:** step 5; a funded wallet.
+**Done when:** the demos install `@x402/moi` instead of carrying bespoke code.
+
+### Step 7 — Get listed
 
 x402 publishes a network support page. Without being on it, we have a working package nobody can
 find.
 
----
-
-## 4. What's blocking, and who unblocks it
-
-**One technical question, for the protocol team:**
-
-> **How does a client find out which MOI network a node is on?**
-
-There is no answer today. All 36 RPC methods were checked — `net.Version` returns the software
-version, `net.Info` returns the node's own peer id, and `moi.Tesseract` is per-account so there is
-no global genesis to read.
-
-CAIP-2 requires a "resolution mechanics" section describing exactly this. Stellar answers it in one
-line. We can't yet.
-
-Likely a small addition — something like `net.Network` returning `"devnet"`. Useful far beyond
-x402.
-
-**Two decisions:**
-
-- Who owns the CASA PR and will answer review comments for a month?
-- Do we want Voyage to operate a facilitator? Not required — it's a service question, the same
-  shape as the MCP server discussion.
+**Needs:** step 5.
+**Done when:** MOI appears alongside the other chains.
 
 ---
 
-## 5. What's in this folder
+### Optional, at any point after step 5
+
+**Other SDKs.** The third PR — Python and Go implementations.
+
+**A facilitator.** Not required: x402 documents self-facilitation as a valid production path, and
+our seller already does it. Running one is a service decision for Voyage, the same shape as the
+MCP server discussion.
+
+**Default assets.** A PR to the asset tables buys `"$0.10"`-style pricing. Atomic units work
+without it, and MAS0 carries no decimals or symbol on chain, so this may not be possible at all.
+
+---
+
+## 4. What's in this folder
 
 | | |
 | --- | --- |
@@ -127,12 +165,12 @@ would break if CASA lands on a different shape — which is why step 1 comes fir
 
 ---
 
-## 6. Honest status
+## 5. Honest status
 
 - The adapter **typechecks** against the real `@x402/core`. It has **never run against a chain** —
   Voyage devnet was reset and nothing is funded.
-- x402 requires **unit, integration and e2e tests** before accepting a mechanism. Not written.
-- Upstreaming needs **three separate PRs** (spec, then implementation, then other SDKs),
-  GPG-signed commits, and AI assistance disclosed in the PR description.
-- Sessions 7–9 target x402 **v1**, which is deprecated. The adapter targets **v2**. That gap is
-  real work, though the logic carries over.
+- **No tests exist.** x402 requires unit, integration and e2e before accepting a mechanism.
+- **Steps 1 and 2 have no owner.** They gate everything else and neither is engineering work in
+  this repo — one is a decision, one is a protocol change.
+- Sessions 7–9 target x402 **v1**, which is deprecated. The adapter targets **v2**. The logic
+  carries over, but the port in step 6 is real work.
