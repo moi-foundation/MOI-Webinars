@@ -1,0 +1,25 @@
+{
+  "name": "moi-x402",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "x402 payment mechanism for MOI. Draft — intended for upstream contribution to x402-foundation/x402 as packages/mechanisms/moi.",
+  "license": "Apache-2.0",
+  "engines": { "node": ">=20" },
+  "exports": {
+    ".": "./src/index.ts",
+    "./exact/client": "./src/client/index.ts",
+    "./exact/server": "./src/server/index.ts",
+    "./exact/facilitator": "./src/facilitator/index.ts"
+  },
+  "scripts": { "build": "tsc --noEmit" },
+  "dependencies": {
+    "@x402/core": "^2.23.0",
+    "js-moi-sdk": "^0.7.1",
+    "js-polo": "^0.1.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2"
+  }
+}
