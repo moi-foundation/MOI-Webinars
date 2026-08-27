@@ -39,14 +39,15 @@ where MOI is differentiated rather than merely compatible.
 
 ## 2. Where MOI stands today
 
-**Better than expected.** Sessions 7–9 already implement x402's flow end to end: the seller answers
-402, the buyer pays and proves, the seller verifies by reading the chain.
+**Better than expected.** Nothing in MOI's design conflicts with x402, and a working prototype of
+the full flow already exists — a seller answering 402, a buyer paying and proving, and the seller
+verifying by reading the chain.
 
 Three things we assumed were blockers turned out not to be:
 
 | Assumption | Reality |
 | --- | --- |
-| We'd need a facilitator | No. x402 documents **self-facilitation** as a valid production path, and our seller already does it. |
+| We'd need a facilitator | No. x402 documents **self-facilitation** as a valid production path, and a MOI seller can verify its own payments with a few chain reads. |
 | MOI's payment model doesn't fit | It does. **`upfront`** — pay first, then prove — is a first-class flow in x402 v2. |
 | We'd need Coinbase to add us to a list | No. v2 uses open CAIP-2 identifiers, not a closed enum. |
 
@@ -119,14 +120,15 @@ missing is everything around it.
 AI assistance disclosed in the PR description; a changeset for the changelog.
 **Done when:** merged and published as `@x402/moi`.
 
-### Step 6 — Port the demos onto it
+### Step 6 — Ship a reference example
 
-Sessions 7–9 target x402 **v1**, which is deprecated. Rewriting them against the published package
-proves it works for someone who isn't us — if our own demos can't run on it in two lines, nobody
-else's will.
+x402 asks contributors to add their chain to `examples/`, and it is the honest test of the package:
+if an integration cannot be written in a few lines against the published package, the interfaces
+are wrong.
 
-**Needs:** step 5; a funded wallet.
-**Done when:** the demos install `@x402/moi` instead of carrying bespoke code.
+**Needs:** step 5; a funded wallet to run it end to end.
+**Done when:** a seller and a buyer run against a live MOI network using only `@x402/moi`, with no
+chain-specific code of their own.
 
 ### Step 7 — Get listed
 
@@ -143,8 +145,8 @@ find.
 **Other SDKs.** The third PR — Python and Go implementations.
 
 **A facilitator.** Not required: x402 documents self-facilitation as a valid production path, and
-our seller already does it. Running one is a service decision for Voyage, the same shape as the
-MCP server discussion.
+a MOI seller can verify its own payments. Running one is a service decision for Voyage, the same
+shape as offering an RPC endpoint.
 
 **Default assets.** A PR to the asset tables buys `"$0.10"`-style pricing. Atomic units work
 without it, and MAS0 carries no decimals or symbol on chain, so this may not be possible at all.
@@ -172,5 +174,5 @@ would break if CASA lands on a different shape — which is why step 1 comes fir
 - **No tests exist.** x402 requires unit, integration and e2e before accepting a mechanism.
 - **Steps 1 and 2 have no owner.** They gate everything else and neither is engineering work in
   this repo — one is a decision, one is a protocol change.
-- Sessions 7–9 target x402 **v1**, which is deprecated. The adapter targets **v2**. The logic
-  carries over, but the port in step 6 is real work.
+- The prototype that proved the flow targets x402 **v1**, which is deprecated. The package in this
+  folder targets **v2**. The logic carries over; the interfaces do not.

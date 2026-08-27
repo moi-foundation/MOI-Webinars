@@ -23,7 +23,7 @@ upstream repo — not from memory. Each claim names how it was checked.
 | Schemes | closed enum, `["exact"]` only | pluggable per-chain mechanisms |
 | Status | deprecated | current |
 
-**Sessions 7–9 target v1.** That is why they had to widen enums by hand.
+**Existing MOI prototype work targets v1**, which is why it had to widen those enums by hand.
 
 *Checked: `npm pack` of both, read the `.d.ts` files directly.*
 
@@ -51,7 +51,7 @@ type SettlePhase     = "before-handler" | "after-handler" | "cancel";
 
 - `authorization` — sign a permission slip, someone else submits it. Needs ERC-3009-style
   detached signing, which MOI does not have.
-- **`upfront` — pay first, then prove. This is exactly what session 7 does.**
+- **`upfront` — pay first, then prove. This is exactly what MOI's signing model allows.**
 - `escrow` — hold funds until delivery.
 
 So MOI does **not** need a custom scheme. It declares `upfront`.
@@ -72,8 +72,8 @@ interface SpendControls {
 
 Config in the buyer, one flag to disable, and **per payment rather than cumulative**.
 
-This is precisely the gap session 8 exists to close, now evidenced by the standard's own
-documentation rather than by our demo.
+A chain-enforced allowance closes this gap; client-side config cannot. Worth noting the evidence
+here is the standard's own documentation, not an outside opinion.
 
 *Checked: `@x402/core@2.23.0` dist `.d.ts`, `interface SpendControls`.*
 
@@ -83,7 +83,7 @@ The spec's own words: the facilitator *"does not hold funds or act as a custodia
 *"an optional but recommended service."* Production support requires *"a production
 facilitator provider, self-hosted facilitator, or self-facilitation capability."*
 
-**Session 7's self-verifying seller is self-facilitation.**
+**A MOI seller that verifies its own payments by reading the chain is self-facilitation.**
 
 *Checked: docs.x402.org/core-concepts/facilitator and /network-and-token-support.*
 
@@ -144,7 +144,8 @@ equivalent answer today.
 
 ## 10. Voyage devnet was reset
 
-Both session-7 accounts, the MAS0 asset, both agent registrations and the transaction
-cited in the session-7 blog no longer resolve. The RPC is alive; the state is gone.
+Previously created accounts, a MAS0 asset, agent registrations and settled transactions no longer
+resolve. The RPC is alive; the state is gone. Relevant because step 5 and step 6 both need a
+funded wallet on a live network.
 
 *Checked: live `existsOnChain` and receipt lookup.*
