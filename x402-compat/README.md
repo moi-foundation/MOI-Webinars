@@ -23,49 +23,10 @@ It's governed by the **x402 Foundation**, under the Linux Foundation since July 
 include Visa, Mastercard, Stripe, Google, AWS, Cloudflare, Coinbase, Ripple and the Solana and
 Stellar foundations.
 
-### HTTP 402 is not x402
-
-Worth separating, because it is the whole of what x402 contributes.
-
-**`402 Payment Required` is only a status code.** It means "you must pay" and nothing else. The
-HTTP spec reserved it in 1997 and never defined what the response body should contain — which is
-why it went unused for nearly thirty years. `404` works because everyone agrees what follows it.
-`402` did not, because nobody agreed.
-
-**x402 defines what follows.** The exact shape of the terms, the header the proof travels in, and
-the retry.
-
-So any service can return an HTTP 402 today, with a body of its own design:
-
-```jsonc
-{ "price": "3", "symbol": "USDM", "asset": "0x…", "payTo": "0x…", "ttlSeconds": 120 }
-```
-
-x402 carries the same information under agreed names:
-
-```jsonc
-{
-  "x402Version": 1,
-  "accepts": [{
-    "scheme": "exact",
-    "network": "moi:mainnet",
-    "amount": "3",
-    "asset": "0x…",
-    "payTo": "0x…",
-    "maxTimeoutSeconds": 120
-  }]
-}
-```
-
-Identical content. The difference is that a buyer's agent which has never seen the seller's code
-can read the second one, because it already expects that shape — and cannot read the first,
-because `price` and `ttlSeconds` are words one developer chose.
-
-The same applies to the proof: a bespoke implementation puts it in a header of its own naming, in
-a format of its own design. x402 puts it in `X-PAYMENT`, in a format every implementation shares.
-
-**Returning a 402 is easy and MOI can already do it. Speaking x402 is the part that makes a
-stranger able to pay.**
+**Note that HTTP 402 and x402 are not the same thing.** `402 Payment Required` is only a status
+code — the HTTP spec reserved it in 1997 and never said what the body should contain, which is why
+it went unused for thirty years. Any service can return a 402 today. x402 is the agreement about
+what goes *inside* it, and that agreement is the entire value.
 
 ### What it doesn't do
 
@@ -197,7 +158,71 @@ without it, and MAS0 carries no decimals or symbol on chain, so this may not be 
 
 ---
 
-## 4. What's in this folder
+## 4. What changes for a developer
+
+Once all seven steps are done.
+
+### Selling something
+
+**Before.** A developer who wants to charge for an API in MAS0 has to invent the whole
+conversation. What does the 402 body look like? What does a proof look like, and which header does
+it travel in? How does the seller check it — and how does the buyer produce something that check
+will accept?
+
+They write all of it, roughly 600 lines, and make seven security decisions alone along the way.
+Then only buyers who read their documentation can pay them, because the format is theirs.
+
+**After.**
+
+```bash
+npm i @x402/moi @x402/express
+```
+
+```ts
+app.use(paymentMiddleware(wallet, {
+  "/api/forecast": { asset: MAS0_ASSET, amount: "3" }
+}))
+```
+
+The route is paid. No format invented, no verification written.
+
+### Buying something
+
+**Before.** An agent that already pays for things over x402 meets a MOI seller and simply cannot
+pay it — there is no MOI code in its stack. Supporting one MOI seller means writing a client for
+that seller's particular format. Supporting a second means writing another.
+
+**After.**
+
+```ts
+client.register("moi:mainnet", new MoiExactClientScheme(wallet))
+```
+
+One line, once. The agent now buys from every MOI seller, and the rest of its logic is untouched.
+
+### The difference in one table
+
+|  | Before | After |
+| --- | --- | --- |
+| Seller writes | ~600 lines and a spec | one line |
+| Buyer writes | a client per seller | one line, once |
+| Who can pay a MOI seller | people who read its docs | anyone with an x402 agent |
+| Security decisions | seven, made alone | none |
+
+### What that actually unlocks
+
+Not saved effort. **A transaction that cannot happen today.**
+
+For an agent to buy something right now, a human had to onboard it to that service in advance.
+There is no path where an agent finds a seller it has never seen, reads the price, decides, and
+pays for one call.
+
+After, that path exists — and the money underneath is the same MAS0 transfer that already works.
+What was missing was never the settlement. It was the conversation around it.
+
+---
+
+## 5. What's in this folder
 
 | | |
 | --- | --- |
@@ -211,7 +236,7 @@ would break if CASA lands on a different shape — which is why step 1 comes fir
 
 ---
 
-## 5. Honest status
+## 6. Honest status
 
 - The adapter **typechecks** against the real `@x402/core`. It has **never run against a chain** —
   Voyage devnet was reset and nothing is funded.
