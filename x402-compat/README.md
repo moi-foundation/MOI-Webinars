@@ -23,6 +23,50 @@ It's governed by the **x402 Foundation**, under the Linux Foundation since July 
 include Visa, Mastercard, Stripe, Google, AWS, Cloudflare, Coinbase, Ripple and the Solana and
 Stellar foundations.
 
+### HTTP 402 is not x402
+
+Worth separating, because it is the whole of what x402 contributes.
+
+**`402 Payment Required` is only a status code.** It means "you must pay" and nothing else. The
+HTTP spec reserved it in 1997 and never defined what the response body should contain — which is
+why it went unused for nearly thirty years. `404` works because everyone agrees what follows it.
+`402` did not, because nobody agreed.
+
+**x402 defines what follows.** The exact shape of the terms, the header the proof travels in, and
+the retry.
+
+So any service can return an HTTP 402 today, with a body of its own design:
+
+```jsonc
+{ "price": "3", "symbol": "USDM", "asset": "0x…", "payTo": "0x…", "ttlSeconds": 120 }
+```
+
+x402 carries the same information under agreed names:
+
+```jsonc
+{
+  "x402Version": 1,
+  "accepts": [{
+    "scheme": "exact",
+    "network": "moi:mainnet",
+    "amount": "3",
+    "asset": "0x…",
+    "payTo": "0x…",
+    "maxTimeoutSeconds": 120
+  }]
+}
+```
+
+Identical content. The difference is that a buyer's agent which has never seen the seller's code
+can read the second one, because it already expects that shape — and cannot read the first,
+because `price` and `ttlSeconds` are words one developer chose.
+
+The same applies to the proof: a bespoke implementation puts it in a header of its own naming, in
+a format of its own design. x402 puts it in `X-PAYMENT`, in a format every implementation shares.
+
+**Returning a 402 is easy and MOI can already do it. Speaking x402 is the part that makes a
+stranger able to pay.**
+
 ### What it doesn't do
 
 x402 moves money. It has no opinion on:
