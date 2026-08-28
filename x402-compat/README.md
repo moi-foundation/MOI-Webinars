@@ -112,6 +112,7 @@ logic and the settlement logic.
 
 **Needs:** step 3 — a spec naming a made-up network won't be merged.
 **Done when:** merged into `x402-foundation/x402`.
+**Detail:** `UPSTREAM.md` — this is PR 1 of 3, and it's one file.
 
 ### Step 5 — Build and test the mechanism package
 
@@ -124,6 +125,7 @@ missing is everything around it.
 **Needs:** unit, integration and e2e tests; a funded devnet wallet to run them; GPG-signed commits;
 AI assistance disclosed in the PR description; a changeset for the changelog.
 **Done when:** merged and published as `@x402/moi`.
+**Detail:** `UPSTREAM.md` — this is PR 2 of 3, with a file-by-file status. Roughly a third done.
 
 ### Step 6 — Ship a reference example
 
@@ -228,6 +230,7 @@ What was missing was never the settlement. It was the conversation around it.
 | --- | --- |
 | `README.md` | this |
 | `FINDINGS.md` | every claim above, with how it was verified |
+| `UPSTREAM.md` | the three upstream PRs, file by file, with what's written and what isn't |
 | `caip2-submission/` | the CASA spec, ready but for three TODOs |
 | `moi-x402/` | the adapter package — 529 lines, typechecks against `@x402/core@2.23.0` |
 
