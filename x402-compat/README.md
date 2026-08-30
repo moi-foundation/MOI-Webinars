@@ -87,15 +87,6 @@ sender, beneficiary, amount and callsite. Verification is therefore a handful of
 needs no third party — which is what x402 calls **self-facilitation** and accepts as a production
 path.
 
-### The payment model has a name in the spec
-
-Because an interaction is signed whole, MOI cannot produce a detached transfer authorization for
-someone else to submit — so x402's `authorization` flow does not apply.
-
-It does not need to. `PaymentFlowName` in `@x402/core` is
-`"authorization" | "upfront" | "escrow"`, and **`upfront`** — settle first, then prove — is exactly
-what MOI's signing model allows.
-
 ### Two things are missing
 
 **No CAIP-2 identifier.** 55 chains are registered with the Chain Agnostic Standards Alliance; MOI
