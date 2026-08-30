@@ -42,25 +42,70 @@ where MOI is differentiated rather than merely compatible.
 
 ---
 
-## 2. Where MOI stands today
+## 2. What MOI already provides
 
-**Better than expected.** Nothing in MOI's design conflicts with x402, and a working prototype of
-the full flow already exists — a seller answering 402, a buyer paying and proving, and the seller
-verifying by reading the chain.
+### Agents can hold and move assets
 
-Three things we assumed were blockers turned out not to be:
+MAS0 assets are protocol-native — created by an operation rather than deployed as contract
+bytecode — and addressed by a 32-byte asset id. An agent that holds a key signs and submits the
+transfer itself:
 
-| Assumption | Reality |
+```ts
+new MAS0AssetLogic(assetId, wallet).transfer(payTo, amount).send({ fuel_limit })
+```
+
+No contract to deploy, no token standard to implement. The full routine set on `MAS0AssetLogic`:
+
+| Routine | Signature |
 | --- | --- |
-| We'd need a facilitator | No. x402 documents **self-facilitation** as a valid production path, and a MOI seller can verify its own payments with a few chain reads. |
-| MOI's payment model doesn't fit | It does. **`upfront`** — pay first, then prove — is a first-class flow in x402 v2. |
-| We'd need Coinbase to add us to a list | No. v2 uses open CAIP-2 identifiers, not a closed enum. |
+| `transfer` | `(beneficiary, amount)` |
+| `transferFrom` | `(benefactor, beneficiary, amount)` |
+| `approve` | `(beneficiary, amount, expiresAt)` |
+| `revoke` | `(beneficiary)` |
+| `lockup` | `(beneficiary, amount)` |
+| `release` | `(benefactor, beneficiary, amount)` |
+| `balanceOf` | `(id)` |
 
-**One real blocker did turn up: MOI has no CAIP-2 identifier.** That's the chain-naming standard
-everything keys off — 55 chains are registered, MOI isn't, and no one has ever filed for it.
+### An owner can cap what an agent spends, on chain
 
-It matters well beyond x402. Wallets and cross-chain tooling use CAIP-2 too. x402 just happened to
-surface it.
+`approve` grants a capped, expiring allowance naming a specific spender. The agent then pays with
+`transferFrom` against the owner's balance rather than holding funds itself. Over the cap, the
+chain refuses.
+
+That matters for x402 specifically, because x402's own `spendControls` are client-side
+configuration — the docs say *"pass `spendControls: false` to disable all spend controls."* An
+on-chain allowance is not disableable by the agent it constrains.
+
+### Payments are verifiable by the seller alone
+
+An interaction is signed with ECDSA over secp256k1, covering the whole envelope — sender, sequence
+number, fuel and operations together. Participant identifiers are derived from public keys, so a
+signature proves control of the paying account.
+
+A seller reads a settled transfer back with `moi.InteractionReceipt` and a POLO decode, recovering
+sender, beneficiary, amount and callsite. Verification is therefore a handful of chain reads and
+needs no third party — which is what x402 calls **self-facilitation** and accepts as a production
+path.
+
+### The payment model has a name in the spec
+
+Because an interaction is signed whole, MOI cannot produce a detached transfer authorization for
+someone else to submit — so x402's `authorization` flow does not apply.
+
+It does not need to. `PaymentFlowName` in `@x402/core` is
+`"authorization" | "upfront" | "escrow"`, and **`upfront`** — settle first, then prove — is exactly
+what MOI's signing model allows.
+
+### Two things are missing
+
+**No CAIP-2 identifier.** 55 chains are registered with the Chain Agnostic Standards Alliance; MOI
+is not among them, and no submission has ever been filed. x402 v2 identifies networks by CAIP-2, so
+nothing can name a MOI network correctly today. It matters beyond x402 — wallets and cross-chain
+tooling key off the same standard.
+
+**No way to ask a node which network it is.** All 36 RPC methods were checked across `moi.*`,
+`ixpool.*` and `net.*`. `net.Version` returns the node's software version, `net.Info` returns its
+own peer id, and `moi.Tesseract` is keyed by account so there is no global genesis to read.
 
 ---
 
