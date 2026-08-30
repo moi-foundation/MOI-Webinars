@@ -106,11 +106,43 @@ Everything below, start to finish. Each step lists what it needs and what "done"
 
 ### Step 1 — Decide what identifies a MOI network
 
-CAIP-2 names a chain as `namespace:reference`. We need the reference half.
+CAIP-2 names a chain as `namespace:reference`. The namespace is `moi`. We need the reference half.
 
-MOI has no chain id, and being account-centric it has no genesis hash either, so the two usual
-answers are both unavailable. The draft proposes short names — `moi:devnet`, `moi:mainnet` —
-following Stellar.
+**How other chains chose theirs:**
+
+| Chain | Identifier | Reference is |
+| --- | --- | --- |
+| Ethereum | `eip155:1` | the numeric chain id |
+| Base | `eip155:8453` | the numeric chain id |
+| Solana | `solana:5eykt4Us…` | the genesis block hash |
+| Aptos | `aptos:1` | the chain id assigned at genesis |
+| Stellar | `stellar:pubnet` | the network's own name |
+
+**MOI has no chain id, and being account-centric it has no genesis hash either** — tesseracts are
+per-account, so there is no single genesis artefact to hash. That rules out the first four rows and
+leaves Stellar's approach: a short, well-known name.
+
+**Which gives something like:**
+
+```
+moi:indus       # the current network
+moi:babylon     # the retired one
+moi:devnet
+```
+
+Those first two are the names the Voyage explorer already uses, so the naming scheme exists —
+this is a matter of confirming it rather than inventing one. Babylon being retired is a useful
+test: the format has to keep working for a network that no longer runs.
+
+*(The draft in `caip2-submission/` currently uses `moi:devnet` / `moi:mainnet` as placeholders. If
+the real names are the answer, three sections of that spec change together — syntax, rationale and
+test cases.)*
+
+**How the identifier actually gets added:** it does not exist until it is registered with the Chain
+Agnostic Standards Alliance, which is step 3 — a pull request to
+[`ChainAgnostic/namespaces`](https://github.com/ChainAgnostic/namespaces) adding a `moi/` folder
+with a `README.md` and a `caip2.md`. Nothing publishes the identifier on our side; a CASA merge is
+what makes it real, and until then any string we use is provisional.
 
 **Needs:** a decision from the protocol team.
 **Done when:** the format is agreed. Everything downstream depends on this string.
