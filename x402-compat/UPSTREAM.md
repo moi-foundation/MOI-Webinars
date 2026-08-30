@@ -1,10 +1,11 @@
 # The three PRs — exactly what each needs, and where it stands
 
-x402 requires a new chain to land in three separate pull requests to
+x402 asks for a new chain to land in up to three pull requests to
 [`x402-foundation/x402`](https://github.com/x402-foundation/x402). They must go in order: the
 specification is reviewed and merged before any implementation is looked at.
 
-**Overall status: PR 1 not started · PR 2 roughly a third done · PR 3 not started.**
+**Overall status: PR 1 not started · PR 2 roughly a third done · PR 3 optional and, judging by the
+rest of the ecosystem, probably not needed.**
 
 ---
 
@@ -94,23 +95,31 @@ uses.
 
 ## PR 3 — The other SDKs
 
-Python and Go implementations of the same three interfaces:
+**In practice this is optional, and most chains skip it.**
 
-- **Go** — `ClientScheme`, `ServerScheme`, `FacilitatorScheme`, under `go/mechanisms/moi/`
-- **Python** — `SchemeNetworkClient`, `SchemeNetworkServer`, `SchemeNetworkFacilitator`, under
-  `python/x402/mechanisms/moi/`
+The contributing guide describes it as a follow-up, but the repository shows what actually happens:
+
+| SDK | Mechanisms present |
+| --- | --- |
+| TypeScript | aptos, avm, concordium, evm, hedera, keeta, near, stellar, svm, tvm, xrpl |
+| Go | `go/mechanisms/` — **evm, svm only** |
+| Python | `python/x402/mechanisms/` — **evm, svm, tvm only** |
+
+Nine of the eleven TypeScript mechanisms have no Go or Python counterpart. Stellar, Aptos, NEAR and
+XRPL are all TypeScript-only.
+
+So a MOI mechanism in TypeScript alone puts it in the same position as most of the ecosystem.
 
 | Item | Status |
 | --- | --- |
-| Go mechanism | ❌ not started |
-| Python mechanism | ❌ not started |
+| Go — `go/mechanisms/moi/` | ❌ not started, and likely unnecessary |
+| Python — `python/x402/mechanisms/moi/` | ❌ not started, and likely unnecessary |
 
-**Needs a MOI SDK in each language.** If `js-moi-sdk` has no Go or Python sibling, this PR is a
-much larger piece of work than PR 2 — worth checking before promising it.
+**If it is ever wanted, it needs a MOI SDK in that language.** `js-moi-sdk` has no obvious Go or
+Python sibling, which would make this a far larger piece of work than PR 2 — writing a MOI client
+library first, then the mechanism on top.
 
 **Depends on:** PR 2 merged.
-
----
 
 ## Applies to every PR
 

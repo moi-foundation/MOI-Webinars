@@ -178,9 +178,17 @@ x402 requires new chains to land in **three separate PRs**, and this is the firs
 only, at `specs/schemes/exact/scheme_exact_moi.md`. It documents the payload, the verification
 logic and the settlement logic.
 
+**The file:**
+
+```
+specs/schemes/exact/scheme_exact_moi.md
+```
+
+That is the whole PR. Seventeen of these already exist — copy the shape from
+`scheme_exact_stellar.md`.
+
 **Needs:** step 3 — a spec naming a made-up network won't be merged.
 **Done when:** merged into `x402-foundation/x402`.
-**Detail:** `UPSTREAM.md` — this is PR 1 of 3, and it's one file.
 
 ### Step 5 — Build and test the mechanism package
 
@@ -190,10 +198,32 @@ The second PR: `typescript/packages/mechanisms/moi`, implementing `SchemeNetwork
 The implementation is written and typechecks against `@x402/core@2.23.0` — see `moi-x402/`. What is
 missing is everything around it.
 
+**The files**, mirroring every other mechanism:
+
+```
+typescript/packages/mechanisms/moi/
+├── package.json  tsconfig.json  tsup.config.ts
+├── vitest.config.ts  vitest.integration.config.ts
+├── eslint.config.js  .prettierrc  .prettierignore
+├── README.md  CHANGELOG.md
+├── src/
+│   ├── constants.ts  types.ts  utils.ts  shared.ts
+│   ├── signer.ts  defaultAssets.ts  index.ts
+│   └── exact/  index.ts + client/ server/ facilitator/
+└── test/  unit/  integrations/
+
+e2e/config/mechanisms_moi.json        # plus registration in the shared e2e modules
+.github/workflows/                    # a publish workflow
+examples/typescript/*/advanced/all_networks   # add MOI, alphabetically
+```
+
+The three scheme implementations under `exact/` are written and typecheck. Everything else on that
+list is not.
+
 **Needs:** unit, integration and e2e tests; a funded devnet wallet to run them; GPG-signed commits;
 AI assistance disclosed in the PR description; a changeset for the changelog.
 **Done when:** merged and published as `@x402/moi`.
-**Detail:** `UPSTREAM.md` — this is PR 2 of 3, with a file-by-file status. Roughly a third done.
+**Detail:** `UPSTREAM.md` has the file-by-file status.
 
 ### Step 6 — Ship a reference example
 
@@ -217,7 +247,9 @@ find.
 
 ### Optional, at any point after step 5
 
-**Other SDKs.** The third PR — Python and Go implementations.
+**Other SDKs.** A Python or Go mechanism. Worth knowing that Go ships only `evm` and `svm`, and
+Python only `evm`, `svm` and `tvm` — nine of the eleven TypeScript mechanisms have no counterpart
+in either. TypeScript alone is the norm, not a shortfall.
 
 **A facilitator.** Not required: x402 documents self-facilitation as a valid production path, and
 a MOI seller can verify its own payments. Running one is a service decision for Voyage, the same
