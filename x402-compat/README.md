@@ -221,11 +221,10 @@ frontmatter          namespace-identifier, title, author, discussions-to,
 ## Copyright
 ```
 
-Both are drafted. Three things are still blank:
+Both are drafted. Two things are still blank:
 
 | Blank | Waiting on |
 | --- | --- |
-| `author` | a real name and GitHub handle |
 | `discussions-to` | a URL where the namespace can be discussed |
 | Resolution Mechanics | step 2. It is written against a proposed `net.Network` and marked as unconfirmed |
 
