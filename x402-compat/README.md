@@ -82,7 +82,7 @@ path.
 **No CAIP-2 identifier.** 55 chains are registered with the Chain Agnostic Standards Alliance; MOI
 is not among them, and no submission has ever been filed. x402 v2 identifies networks by CAIP-2, so
 nothing can name a MOI network correctly today. It matters beyond x402, because wallets and
-cross-chain tooling key off the same standard.
+cross-chain tooling rely on the same standard.
 
 **No way to ask a node which network it is.** MOI exposes 36 RPC methods across `moi.*`,
 `ixpool.*` and `net.*`, and none of them answer the question. `net.Version` returns the node's
@@ -103,7 +103,7 @@ Everything below, start to finish. Each step lists what it needs and what "done"
 
 The first three steps have nothing to do with x402 directly. They are about MOI getting a name.
 
-The **Chain Agnostic Standards Alliance**, or CASA, is an open standards body that publishes the
+The Chain Agnostic Standards Alliance, or CASA, is an open standards body that publishes the
 CAIP specifications. These are conventions for naming things across blockchains, so that wallets,
 explorers and protocols do not each invent their own scheme for saying which chain, which account
 or which asset they mean.
@@ -116,7 +116,7 @@ Getting one is a pull request to a public repository,
 [`ChainAgnostic/namespaces`](https://github.com/ChainAgnostic/namespaces), containing a short
 specification document. Once merged, the identifier is official and anything can use it.
 
-**x402 v2 identifies networks by CAIP-2 identifier**, not by a list it maintains itself. That is
+x402 v2 identifies networks by CAIP-2 identifier, not by a list it maintains itself. That is
 why v2 can support any chain without a code change, and why a chain with no CAIP-2 identifier
 cannot be named correctly in an x402 payment. MOI has no identifier and has never applied for one,
 so steps 1 to 3 are about fixing that. Only then does the x402 work start.
@@ -177,7 +177,7 @@ Ethereum's is `eth_chainId`. Aptos returns `chain_id` from its REST API. Neo ret
 `protocol.network` from `getversion`. Every registered chain has a one-call answer, because without
 one a client cannot tell a testnet from a mainnet except by trusting the URL it was handed.
 
-**MOI has no such call**, so this section cannot be written truthfully today. That is the part that
+MOI has no such call, so this section cannot be written truthfully today. That is the part that
 blocks the submission, not the naming.
 
 **What it would take.** One read-only RPC method that returns the network's name. Something like:
@@ -301,7 +301,7 @@ without it, and MAS0 carries no decimals or symbol on chain, so this may not be 
 
 ## 4. What changes for a developer
 
-Once all seven steps are done.
+This assumes all seven steps are done.
 
 ### Selling something
 
@@ -375,10 +375,10 @@ Nothing is published, pushed or filed.
 
 Some things worth saying plainly:
 
-- The scheme implementations typecheck against the real `@x402/core`, but have **never run against
-  a chain.** Voyage devnet was reset and nothing is funded.
-- **No tests exist.** x402 requires unit, integration and e2e before accepting a mechanism.
-- **Steps 1 and 2 have no owner.** They gate everything else, and neither is a coding task: one is
+- The scheme implementations typecheck against the real `@x402/core`, but have never run against
+  a chain. Voyage devnet was reset and nothing is funded.
+- No tests exist. x402 requires unit, integration and e2e before accepting a mechanism.
+- Steps 1 and 2 have no owner. They gate everything else, and neither is a coding task: one is
   a decision, one is a protocol change.
 - The CAIP-2 identifiers used so far are provisional and would break if CASA lands on a different
   shape, which is why step 1 comes first.
