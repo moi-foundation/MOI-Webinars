@@ -18,6 +18,7 @@ import {
   nowSeconds,
   normalizeAddress,
   identifierFromPublicKey,
+  sameKeyFamily,
   readTransfer,
   type Account,
   type ConsumedTransfers,
@@ -75,10 +76,13 @@ export async function verifyProof(args: {
   // Participant identifiers are derived from public keys, so this proves the signer really owns
   // the account being debited. A valid signature alone could still merely CLAIM someone else's
   // `from` — which is exactly how you would steal a stranger's transfer.
+  // Sub-accounts share the primary's key, so the public key derives the FAMILY, not the exact
+  // account. The claimed payer must be in that family; the chain read below then confirms the
+  // exact sender. A foreign key still fails here — its family matches nothing of the payer's.
   const derived = identifierFromPublicKey(proof.publicKey);
-  const keyOk = derived === claim.from.toLowerCase();
+  const keyOk = sameKeyFamily(derived, claim.from);
   if (!add("key_binds_to_payer", keyOk,
-    keyOk ? `publicKey derives to ${claim.from}`
+    keyOk ? `publicKey derives to ${claim.from}'s key family`
           : `key derives to ${derived}, which cannot control ${claim.from}`)) {
     return bail("invalid_proof");
   }

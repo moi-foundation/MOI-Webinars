@@ -1,45 +1,38 @@
-# MOI Builders #8 — Agentic Payments V2: authority
+# MOI Builders #8 — Agentic Payments V2: context inheritance
 
-**Everything session 7 does, and now the agent cannot overspend even if you delete its spending limit.**
+**Everything session 7 does, and now the agent spends under a budget a contract enforces — even
+if you delete every guard in its code.**
 
-Part 2 of 3. Start with [session 7](../session-7) — this assumes it.
+Part 2 of 3. Start with [session 7](../session-7) — this assumes it. The mechanism comes from
+[session 6](../session-6), which introduced context inheritance and the `AgentBudget` logic.
 
 ---
 
 ## The idea in one change
 
-Session 7's buyer held its own money and obeyed a limit written in its own source:
+Session 7's buyer was a plain account, and its spending limit was a default in its own source:
 
 ```ts
 export const SOFT_LIMIT = BigInt(process.env.MAX_PRICE_PER_ANSWER ?? "6");
 ```
 
-A default in a TypeScript file. Read by the agent, honoured by the agent. Delete it and the
-ceiling is gone. It also capped **one purchase**, not the wallet — so an agent with a 6-unit limit
-and a 99,000-unit balance could drain the wallet 6 units at a time, every payment compliant.
+Delete that line and the ceiling is gone.
 
-Session 8 changes one thing: **the agent stops holding the money.**
+Session 8 makes the buyer an **inherited sub-account** under the `AgentBudget` logic. Context
+inheritance (one `AccountInherit` transaction) gives the account its own storage under that logic
+— actor state — holding its `budget` and `spent`. Before any money moves, the buyer must
+`RecordSpend` against that ledger, **and the contract reverts if the spend would exceed the
+budget**. That rule lives on chain, where the agent's code cannot reach it.
 
-The owner keeps the float and grants a capped, expiring allowance. The agent pays by pulling from
-the owner's balance with `transferFrom`. Three consequences:
+Delete `worth.ts` entirely and the revert still happens.
 
-- It cannot exceed the cap — the chain checks every pull.
-- It cannot raise the cap — granting is the owner's operation on the owner's funds.
-- The cap and the blast radius are finally the same number.
+## Three parties
 
----
-
-## Three accounts
-
-| | holds | can |
+| | is | can |
 | --- | --- | --- |
-| **Owner** | the float | grant, revoke |
-| **Agent** | fuel only | spend the owner's, up to the cap |
-| **Seller** | — | receive |
-
-**The agent has no money.** That is the session.
-
----
+| **Owner** (primary) | the faucet-funded wallet, index 0 | deploy the logic, inherit sub-accounts, reset budgets |
+| **Buyer** (sub-account #1) | inherited under `AgentBudget` | spend, up to its on-chain budget |
+| **Seller** | a plain account | receive |
 
 ## Run it
 
@@ -47,66 +40,46 @@ the owner's balance with `transferFrom`. Three consequences:
 npm install
 cp .env.example .env         # paste ONE funded devnet mnemonic
 npm run preflight            # what exists on chain right now?
-npm run setup:asset          # mint the settlement asset, fund the OWNER
+npm run setup:budget         # deploy AgentBudget → LOGIC_ID
+npm run setup:agents         # AccountInherit the buyer + SetBudget
+npm run setup:asset          # mint the settlement asset (buyer must exist first)
 npm run setup:registry       # register both agents
-npm run setup:authority      # ← the owner grants the allowance
-npm run spike:allowance      # prove the mechanism before trusting it
-npm run demo                 # the honest purchase
-npm run demo -- --overspend  # the agent tries anyway. the chain says no.
-npm run demo -- --revoke     # the owner ends it mid-flight
+npm run demo                 # the honest purchase — gated by RecordSpend
+npm run demo -- --overspend  # the brain says buy. the contract says no.
+npm run demo -- --kill       # the owner zeroes the budget mid-session
+npm run demo -- --tamper     # session 7's identity beat, still working
 ```
 
-`npm run preflight` is safe to run at any time. It reads only and spends nothing.
-
----
-
-## Devnet gets reset
-
-When it does, every account, asset, agent registration and transaction from a previous run stops
-existing, and the SDK reports all of it as `account not found` — which reads like a bug in your
-code and is not.
-
-`npm run preflight` checks the chain in dependency order and names the reset explicitly when it
-sees it. Run that before debugging anything.
-
----
+Order matters: the buyer sub-account only exists after `setup:agents`, so the asset step comes
+after it.
 
 ## Honesty guardrails
 
-These are load-bearing. Read them before writing any stage copy or slide.
+Load-bearing. Read before writing stage copy.
 
 - **Sub-accounts share the primary's key.** Context inheritance is **not** key isolation and
-  **not** a permission sandbox. Whoever holds the key can sign as either account.
-- The guarantee is **"the chain refuses the spend."** Never *"the agent can't touch the money."*
-  The second is a stronger claim and it is not true.
-- **The allowance is authority; any ledger is only visibility.** MOI has no routine to read an
-  allowance back, so a "remaining budget" figure is our own bookkeeping. The agent writes it, so
-  the agent can lie to it — and still cannot spend a unit over the cap.
-- **The cap is total, not per-period.** Five units is five units until spent or expired.
-- **The owner's key is still a key on a laptop.** We moved the limit out of the agent's code. We
-  did not solve key custody.
-
----
+  **not** a sandbox. Whoever holds the key can sign as either account.
+- What inheritance buys is **actor state under a logic** — which is what lets the contract
+  enforce the budget.
+- The line is **"the chain refuses the spend."** Never *"the agent can't touch the money."*
+- The budget gate binds agents that use the inheritance flow. Ours does, so the cap genuinely
+  bites here.
+- **MAS0 fails silently** — a refused transfer still returns a hash with no error. On stage the
+  proof is the balance diff, never the receipt.
 
 ## What changed from session 7
 
 | | Session 7 | Session 8 |
 | --- | --- | --- |
-| Who holds the float | the agent | the **owner** |
-| Spend cap | env-var default in `worth.ts` | on-chain allowance |
-| Cap applies to | one purchase | the total grant |
-| Enforced by | the agent | the **chain** |
-| Can the agent raise it | yes, edit one line | no |
-| Revocable mid-run | — | yes, by the owner |
-| Identity check | ✅ | ✅ unchanged |
-| Seller's seven checks | ✅ | ✅ unchanged |
+| Buyer account | plain | inherited **sub-account** |
+| Spend limit | env-var default in `worth.ts` | `budget` in actor state, on chain |
+| Enforced by | the agent's own code | the **AgentBudget contract** |
+| Before paying | identity check | identity check **+ RecordSpend** |
+| Readable remaining budget | no | yes — `GetBudget`, from chain |
+| Failure beats | `--tamper` | `--tamper` + `--overspend` + `--kill` |
 
----
+## Devnet gets reset
 
-## A trap worth knowing
-
-**MAS0 fails silently.** A refused pull still returns an interaction hash with no error — it is
-indistinguishable from success unless you diff balances. Every assertion in `spike-allowance.ts`
-is a balance diff for exactly this reason, and the demo shows balances rather than receipts.
-
-This cost real time in session 7. Do not trust a receipt here.
+When it does, everything here stops existing and the SDK says `account not found`, which reads
+like a bug and is not. `npm run preflight` names it. The LOGIC_ID in `.env` also dies with the
+chain — redeploy with `setup:budget`.

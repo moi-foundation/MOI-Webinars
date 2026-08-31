@@ -1,162 +1,154 @@
 # Session 8 — Demo Plan
 
-**The one line:** session 7's agent obeyed its limit. This one *cannot disobey* it.
+**The one line:** session 7's agent obeyed its limit. This one *cannot disobey* it — the limit
+lives in a contract, delivered by context inheritance (the thing session 6 introduced).
 
-Everything below assumes a funded devnet wallet. Run `npm run preflight` first — it tells you
-what exists and what to run next.
+Everything below assumes a funded devnet wallet. `npm run preflight` tells you what exists.
 
 ---
 
-## Pre-flight (do this before you go live)
+## Pre-flight (before going live)
 
 ```bash
 cd session-8
 npm install
-npm run preflight          # what exists on chain right now?
-npm run setup:asset        # mint USDM, fund the OWNER
-npm run setup:registry     # register both agents
-npm run setup:authority    # ← session 8: the owner grants the allowance
-npm run preflight          # confirm
-npm run spike:allowance    # prove the mechanism before trusting it on stage
+npm run preflight
+npm run setup:budget       # deploy AgentBudget → LOGIC_ID
+npm run setup:agents       # AccountInherit the buyer + SetBudget(5)
+npm run setup:asset        # mint USDM (buyer must exist first — order matters)
+npm run setup:registry
+npm run demo               # one full rehearsal
 ```
 
-If `spike:allowance` fails, **do not run the demo.** Its five assertions are the demo.
+Two terminals: seller left, buyer right. `worth.ts` open in the editor.
 
 ---
 
-## The setup, in one breath
+## The setup, in one breath (2 min)
 
-Three accounts. Say this out loud early, because everything depends on it:
+> "Session 6 introduced context inheritance: one transaction derives a sub-account under a logic,
+> and that account gets its own storage inside the contract — its actor state. Session 7 built
+> two agents that pay each other. Tonight we put them together."
 
-| | holds | can |
+Three parties, say it out loud:
+
+| | | |
 | --- | --- | --- |
-| **Owner** | the float | grant and revoke |
-| **Agent** | fuel only, no float | spend the owner's, up to the cap |
-| **Seller** | — | receive |
+| **Owner** | the primary wallet | deploys, inherits, sets budgets |
+| **Buyer** | sub-account #1, inherited under `AgentBudget` | spends, up to its on-chain budget |
+| **Seller** | plain account | receives |
 
-**The agent has no money.** That is the whole session. It spends someone else's, under a limit
-recorded on chain.
+The buyer's budget — 5 units — is **in the contract's storage**, not in its code.
 
 ---
 
-## Beat 1 — the honest purchase (2 min)
+## Beat 1 — the honest purchase (3 min)
 
 ```bash
 npm run demo
 ```
 
-Runs session 7's flow end to end. Discovery, catalog, 402, identity check, payment, proof,
-delivery.
+Session 7's full flow, plus one new step to point at — **step 7.5**:
 
-**What to say:** "This is last session, unchanged. Same discovery, same identity check, same
-seven verification checks. One thing is different and you cannot see it from here — the money
-that just moved was never the agent's."
+```
+── BUYER · step 7.5 ─────────────────────────────
+   Record the spend against my on-chain budget
+   budget     5
+   spent so far   0
+   remaining      5
+   ✓ RecordSpend accepted — remaining 2
+```
 
-**Point at the transfer.** It names the owner as benefactor. The agent signed it; the owner
-funded it.
-
----
-
-## Beat 2 — the cap, shown not asserted (1 min)
-
-The cap is 5. The purchase was 3. So 2 remain.
-
-**Say the awkward part out loud** — it is more interesting than hiding it:
-
-> "I cannot ask the chain how much is left. MOI lets you grant an allowance, spend it, and
-> revoke it. There is no routine that reads one back. So the number I am about to show you is
-> our own bookkeeping, not the chain's."
-
-That distinction sets up beat 3, and it is the honest version of a slide everyone else fakes.
+**Say:** "Before any money moved, the agent wrote this spend into its ledger inside the contract.
+That's the new step. Everything else — discovery, the 402, the identity check, the seven
+verification checks — is last session, unchanged. And notice: the remaining budget is READ FROM
+CHAIN. Not our bookkeeping — the contract's."
 
 ---
 
-## Beat 3 — THE BEAT. Break the agent on purpose (3 min)
+## Beat 2 — THE BEAT: break the agent, on purpose (4 min)
 
-This is the session. Do it slowly.
+**First, sabotage it in front of them.** Open `worth.ts`, delete the `SOFT_LIMIT` guard, save.
 
-**First, sabotage the agent in front of them.** Open `worth.ts` and delete the limit — the whole
-guard. Say what you are doing:
+> "Session 7's protection was this file. It's gone. This agent now has no spending limit anywhere
+> in its code."
 
-> "Session 7's protection was this file. I am deleting it. The agent now has no spending limit
-> of any kind, and its brain is about to tell it to buy."
-
-**Then buy something that costs more than what is left.**
+**Then:**
 
 ```bash
 npm run demo -- --overspend
 ```
 
-**What happens:** the agent discovers, judges, decides to buy, and submits the transfer. The
-model says yes. Nothing in the agent objects, because you removed the thing that would have.
+What it does on chain, visibly: shrinks the budget so the next purchase exceeds it, then lets the
+agent run. Watch the sequence:
 
-**And no money moves.**
+1. The brain decides to buy — nothing in the agent objects
+2. Step 7.5 fires: `RecordSpend` → **the contract REVERTS**
+3. The buyer refuses to pay. **No transfer was ever submitted.**
 
-> "The agent wanted to. It tried. The chain said no."
+**Say:** "The agent wanted to. It decided to. I deleted everything that would have stopped it —
+you watched me. And the chain said no, because the rule isn't in the agent. It's in the
+contract's storage, and the agent has no way to edit it."
 
-**Then show the balances.** Owner unchanged, seller unchanged. Nothing moved. That is the proof
-— not the error message, the balances.
-
-⚠️ **Rehearse this.** MAS0 fails *silently*: a refused pull still returns an interaction hash
-with no error. If you read the receipt you will think it worked. Show the **balance diff**, never
-the receipt.
+**⚠️ If anyone asks "but couldn't the agent just skip the RecordSpend call?"** — answer honestly:
+yes, an agent that bypasses the gate can still move its float. Sub-accounts share the primary's
+key; this is a budget the contract enforces for agents that use the inheritance flow, not key
+isolation. That's the difference between "the chain refuses the spend" (true) and "the agent
+can't touch the money" (not true). Session 9's standard rides on exactly this same honesty.
 
 ---
 
-## Beat 4 — revoke, live (1 min)
-
-> "And I can end it from here, mid-run, without the agent's cooperation."
+## Beat 3 — the owner pulls the plug (1 min)
 
 ```bash
-npm run demo -- --revoke
+npm run demo -- --kill
 ```
 
-Owner revokes. The next pull dies instantly.
+The owner zeroes the remaining budget mid-session. The agent's next purchase dies at the gate.
 
-**The line:** "The agent did not agree to that. It was not asked."
+**Say:** "The agent was not consulted. The owner edited the contract's state, not the agent's
+code. That's the relationship inheritance builds: the agent decides *what* to buy, the ledger
+decides *whether it still may*."
 
 ---
 
-## Beat 5 — the honest close (1 min)
+## Beat 4 — session 7 still holds (1 min, optional)
 
-Do not skip this. It is why people trust the rest.
+```bash
+npm run demo -- --tamper
+```
 
-- **Sub-accounts share the primary's key.** This is not key isolation and not a sandbox. The
-  guarantee is *the chain refuses the spend* — never *the agent can't touch the money*.
-- **The cap is total, not per-period.** Five units is five units until spent or expired.
-- **The owner's key is still a key on a laptop.** We moved the limit out of the agent's code. We
-  did not solve key custody.
-- **A budget is a blast radius, not a judgement.** The chain caps the amount. It has no opinion
-  on whether buying was wise.
+The identity check still refuses a tampered registry. Nothing was given up.
 
-**Close on session 9:** our two agents speak a format we invented. Fine for two agents that know
-each other. Useless for an open market. Next time we adopt an open standard — with MOI underneath
-still answering the two questions a payment protocol cannot: *whose address is this*, and *what
-is this agent allowed to spend?*
+---
+
+## Close (1 min)
+
+- Session 6: context inheritance — accounts get state under a logic.
+- Session 7: two agents transact — who am I paying?
+- **Session 8: put them together — what may I spend?**
+- Session 9: open the doors — a standard, so strangers can join.
 
 ---
 
 ## Timing
 
-| Beat | Minutes |
+| Beat | min |
 | --- | --- |
-| Setup framing (three accounts) | 2 |
-| 1 — honest purchase | 2 |
-| 2 — the cap | 1 |
-| 3 — **break the agent** | 3 |
-| 4 — revoke | 1 |
-| 5 — honest close | 1 |
-| Questions | rest |
+| setup framing | 2 |
+| 1 — honest purchase | 3 |
+| 2 — **break the agent** | 4 |
+| 3 — kill switch | 1 |
+| 4 — tamper (optional) | 1 |
+| close | 1 |
 
-Beat 3 is the session. If you are short on time, cut beat 2, never beat 3.
-
----
+Cut beat 4 if short. Never beat 2.
 
 ## If it breaks on stage
 
-| Symptom | Cause | Say |
-| --- | --- | --- |
-| `account not found` everywhere | devnet was reset | "Testnet got wiped — that's what testnets do." Run `preflight`. |
-| transfer works when it should fail | allowance not granted, or agent holds its own float | Check `setup:authority` ran and reported the agent at zero. |
-| refused pull shows no error | **expected** — MAS0 fails silently | Show balances instead. |
-| registry read fails | caller not on chain | The reading account needs to exist on chain first. |
+| Symptom | Say / do |
+| --- | --- |
+| `account not found` everywhere | devnet reset. "Testnets get wiped." Run preflight. |
+| RecordSpend fails on the HAPPY path | budget not set — `npm run setup:agents` |
+| refused spend still shows a hash | expected — MAS0 fails silently. Show balances. |
+| `LOGIC_ID unset` | `npm run setup:budget` |

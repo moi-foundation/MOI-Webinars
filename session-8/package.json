@@ -16,14 +16,15 @@
     "preflight": "tsx scripts/preflight.ts",
     "setup:asset": "tsx scripts/00-setup-asset.ts",
     "setup:registry": "tsx scripts/01-register-agents.ts",
-    "setup:authority": "tsx scripts/02-grant-authority.ts",
     "seller": "tsx packages/agent-seller/src/index.ts",
     "buyer": "tsx packages/agent-buyer/src/index.ts",
     "demo": "tsx scripts/demo.ts",
     "ask": "tsx scripts/ask.ts",
     "ui": "tsx scripts/ui.ts",
     "attack-test": "tsx scripts/attack-test.ts",
-    "spike:allowance": "tsx scripts/spike-allowance.ts"
+    "spike:allowance": "tsx scripts/spike-allowance.ts",
+    "setup:budget": "tsx scripts/01-deploy-budget.ts",
+    "setup:agents": "tsx scripts/02-provision-agents.ts"
   },
   "dependencies": {
     "@demo/agent-buyer": "*",

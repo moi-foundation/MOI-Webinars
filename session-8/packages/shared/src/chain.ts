@@ -39,13 +39,52 @@ export async function loadAccount(label: string, derivationPath: string): Promis
 }
 
 /** The funded wallet. This is the only account that needs gas. */
-export const buyerAccount = () => loadAccount("buyer", config.derivationPath);
+/** The BUYER — an inherited sub-account of the primary, signing with the shared key. */
+export const buyerAccount = () => loadSubAccount("buyer", config.buyerIndex);
 /** Receive-only. Never signs, never needs gas. */
 /**
  * The AGENT's wallet — session 8. Holds no settlement asset; spends the owner's under an
  * allowance. Needs fuel to sign, nothing more.
  */
-export const agentAccount = (): Promise<Account> => loadAccount("agent", config.agentDerivationPath);
+/**
+ * The PRIMARY account — the wallet the faucet funded, index 0. It deploys the logic, inherits the
+ * sub-accounts, and is what "the owner" means in session 8.
+ */
+export const primaryAccount = (): Promise<Account> => loadAccount("owner", config.derivationPath);
+
+/**
+ * Sign AS an inherited sub-account: same key, same derivation path, sub-account id set on the
+ * wallet. This is what makes the buyer a sub-account rather than merely knowing about one.
+ */
+export async function loadSubAccount(label: string, index: number): Promise<Account> {
+  const provider = makeProvider();
+  const wallet = await Wallet.fromMnemonic(config.mnemonic, config.derivationPath);
+  (wallet as any).setSubAccountId(index);
+  wallet.connect(provider);
+  return {
+    label,
+    wallet,
+    provider,
+    address: (await wallet.getIdentifier()).toHex().toLowerCase(),
+    publicKey: wallet.getPublicKey(),
+    keyId: await wallet.getKeyId(),
+  };
+}
+
+/**
+ * True when two identifiers share the same 28-byte prefix — same primary key, differing only by
+ * sub-account index. Sub-accounts SHARE the primary's key, so a signature can only ever be bound
+ * to the key FAMILY; the exact account comes from the address's last 4 bytes.
+ */
+export const sameKeyFamily = (a: string, b: string): boolean =>
+  a.slice(0, 58).toLowerCase() === b.slice(0, 58).toLowerCase();
+
+/**
+ * Sub-account address derivation: primary's first 29 bytes + 4-byte index. Reproduces the SDK's
+ * own arithmetic — verified against it for indices 1, 2, 7 and 4096 in the session-6 build.
+ */
+export const subAccountAddress = (primary: string, index: number): `0x${string}` =>
+  (primary.slice(0, 58) + Number(index).toString(16).padStart(8, "0")) as `0x${string}`;
 
 export const sellerAccount = () => loadAccount("seller", config.sellerDerivationPath);
 

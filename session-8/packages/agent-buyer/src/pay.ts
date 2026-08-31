@@ -26,6 +26,7 @@ export class PaymentRefused extends Error {}
 export type BuyerEvent =
   | { type: "request"; url: string; attempt: number }
   | { type: "quoted"; quote: Quote }
+  | { type: "budget-ok"; spendHash: string; remaining: bigint }
   | { type: "transferred"; txHash: string; amount: bigint }
   | { type: "signed"; claim: PaymentClaim; signature: string }
   | { type: "paid"; receipt: Receipt };
@@ -34,6 +35,11 @@ export interface PayOptions {
   buyer: Account;
   /** Buyer policy, run BEFORE any money moves. Return a string to refuse. */
   approve: (q: Quote) => Promise<string | null>;
+  /**
+   * The budget gate — session 8's addition. Runs AFTER approve and BEFORE the transfer. The
+   * chain reverting here means "refuse to pay"; no local code makes that decision.
+   */
+  gate: (q: Quote) => Promise<{ ok: boolean; spendHash?: string; remaining?: bigint; reason?: string }>;
   onEvent?: (e: BuyerEvent) => void;
 }
 
@@ -71,6 +77,13 @@ export async function payingFetch<T = unknown>(
   if (refusal) throw new PaymentRefused(refusal);
 
   const price = BigInt(quote.price);
+
+  // ── the budget gate: record the spend on chain FIRST ────────────────────────────────────
+  // If the contract refuses, nothing below runs and no money moves.
+  const gate = await opts.gate(quote);
+  if (!gate.ok) throw new PaymentRefused(gate.reason ?? "budget gate refused");
+  if (gate.spendHash) emit({ type: "budget-ok", spendHash: gate.spendHash, remaining: gate.remaining ?? 0n });
+
   // MAS0 transfer amounts must be numbers at the wire layer — a bigint breaks signing.
   const transferAmount = Number(price);
 

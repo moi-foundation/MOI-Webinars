@@ -32,6 +32,10 @@ export const FAUCET_URL = "https://voyage.moi.technology";
 export const NETWORK = "moi-voyage-devnet";
 
 export const FUEL_LIMIT = Number(opt("FUEL_LIMIT", "20000"));
+/** AccountInherit needs more headroom than a plain call. */
+export const INHERIT_FUEL_LIMIT = FUEL_LIMIT * 4;
+/** KMOI seeded into a fresh sub-account so it can sign its own interactions. */
+export const SEED_KMOI = BigInt(FUEL_LIMIT * 3);
 
 export const config = {
   get mnemonic(): string { return req("USER_MNEMONIC"); },
@@ -60,16 +64,12 @@ export const config = {
   /** How long a quote, and the signed claim that answers it, stay valid. */
   authTtlSeconds: Number(opt("AUTH_TTL_SECONDS", "120")),
 
-  // ── session 8: authority ──────────────────────────────────────────────────────────────
-  /**
-   * The AGENT's own wallet. It holds no float — it spends the OWNER's balance under an
-   * allowance, so it needs fuel and nothing else.
-   */
-  agentDerivationPath: opt("AGENT_DERIVATION_PATH", "m/44'/6174'/7020'/0/42"),
-  /** Total the owner is willing to let the agent spend, in base units. Enforced by the chain. */
-  agentAllowance: BigInt(opt("AGENT_ALLOWANCE", "5")),
-  /** How long the grant stays valid. The chain enforces the expiry, not us. */
-  allowanceTtlSeconds: Number(opt("ALLOWANCE_TTL_SECONDS", "3600")),
-  /** The AgentBudget logic — the readable ledger. Optional: the allowance works without it. */
-  get logicIdOrNull(): string | null { return process.env.BUDGET_LOGIC_ID?.trim() || null; },
+    // ── session 8: context inheritance ────────────────────────────────────────────────────
+  /** The deployed AgentBudget logic. Set by `npm run setup:budget`. */
+  get logicId(): string { return req("LOGIC_ID"); },
+  get logicIdOrNull(): string | null { return process.env.LOGIC_ID?.trim() || null; },
+  /** Sub-account indexes under the primary. 0 is the primary itself. */
+  buyerIndex: Number(opt("BUYER_SUBACCOUNT_INDEX", "1")),
+  /** The buyer's on-chain budget, in base units of the settlement asset. */
+  buyerBudget: BigInt(opt("BUYER_BUDGET", "5")),
 } as const;

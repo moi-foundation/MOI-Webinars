@@ -35,6 +35,7 @@ import {
 import { payingFetch, PaymentRefused, type BuyerEvent } from "./pay.js";
 import { checkSellerIdentity } from "./identity-check.js";
 import { chooseMarket, type CatalogMarket } from "./brain.js";
+import { spendWithinBudget } from "./budget-gate.js";
 import { worthIt, SOFT_LIMIT } from "./worth.js";
 
 export interface BuyResult {
@@ -284,6 +285,8 @@ export async function runBuyer(
       case "quoted":
         ok("received HTTP 402 with a quote");
         break;
+      case "budget-ok":
+        break;   // narrated by the gate itself, with full before/after detail
       case "transferred":
         banner("BUYER", "step 8", "Pay — the buyer moves its OWN funds");
         detail("amount", `${e.amount} ${config.assetSymbol}`);
@@ -320,8 +323,46 @@ export async function runBuyer(
 
   const url = `${base}/signal/${encodeURIComponent(choice.marketId)}`;
 
+  // ── the budget gate: session 8's addition, run by payingFetch before any transfer ─────────
+  const gate = async (q: Quote) => {
+    banner("BUYER", "step 7.5", "Record the spend against my on-chain budget");
+    const verdict = await spendWithinBudget(buyer, BigInt(q.price), `signal:${choice.marketId}`);
+    if (verdict.before) {
+      detail("budget", String(verdict.before.budget));
+      detail("spent so far", String(verdict.before.spent));
+      detail("remaining", String(verdict.before.remaining));
+    }
+    if (verdict.ok) {
+      ok(`RecordSpend accepted — ix ${verdict.spendHash} (remaining ${verdict.remaining})`);
+      steps.emit({
+        actor: "chain",
+        title: "Spend recorded against the on-chain budget",
+        thought:
+          "Before any money moves, I write this spend into my sub-account's ledger under the " +
+          "AgentBudget logic. Over budget, the contract reverts and I refuse to pay.",
+        detail: [
+          ["spend ix", verdict.spendHash ?? ""],
+          ["remaining", String(verdict.remaining ?? "")],
+        ],
+        status: "ok",
+      });
+    } else {
+      fail(verdict.reason ?? "budget gate refused");
+      steps.emit({
+        actor: "chain",
+        title: "The chain REFUSED this spend",
+        thought:
+          "The AgentBudget contract reverted: recording this spend would exceed my on-chain " +
+          "budget. Nothing was transferred. This rule is not in my code — I cannot edit it.",
+        detail: [["reason", verdict.reason ?? ""]],
+        status: "fail",
+      });
+    }
+    return verdict;
+  };
+
   try {
-    const result = await payingFetch(url, { buyer, approve, onEvent: narrate });
+    const result = await payingFetch(url, { buyer, approve, gate, onEvent: narrate });
     banner("BUYER", "done", "Estimate delivered — agent loop complete");
     console.log(JSON.stringify(result.data, null, 2));
     steps.emit({

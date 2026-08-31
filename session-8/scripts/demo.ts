@@ -1,13 +1,17 @@
-// The on-stage driver for SESSION 7 (V1: identity + payment).
+// The on-stage driver for SESSION 8 (V2: identity + payment + context inheritance).
 //
-//   npm run demo                the happy path
-//   npm run demo -- --tamper    repoint the seller's registry wallet at an attacker, so the identity
-//                            check FAILS live and the buyer refuses. Restored afterwards.
+//   npm run demo                  the happy path — session 7's flow, now gated by the on-chain budget
+//   npm run demo -- --overspend   exhaust the budget on chain, then let the agent try to buy anyway.
+//                                 The brain says buy; the AgentBudget contract reverts; no money moves.
+//   npm run demo -- --kill        the owner zeroes the remaining budget mid-session; the next
+//                                 purchase dies instantly. The agent is not consulted.
+//   npm run demo -- --tamper      session 7's identity beat, still working.
 //
-// There is deliberately NO budget beat here — authority is session 8.
+// ⚠️ The proof on stage is always the BALANCE DIFF, never a receipt — MAS0 fails silently.
 
 import {
   config, buyerAccount, sellerAccount, registryClient, getProfile, updateAgentWallet,
+  setBudget, getBudget,
   addr0x, banner, detail, ok, fail, warn, say, summary,
 } from "@demo/shared";
 import { startSeller } from "@demo/agent-seller";
@@ -16,11 +20,15 @@ import { PaymentRefused } from "@demo/agent-buyer/src/pay.js";
 
 const args = new Set(process.argv.slice(2));
 const TAMPER = args.has("--tamper");
+const OVERSPEND = args.has("--overspend");
+const KILL = args.has("--kill");
 const QUESTION = "How likely is a big bitcoin drawdown this quarter?";
 
 async function main(): Promise<void> {
-  banner("DEMO", "0", "MOI Builders #7 — an agent finds another agent, and pays it");
-  detail("mode", TAMPER ? "--tamper (identity attack)" : "happy path");
+  banner("DEMO", "0", "MOI Builders #8 — the agent spends under a budget the CHAIN enforces");
+  detail("mode", OVERSPEND ? "--overspend (the chain says no)"
+    : KILL ? "--kill (the owner pulls the plug)"
+    : TAMPER ? "--tamper (identity attack)" : "happy path");
   detail("asset", config.assetId);
   detail("price", `${config.price} ${config.assetSymbol}`);
 
@@ -60,6 +68,28 @@ async function main(): Promise<void> {
     say("DEMO", "the seller still asks to be paid at its REAL address — watch the buyer notice");
   }
 
+  // ── session 8's sabotage beats — staged ON CHAIN, not in our code ─────────────────────────
+  let restoreBudget: bigint | null = null;
+  if (OVERSPEND || KILL) {
+    const before = await getBudget(buyer);
+    detail("budget", String(before.budget));
+    detail("spent", String(before.spent));
+    detail("remaining", String(before.remaining));
+    restoreBudget = before.budget;
+    if (OVERSPEND) {
+      banner("DEMO", "1b", "OVERSPEND — shrink the budget so the next purchase exceeds it");
+      // Leave less than one purchase's worth of headroom. SetBudget must stay > spent.
+      await setBudget(buyer, before.spent + (config.price > 1n ? config.price - 1n : 1n));
+      say("DEMO", "the agent still WANTS to buy. Watch the contract refuse to record the spend.");
+    } else {
+      banner("DEMO", "1b", "KILL — the owner zeroes the remaining budget, mid-session");
+      await setBudget(buyer, before.spent > 0n ? before.spent : 1n);
+      say("DEMO", "the agent was not consulted. Its next purchase dies at the gate.");
+    }
+    const now = await getBudget(buyer);
+    detail("remaining now", String(now.remaining));
+  }
+
   const sellerSvc = await startSeller();
 
   try {
@@ -72,22 +102,27 @@ async function main(): Promise<void> {
       ["buyer", buyer.address],
       ["seller", seller.address],
     ]);
-    if (TAMPER) {
+    if (TAMPER || OVERSPEND || KILL) {
       fail("EXPECTED A REFUSAL BUT THE PURCHASE SUCCEEDED — the guard did not fire.");
       process.exitCode = 1;
     }
   } catch (err) {
-    if (err instanceof PaymentRefused && TAMPER) {
+    if (err instanceof PaymentRefused && (TAMPER || OVERSPEND || KILL)) {
       // Refusing IS the success condition here.
-      summary("Agent refused — exactly as intended", [
+      summary(OVERSPEND || KILL ? "The CHAIN refused — exactly as intended" : "Agent refused — exactly as intended", [
         ["reason", (err as Error).message],
         ["money moved", "none"],
+        ...(OVERSPEND || KILL ? [["enforced by", "AgentBudget contract, on chain"] as [string, string]] : []),
       ]);
     } else {
       throw err;
     }
   } finally {
     await sellerSvc.close();
+    if (restoreBudget !== null) {
+      await setBudget(buyer, restoreBudget);
+      ok(`restored the buyer's budget to ${restoreBudget}`);
+    }
     if (restoreWallet && config.sellerAgentId) {
       await updateAgentWallet(await registryClient(buyer, false), config.sellerAgentId, seller.address);
       ok(`restored the seller's registry wallet to ${seller.address}`);
