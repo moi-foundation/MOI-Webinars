@@ -48,7 +48,9 @@ never holds funds; the spec is explicit that it is optional.
 
 Settlement first: a MOI interaction is signed whole, so there is no detached authorization to hand
 anyone. The buyer submits its own transfer and pays its own fuel. By the time the seller sees a
-payment, the money has already moved, and there is nothing left to settle.
+payment, the money has already moved, and there is nothing left to settle. (Third-party settlement
+is still possible in our own design, via an on-chain `approve` allowance, but it is not a
+requirement anywhere.)
 
 Verification: the seller reads the settled transfer back off the chain itself, in a handful of RPC
 calls. Paying a third party to do a few reads you can do yourself is a dependency, not a service.
