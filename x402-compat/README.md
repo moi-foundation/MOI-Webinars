@@ -28,6 +28,21 @@ code. The HTTP spec reserved it in 1997 and never said what the body should cont
 it went unused for thirty years. Any service can return a 402 today. x402 is the agreement about
 what goes *inside* it, and that agreement is what the standard actually supplies.
 
+### What that looks like in practice
+
+An agent is planning a delivery route and needs tomorrow's weather. A forecasting service sells
+it at a tenth of a cent per call.
+
+1. The agent requests `GET /forecast/rotterdam`. No account, no API key.
+2. The service answers `402` with the terms: the amount, the asset it wants it in, the address to
+   pay, and sixty seconds to do so.
+3. The agent pays, then repeats the same request with the payment proof in a header.
+4. `200`, and the forecast is in the body.
+
+Two requests, a few seconds apart. No signup, no subscription, no invoice, and neither side knew
+the other existed a minute earlier. That is the whole product: a machine can buy one small thing
+from a stranger.
+
 ### The facilitator, and why MOI doesn't need one
 
 Most descriptions of x402 mention a third party called the **facilitator**, so it is worth saying
@@ -56,6 +71,11 @@ Verification: the seller reads the settled transfer back off the chain itself, i
 calls. Paying a third party to do a few reads you can do yourself is a dependency, not a service.
 The spec has a name for a seller that verifies its own payments, **self-facilitation**, and accepts
 it as a production path.
+
+Running without one is normal, not a workaround. The spec's own directory of facilitator
+providers lists none for Aptos, Algorand, Concordium, Hedera, Keeta or TON, all chains with merged
+x402 mechanisms. Sellers on those chains either verify their own payments or host the facilitator
+code themselves; no third-party service exists for them.
 
 So nothing in the steps below involves building or running a facilitator. If Voyage ever wants to
 operate one as a hosted service for sellers who would rather not run MOI infrastructure, that is a
