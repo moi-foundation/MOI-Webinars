@@ -28,18 +28,6 @@ code. The HTTP spec reserved it in 1997 and never said what the body should cont
 it went unused for thirty years. Any service can return a 402 today. x402 is the agreement about
 what goes *inside* it, and that agreement is what the standard actually supplies.
 
-### What it doesn't do
-
-x402 moves money. It has no opinion on:
-
-- who owns the address you're paying. It gives you *where*, never *whose*.
-- what your agent is allowed to spend. Its own spend controls are client-side config, and
-  the docs say *"pass `spendControls: false` to disable all spend controls"*.
-- whether the seller will actually deliver.
-
-Those need state that persists between strangers, which means a chain rather than a wire format.
-It is also where MOI is differentiated rather than merely compatible.
-
 ---
 
 ## 2. What MOI already provides
