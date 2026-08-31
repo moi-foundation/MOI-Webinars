@@ -149,9 +149,6 @@ Babylon. That is useful in two ways: it shows MOI already names its networks rat
 them, and a retired network is a good test that the format keeps working for a chain that no longer
 runs.
 
-*(The draft in `caip2-submission/` uses `moi:devnet` and `moi:mainnet`. If the protocol team wants
-different names, three sections of that spec change together: syntax, rationale and test cases.)*
-
 **How the identifier actually gets added:** it does not exist until it is registered with the Chain
 Agnostic Standards Alliance, which is step 3. That means a pull request to
 [`ChainAgnostic/namespaces`](https://github.com/ChainAgnostic/namespaces) adding a `moi/` folder
