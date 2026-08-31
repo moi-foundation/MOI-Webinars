@@ -141,18 +141,17 @@ leaves Stellar's approach: a short, well-known name.
 **Which gives something like:**
 
 ```
-moi:indus       # the current network
-moi:babylon     # the retired one
-moi:devnet
+moi:devnet      # the current network
+moi:mainnet
 ```
 
-Those first two are the names the Voyage explorer already uses, so the naming scheme exists. This
-is a matter of confirming it rather than inventing one. Babylon being retired is a useful
-test, because the format has to keep working for a network that no longer runs.
+The Voyage explorer also carries names for other networks, including Indus and a retired one called
+Babylon. That is useful in two ways: it shows MOI already names its networks rather than numbering
+them, and a retired network is a good test that the format keeps working for a chain that no longer
+runs.
 
-*(The draft in `caip2-submission/` currently uses `moi:devnet` and `moi:mainnet` as placeholders. If
-the real names are the answer, three sections of that spec change together: syntax, rationale and
-test cases.)*
+*(The draft in `caip2-submission/` uses `moi:devnet` and `moi:mainnet`. If the protocol team wants
+different names, three sections of that spec change together: syntax, rationale and test cases.)*
 
 **How the identifier actually gets added:** it does not exist until it is registered with the Chain
 Agnostic Standards Alliance, which is step 3. That means a pull request to
