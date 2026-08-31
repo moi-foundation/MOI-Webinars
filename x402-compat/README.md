@@ -66,16 +66,6 @@ No contract to deploy, no token standard to implement. The full routine set on `
 | `release` | `(benefactor, beneficiary, amount)` |
 | `balanceOf` | `(id)` |
 
-### An owner can cap what an agent spends, on chain
-
-`approve` grants a capped, expiring allowance naming a specific spender. The agent then pays with
-`transferFrom` against the owner's balance rather than holding funds itself. Over the cap, the
-chain refuses.
-
-That matters for x402 specifically, because x402's own `spendControls` are client-side
-configuration. The docs say *"pass `spendControls: false` to disable all spend controls."* An
-on-chain allowance is not disableable by the agent it constrains.
-
 ### Payments are verifiable by the seller alone
 
 An interaction is signed with ECDSA over secp256k1, covering the whole envelope: sender, sequence
