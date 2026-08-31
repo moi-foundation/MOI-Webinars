@@ -251,17 +251,28 @@ one chain that failed did so because its author stopped replying for 587 days.
 
 ### Step 4: Write the x402 scheme spec
 
-x402 asks new chains to land in up to three PRs, and this is the first: a specification
-only, documenting the payload, the verification logic and the settlement logic.
+Steps 4 and 5 both land in the same place: the x402 Foundation's monorepo,
+[`x402-foundation/x402`](https://github.com/x402-foundation/x402). That repo holds the protocol
+specs, the `@x402/core` package that every implementation builds on, and one mechanism package per
+chain. Adding MOI means contributing to it, the same way Stellar, Aptos and NEAR did.
 
-**The file:**
+The foundation asks new chains to arrive in up to three PRs, in order: the specification first, the
+TypeScript implementation second, other languages third. Reviewers read the spec before they will
+look at any code.
+
+This step is the first PR. One file, prose only:
 
 ```
 specs/schemes/exact/scheme_exact_moi.md
 ```
 
-That is the whole PR. Seventeen of these already exist, so copy the shape from
-`scheme_exact_stellar.md`.
+It documents three things: what a MOI payment payload contains, how a seller or facilitator
+verifies one, and how settlement works. For MOI that means writing down the claim format, the
+seven verification checks, and the pay-first flow.
+
+Seventeen of these already exist in the same directory, including seven for chains with no
+implementation at all, so a spec can land and sit alone. `scheme_exact_stellar.md` is the closest
+shape to copy.
 
 **Needs:** step 3. A spec naming a made-up network won't be merged.
 **Done when:** merged into `x402-foundation/x402`.
