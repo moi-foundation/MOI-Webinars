@@ -158,11 +158,42 @@ runs.
 
 ### Step 2: Add a way to ask a node which network it is
 
-A CAIP-2 profile has to show how a client verifies the reference against a live node. Ethereum has
-`eth_chainId`, Stellar returns `network_passphrase`, Aptos returns `chain_id`. MOI needs its own.
+Every CAIP-2 profile has a required section called **Resolution Mechanics**. It answers one
+question: given a node you are connected to, how do you confirm which network it is, so that the
+identifier you are using is the right one?
 
-**Needs:** a small protocol change, something like `net.Network` returning `{"network":"devnet"}`,
-and a node release carrying it.
+The convention is to show a real request and the real response. Stellar's profile does it in four
+lines. It says the reference can be read from the `network_passphrase` field that Horizon returns,
+and shows the call:
+
+```sh
+curl https://horizon.stellar.org/
+```
+```json
+{ "network_passphrase": "Public Global Stellar Network ; September 2015" }
+```
+
+Ethereum's is `eth_chainId`. Aptos returns `chain_id` from its REST API. Neo returns
+`protocol.network` from `getversion`. Every registered chain has a one-call answer, because without
+one a client cannot tell a testnet from a mainnet except by trusting the URL it was handed.
+
+**MOI has no such call**, so this section cannot be written truthfully today. That is the part that
+blocks the submission, not the naming.
+
+**What it would take.** One read-only RPC method that returns the network's name. Something like:
+
+```sh
+curl -X POST https://dev.voyage-rpc.moi.technology/devnet/   -H 'Content-Type: application/json'   -d '{"jsonrpc":"2.0","id":1,"method":"net.Network","params":[]}'
+```
+```json
+{ "jsonrpc": "2.0", "id": 1, "result": { "network": "devnet" } }
+```
+
+No consensus change and no state involved. The node already knows which network it belongs to; it
+just has no way to say so. The work is exposing a constant over the existing `net.*` namespace and
+shipping it in a node release.
+
+**Needs:** that method, and a node release carrying it.
 **Done when:** a `curl` against a public endpoint returns the name chosen in step 1.
 
 ### Step 3: Register the namespace with CASA
