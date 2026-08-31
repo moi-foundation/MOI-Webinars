@@ -28,6 +28,37 @@ code. The HTTP spec reserved it in 1997 and never said what the body should cont
 it went unused for thirty years. Any service can return a 402 today. x402 is the agreement about
 what goes *inside* it, and that agreement is what the standard actually supplies.
 
+### The facilitator, and why MOI doesn't need one
+
+Most descriptions of x402 mention a third party called the **facilitator**, so it is worth saying
+what it is before it comes up.
+
+A facilitator is a service the *seller* points at. It does two things:
+
+- **Verify.** Check the buyer's payment: signature real, funds present, not expired, not a replay.
+- **Settle.** Submit the transaction that moves the money, and pay the gas for it.
+
+It exists because on EVM chains the buyer does not submit anything itself. It signs a transfer
+authorization, a portable message saying "let this amount move from me", and hands it over. Someone
+has to put that on chain and pay for it, and that someone is the facilitator. Coinbase runs the
+main one for Base, which is most of what "Base supports x402" means in practice. The facilitator
+never holds funds; the spec is explicit that it is optional.
+
+**Neither job applies on MOI.**
+
+Settlement first: a MOI interaction is signed whole, so there is no detached authorization to hand
+anyone. The buyer submits its own transfer and pays its own fuel. By the time the seller sees a
+payment, the money has already moved, and there is nothing left to settle.
+
+Verification: the seller reads the settled transfer back off the chain itself, in a handful of RPC
+calls. Paying a third party to do a few reads you can do yourself is a dependency, not a service.
+The spec has a name for a seller that verifies its own payments, **self-facilitation**, and accepts
+it as a production path.
+
+So nothing in the steps below involves building or running a facilitator. If Voyage ever wants to
+operate one as a hosted service for sellers who would rather not run MOI infrastructure, that is a
+product decision, and it appears in the optional list at the end for exactly that reason.
+
 ---
 
 ## 2. What MOI already provides
@@ -61,9 +92,8 @@ number, fuel and operations together. Participant identifiers are derived from p
 signature proves control of the paying account.
 
 A seller reads a settled transfer back with `moi.InteractionReceipt` and a POLO decode, recovering
-sender, beneficiary, amount and callsite. Verification is therefore a handful of chain reads and
-needs no third party, which is what x402 calls self-facilitation and accepts as a production
-path.
+sender, beneficiary, amount and callsite. Verification is a handful of chain reads, with no third
+party involved.
 
 ### Two things are missing
 
@@ -324,8 +354,8 @@ find.
 Python only `evm`, `svm` and `tvm`. Nine of the eleven TypeScript mechanisms have no counterpart
 in either, so TypeScript alone is normal rather than a shortfall.
 
-**A facilitator.** Not required. x402 documents self-facilitation as a valid production path, and
-a MOI seller can verify its own payments. Running one is a service decision for Voyage, the same
+**A facilitator.** Not required, for the reasons in section 1. Running one as a hosted service for
+sellers who would rather not run MOI infrastructure is a product decision for Voyage, the same
 shape as offering an RPC endpoint.
 
 **Default assets.** A PR to the asset tables buys `"$0.10"`-style pricing. Atomic units work
