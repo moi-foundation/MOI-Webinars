@@ -167,7 +167,15 @@ and a node release carrying it.
 
 ### Step 3: Register the namespace with CASA
 
-A spec document submitted to `ChainAgnostic/namespaces`. Draft is written: `caip2-submission/`.
+A spec document submitted to `ChainAgnostic/namespaces`. The folder it adds:
+
+```
+moi/
+├── README.md     # what the namespace covers, per CAIP-104
+└── caip2.md      # the chain identifier spec
+```
+
+A first draft of both is written.
 
 **Needs:** steps 1 and 2; a named owner with a GitHub handle; a `discussions-to` URL.
 **Expect:** median 24 days. 91 of the last 100 PRs merged. Nobody has been rejected on merit. The
@@ -196,8 +204,8 @@ That is the whole PR. Seventeen of these already exist, so copy the shape from
 The second PR: `typescript/packages/mechanisms/moi`, implementing `SchemeNetworkClient`,
 `SchemeNetworkServer` and `SchemeNetworkFacilitator`.
 
-The implementation is written and typechecks against `@x402/core@2.23.0`, in `moi-x402/`. What is
-missing is everything around it.
+The three scheme implementations are written and typecheck against `@x402/core@2.23.0`. What is
+missing is everything around them.
 
 **The files**, mirroring every other mechanism:
 
@@ -224,7 +232,6 @@ list is not.
 **Needs:** unit, integration and e2e tests; a funded devnet wallet to run them; GPG-signed commits;
 AI assistance disclosed in the PR description; a changeset for the changelog.
 **Done when:** merged and published as `@x402/moi`.
-**Detail:** `UPSTREAM.md` has the file-by-file status.
 
 ### Step 6: Ship a reference example
 
@@ -325,27 +332,24 @@ MOI was never missing the settlement. It was missing an agreed way to ask for it
 
 ---
 
-## 5. What's in this folder
+## 5. Status
 
 | | |
 | --- | --- |
-| `README.md` | this |
-| `FINDINGS.md` | every claim above, with how it was verified |
-| `UPSTREAM.md` | the three upstream PRs, file by file, with what's written and what isn't |
-| `caip2-submission/` | the CASA spec, ready but for three TODOs |
-| `moi-x402/` | the adapter package, 529 lines, typechecks against `@x402/core@2.23.0` |
+| CAIP-2 namespace spec | first draft written, three fields left blank |
+| `@x402/moi` client, server and facilitator | written, 529 lines, typechecks against `@x402/core@2.23.0` |
+| Everything else on the step 5 list | not started |
 
-Nothing is published, pushed or filed. The CAIP-2 identifiers in the code are provisional and
-would break if CASA lands on a different shape, which is why step 1 comes first.
+Nothing is published, pushed or filed.
 
----
+Some things worth saying plainly:
 
-## 6. Honest status
-
-- The adapter typechecks against the real `@x402/core`. It has never run against a chain, because
-  Voyage devnet was reset and nothing is funded.
-- No tests exist. x402 requires unit, integration and e2e before accepting a mechanism.
-- Steps 1 and 2 have no owner. They gate everything else, and neither is engineering work in
-  this repo: one is a decision, one is a protocol change.
-- The prototype that proved the flow targets x402 v1, which is deprecated. The package in this
-  folder targets v2. The logic carries over; the interfaces do not.
+- The scheme implementations typecheck against the real `@x402/core`, but have **never run against
+  a chain.** Voyage devnet was reset and nothing is funded.
+- **No tests exist.** x402 requires unit, integration and e2e before accepting a mechanism.
+- **Steps 1 and 2 have no owner.** They gate everything else, and neither is a coding task: one is
+  a decision, one is a protocol change.
+- The CAIP-2 identifiers used so far are provisional and would break if CASA lands on a different
+  shape, which is why step 1 comes first.
+- The earlier prototype that proved the flow targets x402 v1, which is deprecated. This work
+  targets v2. The logic carries over; the interfaces do not.
