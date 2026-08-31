@@ -407,27 +407,3 @@ pays for one call.
 
 After, that path exists, and the money underneath is the same MAS0 transfer that already works.
 MOI was never missing the settlement. It was missing an agreed way to ask for it and prove it.
-
----
-
-## 5. Status
-
-| | |
-| --- | --- |
-| CAIP-2 namespace spec | first draft written, three fields left blank |
-| `@x402/moi` client, server and facilitator | written, 529 lines, typechecks against `@x402/core@2.23.0` |
-| Everything else on the step 5 list | not started |
-
-Nothing is published, pushed or filed.
-
-Some things worth saying plainly:
-
-- The scheme implementations typecheck against the real `@x402/core`, but have never run against
-  a chain. Voyage devnet was reset and nothing is funded.
-- No tests exist. x402 requires unit, integration and e2e before accepting a mechanism.
-- Steps 1 and 2 have no owner. They gate everything else, and neither is a coding task: one is
-  a decision, one is a protocol change.
-- The CAIP-2 identifiers used so far are provisional and would break if CASA lands on a different
-  shape, which is why step 1 comes first.
-- The earlier prototype that proved the flow targets x402 v1, which is deprecated. This work
-  targets v2. The logic carries over; the interfaces do not.
