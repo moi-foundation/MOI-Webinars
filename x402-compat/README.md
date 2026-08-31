@@ -134,9 +134,8 @@ CAIP-2 names a chain as `namespace:reference`. The namespace is `moi`. We need t
 | Aptos | `aptos:1` | the chain id assigned at genesis |
 | Stellar | `stellar:pubnet` | the network's own name |
 
-MOI has no chain id, and being account-centric it has no genesis hash either. Tesseracts are
-per-account, so there is no single genesis artefact to hash. That rules out the first four rows and
-leaves Stellar's approach: a short, well-known name.
+MOI has no chain id, and no single genesis block to hash either, so the first four rows are out.
+That leaves Stellar's approach: a short, well-known name.
 
 **Which gives something like:**
 
