@@ -95,6 +95,31 @@ there is no global genesis to read.
 
 Everything below, start to finish. Each step lists what it needs and what "done" looks like.
 
+### First, what CASA is and why it comes before x402
+
+The first three steps have nothing to do with x402 directly. They are about MOI getting a name.
+
+The **Chain Agnostic Standards Alliance**, or CASA, is an open standards body that publishes the
+CAIP specifications. These are conventions for naming things across blockchains, so that wallets,
+explorers and protocols do not each invent their own scheme for saying which chain, which account
+or which asset they mean.
+
+**CAIP-2 is the one that names chains.** Every registered chain has an identifier shaped
+`namespace:reference`, such as `eip155:1` for Ethereum or `solana:5eykt4Us…` for Solana. There are
+55 of them today.
+
+Getting one is a pull request to a public repository,
+[`ChainAgnostic/namespaces`](https://github.com/ChainAgnostic/namespaces), containing a short
+specification document. Once merged, the identifier is official and anything can use it.
+
+**x402 v2 identifies networks by CAIP-2 identifier**, not by a list it maintains itself. That is
+why v2 can support any chain without a code change, and why a chain with no CAIP-2 identifier
+cannot be named correctly in an x402 payment. MOI has no identifier and has never applied for one,
+so steps 1 to 3 are about fixing that. Only then does the x402 work start.
+
+CAIP-2 is also worth having on its own terms. Wallets, block explorers and cross-chain tooling all
+key off it, so this is infrastructure MOI is missing regardless of whether x402 ever happens.
+
 ### Step 1: Decide what identifies a MOI network
 
 CAIP-2 names a chain as `namespace:reference`. The namespace is `moi`. We need the reference half.
