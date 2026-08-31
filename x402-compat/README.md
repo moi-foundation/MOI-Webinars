@@ -149,12 +149,6 @@ Babylon. That is useful in two ways: it shows MOI already names its networks rat
 them, and a retired network is a good test that the format keeps working for a chain that no longer
 runs.
 
-**How the identifier actually gets added:** it does not exist until it is registered with the Chain
-Agnostic Standards Alliance, which is step 3. That means a pull request to
-[`ChainAgnostic/namespaces`](https://github.com/ChainAgnostic/namespaces) adding a `moi/` folder
-with a `README.md` and a `caip2.md`. Nothing publishes the identifier on our side. A CASA merge is
-what makes it real, and until then any string we use is provisional.
-
 **Needs:** a decision from the protocol team.
 **Done when:** the format is agreed. Everything downstream depends on this string.
 
