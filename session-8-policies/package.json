@@ -1,0 +1,29 @@
+{
+  "name": "moi-builders-8-policies",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MOI Builders #8 — Access Policies: protocol-enforced permissions for agents.",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "tsc --noEmit",
+    "preflight": "tsx scripts/preflight.ts",
+    "spike:policy": "tsx scripts/spike-policy.ts"
+  },
+  "dependencies": {
+    "@demo/shared": "*",
+    "dotenv": "^16.6.1",
+    "js-moi-sdk": "^0.8.0",
+    "js-moi-utils": "^0.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
