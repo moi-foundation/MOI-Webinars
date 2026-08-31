@@ -89,6 +89,10 @@ cross-chain tooling key off the same standard.
 software version, `net.Info` returns its own peer id, and `moi.Tesseract` is keyed by account, so
 there is no global genesis to read.
 
+That is a gap beyond CAIP-2. Participant identifiers are derived from public keys, so the same
+address exists on every MOI network. Point a client at the wrong endpoint and the interaction may
+simply succeed, on the wrong chain.
+
 ---
 
 ## 3. What has to happen, in order
@@ -154,19 +158,12 @@ runs.
 
 ### Step 2: Add a way to ask a node which network it is
 
-CAIP-2 requires a section showing how a client *verifies* the reference against a live node.
-Ethereum has `eth_chainId`. Stellar returns `network_passphrase`. Aptos returns `chain_id`.
-
-MOI has nothing equivalent across its 36 RPC methods. `net.Version` gives the software version and
-`net.Info` gives the node's own peer id.
-
-This matters more on MOI than elsewhere. Participant identifiers are derived from public keys, so
-the same address exists on every MOI network. Point a client at the wrong endpoint and the
-interaction may simply succeed, on the wrong chain.
+A CAIP-2 profile has to show how a client verifies the reference against a live node. Ethereum has
+`eth_chainId`, Stellar returns `network_passphrase`, Aptos returns `chain_id`. MOI needs its own.
 
 **Needs:** a small protocol change, something like `net.Network` returning `{"network":"devnet"}`,
 and a node release carrying it.
-**Done when:** a `curl` against a public endpoint returns the reference from step 1.
+**Done when:** a `curl` against a public endpoint returns the name chosen in step 1.
 
 ### Step 3: Register the namespace with CASA
 
