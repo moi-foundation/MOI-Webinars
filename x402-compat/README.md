@@ -59,15 +59,11 @@ has to put that on chain and pay for it, and that someone is the facilitator. Co
 main one for Base, which is most of what "Base supports x402" means in practice. The facilitator
 never holds funds; the spec is explicit that it is optional.
 
-**Neither job applies on MOI.**
-
-Settlement first: on MOI the buyer submits its own transfer and pays its own fuel. By the time the
-seller sees a payment, the money has already moved, and there is nothing left to settle.
-
-Verification: the seller reads the settled transfer back off the chain itself, in a handful of RPC
-calls. Paying a third party to do a few reads you can do yourself is a dependency, not a service.
-The spec has a name for a seller that verifies its own payments, **self-facilitation**, and accepts
-it as a production path.
+**Neither job applies on MOI.** The buyer pays directly: it submits its own transfer and pays its
+own fuel, so there is no settlement step for anyone else to perform. And the seller verifies
+directly: it reads the settled transfer back off the chain in a handful of RPC calls. The spec has
+a name for a seller that verifies its own payments, **self-facilitation**, and accepts it as a
+production path.
 
 Running without one is normal, not a workaround. The spec's own directory of facilitator
 providers lists none for Aptos, Algorand, Concordium, Hedera, Keeta or TON, all chains with merged
