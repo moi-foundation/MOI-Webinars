@@ -198,15 +198,51 @@ shipping it in a node release.
 
 ### Step 3: Register the namespace with CASA
 
-A spec document submitted to `ChainAgnostic/namespaces`. The folder it adds:
+A pull request to `ChainAgnostic/namespaces` adding one folder with two files. Both follow CASA's
+own template, and both are short. Stellar's `caip2.md` is about 3 KB; Aptos's is 2.4 KB.
+
+**`moi/README.md`** describes the ecosystem, not the identifier:
 
 ```
-moi/
-├── README.md     # what the namespace covers, per CAIP-104
-└── caip2.md      # the chain identifier spec
+frontmatter    namespace-identifier, title, author, status, type, created
+# Namespace for MOI Chains
+               a plain-language paragraph on what `moi` covers
+## Rationale   ~200 words on what makes MOI different from an EVM chain
+## Governance  ~200 words on who maintains this and how changes are proposed
+## References
+## Copyright   CC0 waiver
 ```
 
-A first draft of both is written.
+**`moi/caip2.md`** is the identifier spec:
+
+```
+frontmatter          namespace-identifier, title, author, discussions-to,
+                     status, type, created, requires: CAIP-2
+# CAIP-2
+## Introduction      what MOI is, in terms a non-MOI reader follows
+## Specification
+   ### Semantics     what the namespace and reference mean
+   ### Syntax        the permitted format, with a regex
+   ### Resolution
+       Mechanics     how a client verifies it against a live node
+## Rationale         why this reference and not a chain id or a hash
+   ### Backwards
+       Compatibility
+## Test Cases        valid and invalid identifiers, each with a reason
+## References
+## Copyright
+```
+
+Both are drafted. Three things are still blank:
+
+| Blank | Waiting on |
+| --- | --- |
+| `author` | a real name and GitHub handle |
+| `discussions-to` | a URL where the namespace can be discussed |
+| Resolution Mechanics | step 2. It is written against a proposed `net.Network` and marked as unconfirmed |
+
+CASA's template calls **Test Cases** the most important section, and the accepted profiles bear
+that out. Neo's lists five valid identifiers and ten invalid ones, each with the reason it fails.
 
 **Needs:** steps 1 and 2; a named owner with a GitHub handle; a `discussions-to` URL.
 **Expect:** median 24 days. 91 of the last 100 PRs merged. Nobody has been rejected on merit. The
