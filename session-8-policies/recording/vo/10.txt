@@ -1,0 +1,1 @@
+And the taking-back: one interaction to grant, one to revoke. No redeploy. No key rotation. No asking the agent to behave. The next write simply fails. For anyone running agents in production, this is the answer to the question you actually have: how fast can I stop it? One interaction.

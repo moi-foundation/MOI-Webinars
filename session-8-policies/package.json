@@ -13,7 +13,10 @@
   "scripts": {
     "build": "tsc --noEmit",
     "preflight": "tsx scripts/preflight.ts",
-    "spike:policy": "tsx scripts/spike-policy.ts"
+    "setup:fuel": "tsx scripts/00-fund-agent.ts",
+    "setup:logic": "tsx scripts/01-deploy-ticker.ts",
+    "spike:policy": "tsx scripts/spike-policy.ts",
+    "demo": "tsx scripts/demo.ts"
   },
   "dependencies": {
     "@demo/shared": "*",

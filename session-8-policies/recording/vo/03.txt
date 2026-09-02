@@ -1,0 +1,1 @@
+So where do the rules go? The obvious answer is in code â a config file, a contract the agent spends through. Here is the problem with that. Any limit the agent has to look up is a limit it can decide not to look up. You are not constraining it. You are asking it nicely.

@@ -1,9 +1,9 @@
 // Env parsing + constants. Single source of truth.
 // Required vars throw by name. No silent defaults for secrets.
 //
-// SESSION 7 = V1: identity + payment. NO context inheritance, NO budget logic, NO sub-accounts.
-// Each agent is simply an account with a wallet — per the 4 Aug call: "why can't I just create an
-// agent wallet and just assign some money to that wallet?" Authority arrives in session 8.
+// SESSION 8 = ACCESS POLICIES. Two plain accounts, no sub-accounts, no inheritance. The owner
+// holds storage; the agent wants to write to it. Whether it may is decided by the protocol, from
+// a policy the owner registered — not by a rule inside a logic the agent could route around.
 
 import { config as loadDotenv } from "dotenv";
 import { fileURLToPath } from "node:url";
@@ -22,16 +22,18 @@ const opt = (name: string, fallback: string): string => process.env[name]?.trim(
 
 /** The Voyage faucet derivation path. */
 export const DEFAULT_DERIVATION_PATH = "m/44'/6174'/7020'/0/0";
-/** The seller only ever RECEIVES, so it never needs gas and never needs funding. */
-export const DEFAULT_SELLER_PATH = "m/44'/6174'/7020'/0/1";
 
 export const VOYAGE_DEVNET_RPC = "https://dev.voyage-rpc.moi.technology/devnet/";
 export const FAUCET_URL = "https://voyage.moi.technology";
 
-/** Names the chain a payment settled on. Only appears in quotes and receipts. */
-export const NETWORK = "moi-voyage-devnet";
-
-export const FUEL_LIMIT = Number(opt("FUEL_LIMIT", "20000"));
+/**
+ * The node requires the sender's balance to cover fuel_limit UP FRONT, not just actual usage. So
+ * a generous limit is not free on a lightly-funded devnet account — it fails as "insufficient
+ * funds", which reads like an empty wallet and is not.
+ *
+ * Measured usage on this chain: ParticipantCreate 399, logic deploy 719, access op 100.
+ */
+export const FUEL_LIMIT = Number(opt("FUEL_LIMIT", "1500"));
 
 export const config = {
   get mnemonic(): string { return req("USER_MNEMONIC"); },

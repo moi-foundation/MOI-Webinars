@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOI Builders #8 — Access Policies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===========================================
+   FIXED 16:9 STAGE: MANDATORY BASE STYLES
+   =========================================== */
+html, body { width:100%; height:100%; margin:0; overflow:hidden; background:var(--stage-bg,#000); }
+.deck-viewport { position:fixed; inset:0; overflow:hidden; background:var(--stage-bg,#000); }
+.deck-stage { position:absolute; left:0; top:0; width:1920px; height:1080px; overflow:hidden; transform-origin:0 0; background:var(--slide-bg,#fff); }
+.slide { position:absolute; inset:0; width:1920px; height:1080px; overflow:hidden; display:block; visibility:hidden; opacity:0; pointer-events:none; background:var(--slide-bg,#fff); }
+.slide.active, .slide.visible { visibility:visible; opacity:1; pointer-events:auto; z-index:1; }
+img, video, canvas, svg { max-width:100%; max-height:100%; }
+.deck-controls { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:1000; }
+@media print {
+  html, body { width:1920px; height:auto; overflow:visible; background:#fff; }
+  .deck-viewport { position:static; overflow:visible; background:#fff; }
+  .deck-stage { position:static; width:auto; height:auto; transform:none !important; background:none; }
+  .slide { position:relative; display:block !important; visibility:visible !important; opacity:1 !important; pointer-events:auto !important; width:1920px; height:1080px; break-after:page; page-break-after:always; }
+  .slide:last-child { break-after:auto; page-break-after:auto; }
+  .deck-controls { display:none !important; }
+  /* reveals never animate on paper — force them visible or 17 pages print blank */
+  .slide .rv { opacity:1 !important; transform:none !important; animation:none !important; }
+}
+@page { size: 1920px 1080px; margin: 0; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration:0.01ms !important; transition-duration:0.2s !important; }
+}
+
+/* ===========================================
+   MOI BRAND TOKENS
+   =========================================== */
+:root {
+  --moi-main:#4B17E5;
+  --moi-dark:#320F99;
+  --moi-white:#FFFFFF;
+  --moi-grey:#BFBFBF;
+  --moi-black:#0A0026;
+  --bg-almost-lavender:#FCFBFF;
+  --bg-certainly-lavender:#F5F2FF;
+  --bg-pastel-purple:#D9CCFF;
+  --lav-accent:#BCA6FF;
+  /* text on light */
+  --ink-hi:rgba(10,5,26,.85);
+  --ink-mid:rgba(10,5,26,.69);
+  --ink-low:rgba(10,5,26,.55);
+  /* text on dark */
+  --snow-hi:rgba(255,255,255,.85);
+  --snow-mid:rgba(255,255,255,.69);
+  --snow-low:rgba(255,255,255,.55);
+  --stage-bg:#0A0026;
+  --slide-bg:#FCFBFF;
+}
+
+/* ===========================================
+   TYPE
+   =========================================== */
+.slide { font-family:'Poppins', sans-serif; font-weight:400; -webkit-font-smoothing:antialiased; }
+.chip {
+  display:inline-block; font-weight:600; font-size:22px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--moi-main); background:var(--bg-certainly-lavender);
+  border:1.5px solid var(--bg-pastel-purple); border-radius:999px; padding:10px 28px;
+}
+.slide.dark .chip { color:var(--lav-accent); background:rgba(255,255,255,.06); border-color:rgba(188,166,255,.35); }
+
+h1 { font-weight:700; font-size:112px; line-height:1.08; margin:0; letter-spacing:-0.01em; }
+h2 { font-weight:600; font-size:76px; line-height:1.12; margin:0; letter-spacing:-0.01em; color:var(--ink-hi); }
+.slide.dark h1, .slide.dark h2 { color:var(--snow-hi); }
+.sub { font-weight:400; font-size:36px; line-height:1.5; color:var(--ink-mid); }
+.slide.dark .sub { color:var(--snow-mid); }
+.accent { color:var(--moi-main); }
+.slide.dark .accent { color:var(--lav-accent); }
+
+/* ===========================================
+   LAYOUT
+   =========================================== */
+.pad { position:absolute; inset:0; padding:110px 140px; box-sizing:border-box; display:flex; flex-direction:column; }
+.slide.light { background:var(--bg-almost-lavender); }
+.slide.lav   { background:var(--bg-certainly-lavender); }
+.slide.dark  { background:var(--moi-black); }
+.slide.dark.grad { background:linear-gradient(160deg, #14063f 0%, var(--moi-black) 55%); }
+
+.corner-logo { position:absolute; top:58px; right:72px; width:96px; height:auto; opacity:.9; }
+.slide-num { position:absolute; bottom:56px; right:72px; font-weight:600; font-size:20px; letter-spacing:.08em; color:var(--ink-low); }
+.slide.dark .slide-num { color:var(--snow-low); }
+
+.dia { width:1620px; height:auto; display:block; }
+.slide.dark .dia { color:var(--snow-hi); }
+
+/* planetoid watermark */
+.planetoid { position:absolute; pointer-events:none; }
+
+/* cards */
+.cards { display:flex; gap:36px; }
+.card {
+  flex:1; background:var(--moi-white); border:1.5px solid var(--bg-pastel-purple); border-radius:28px;
+  padding:44px 48px; box-sizing:border-box;
+}
+.card .k { font-weight:600; font-size:22px; letter-spacing:.08em; text-transform:uppercase; color:var(--moi-main); margin-bottom:18px; }
+.card .v { font-weight:500; font-size:34px; line-height:1.3; color:var(--ink-hi); }
+.card .d { font-weight:400; font-size:24px; line-height:1.5; color:var(--ink-mid); margin-top:14px; }
+
+/* code — the one non-Poppins surface: code is content, not brand voice */
+.code {
+  font-family:ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size:27px; line-height:1.62; color:var(--snow-hi);
+  background:var(--moi-black); border-radius:24px; padding:44px 56px;
+  white-space:pre; overflow:hidden;
+}
+.code .c  { color:rgba(255,255,255,.42); }         /* comment */
+.code .kw { color:var(--lav-accent); }             /* keyword */
+.code .s  { color:#9EE8C1; }                       /* string  */
+
+/* beats */
+.beats { display:flex; gap:40px; }
+.beat { flex:1; border-radius:28px; padding:48px; box-sizing:border-box; text-align:center; }
+.beat .n { font-weight:700; font-size:26px; letter-spacing:.08em; text-transform:uppercase; margin-bottom:22px; }
+.beat .r { font-weight:700; font-size:58px; line-height:1.1; }
+.beat .m { font-weight:400; font-size:24px; margin-top:20px; line-height:1.4; }
+.beat.no  { background:rgba(255,255,255,.05); border:1.5px solid rgba(255,255,255,.14); }
+.beat.no  .n { color:var(--snow-low); } .beat.no .r { color:var(--snow-hi); } .beat.no .m { color:var(--snow-mid); }
+.beat.yes { background:var(--moi-main); }
+.beat.yes .n { color:rgba(255,255,255,.7); } .beat.yes .r { color:#fff; } .beat.yes .m { color:rgba(255,255,255,.8); }
+
+/* table */
+table.cmp { border-collapse:separate; border-spacing:0; width:100%; font-size:30px; }
+.cmp th { font-weight:600; font-size:22px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-low); text-align:left; padding:18px 36px; }
+.cmp td { background:var(--moi-white); color:var(--ink-hi); font-weight:500; padding:30px 36px; border-top:1.5px solid var(--bg-pastel-purple); }
+.cmp tr td:first-child { font-weight:600; }
+.cmp tr.hero td { background:var(--moi-main); color:#fff; border-top-color:var(--moi-main); }
+.cmp tr:first-child td:first-child { border-top-left-radius:24px; } .cmp tr:first-child td:last-child { border-top-right-radius:24px; }
+.cmp tr:last-child td:first-child { border-bottom-left-radius:24px; } .cmp tr:last-child td:last-child { border-bottom-right-radius:24px; }
+
+/* pills row */
+.pills { display:flex; gap:28px; }
+.pill { border-radius:999px; padding:20px 44px; font-weight:600; font-size:30px; letter-spacing:.06em; text-transform:uppercase; }
+.pill.live { background:var(--moi-main); color:#fff; }
+.pill.res  { background:transparent; border:2px solid var(--bg-pastel-purple); color:var(--ink-low); }
+
+/* staggered reveal */
+.slide .rv { opacity:0; transform:translateY(26px); }
+.slide.active .rv { animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards; }
+.slide.active .rv.d1 { animation-delay:.08s; } .slide.active .rv.d2 { animation-delay:.2s; }
+.slide.active .rv.d3 { animation-delay:.34s; } .slide.active .rv.d4 { animation-delay:.48s; }
+.slide.active .rv.d5 { animation-delay:.62s; }
+@keyframes rise { to { opacity:1; transform:none; } }
+
+/* progress dots */
+.deck-controls { display:flex; gap:10px; }
+.dot { width:9px; height:9px; border-radius:50%; background:rgba(255,255,255,.25); border:0; padding:0; cursor:pointer; }
+.dot.on { background:var(--lav-accent); }
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+<div class="deck-stage" id="stage">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<linearGradient id="gOnDark" x1="13" y1=".55" x2="13" y2="19.57" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#dbcef9"/><stop offset="1" stop-color="#fff"/></linearGradient>
+<linearGradient id="gOnLight" x1="13" y1=".55" x2="13" y2="19.57" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#320f99"/><stop offset="1" stop-color="#4b17e5"/></linearGradient>
+<symbol id="moiOnDark" viewBox="0 0 26 20"><path fill="url(#gOnDark)" d="m22.5,6.89c-2.58-1.49-6.09-2.74-6.5-2.89.35.07,3.11.68,5.99,1.62-1.62-3.33-5.04-5.62-8.99-5.62C8.4,0,4.52,3.1,3.36,7.34c-.13.47-.23.95-.28,1.44-.94.08-1.66.3-2.08.72-1.07,1.07.43,2.42,2.5,3.61,2.58,1.49,6.09,2.74,6.5,2.89-.35-.07-3.11-.68-5.99-1.62,1.63,3.33,5.04,5.62,8.99,5.62,4.6,0,8.48-3.11,9.64-7.34.13-.47.23-.95.28-1.44.94-.08,1.66-.3,2.08-.72,1.07-1.07-.43-2.42-2.5-3.61Zm-11.5,10.11c-.55,0-1-.45-1-1s.45-1,1-1,1,.45,1,1-.45,1-1,1Zm4-12c-.55,0-1-.45-1-1s.45-1,1-1,1,.45,1,1-.45,1-1,1Z"/><g fill="#4B17E5"><path d="m12.03,8v4h-.97v-2.4l-.89,2.4h-.79l-.9-2.4v2.4h-.97v-4h1.15l1.12,2.77,1.11-2.77h1.15Z"/><path d="m13.75,11.79c-.31-.17-.56-.42-.75-.73s-.28-.67-.28-1.06.09-.74.28-1.05.43-.55.75-.73.66-.26,1.03-.26.72.09,1.03.26c.31.17.56.42.74.73.18.31.27.66.27,1.05s-.09.74-.27,1.06c-.18.31-.43.56-.74.73-.31.17-.66.26-1.03.26s-.72-.09-1.03-.26Zm1.8-.95c.19-.21.29-.49.29-.84s-.1-.64-.29-.85c-.19-.21-.45-.32-.77-.32s-.58.1-.77.31c-.19.21-.29.49-.29.85s.1.64.29.85c.19.21.45.32.77.32s.57-.11.77-.32Z"/><path d="m18.5,8v4h-.97v-4h.97Z"/></g></symbol>
+<symbol id="moiOnLight" viewBox="0 0 26 20"><path fill="url(#gOnLight)" d="m22.5,6.89c-2.58-1.49-6.09-2.74-6.5-2.89.35.07,3.11.68,5.99,1.62-1.62-3.33-5.04-5.62-8.99-5.62C8.4,0,4.52,3.1,3.36,7.34c-.13.47-.23.95-.28,1.44-.94.08-1.66.3-2.08.72-1.07,1.07.43,2.42,2.5,3.61,2.58,1.49,6.09,2.74,6.5,2.89-.35-.07-3.11-.68-5.99-1.62,1.63,3.33,5.04,5.62,8.99,5.62,4.6,0,8.48-3.11,9.64-7.34.13-.47.23-.95.28-1.44.94-.08,1.66-.3,2.08-.72,1.07-1.07-.43-2.42-2.5-3.61Zm-11.5,10.11c-.55,0-1-.45-1-1s.45-1,1-1,1,.45,1,1-.45,1-1,1Zm4-12c-.55,0-1-.45-1-1s.45-1,1-1,1,.45,1,1-.45,1-1,1Z"/><g fill="#FFFFFF"><path d="m12.03,8v4h-.97v-2.4l-.89,2.4h-.79l-.9-2.4v2.4h-.97v-4h1.15l1.12,2.77,1.11-2.77h1.15Z"/><path d="m13.75,11.79c-.31-.17-.56-.42-.75-.73s-.28-.67-.28-1.06.09-.74.28-1.05.43-.55.75-.73.66-.26,1.03-.26.72.09,1.03.26c.31.17.56.42.74.73.18.31.27.66.27,1.05s-.09.74-.27,1.06c-.18.31-.43.56-.74.73-.31.17-.66.26-1.03.26s-.72-.09-1.03-.26Zm1.8-.95c.19-.21.29-.49.29-.84s-.1-.64-.29-.85c-.19-.21-.45-.32-.77-.32s-.58.1-.77.31c-.19.21-.29.49-.29.85s.1.64.29.85c.19.21.45.32.77.32s.57-.11.77-.32Z"/><path d="m18.5,8v4h-.97v-4h.97Z"/></g></symbol>
+</defs></svg>
+<section class="slide dark grad">
+  <svg class="planetoid" style="right:-320px; top:-260px; width:1200px; opacity:.12" viewBox="0 0 26 20"><path fill="none" stroke="#BCA6FF" stroke-width=".35" d="m22.5,6.89c-2.58-1.49-6.09-2.74-6.5-2.89.35.07,3.11.68,5.99,1.62C20.37,2.29,16.95,0,13,0,8.4,0,4.52,3.1,3.36,7.34c-.13.47-.23.95-.28,1.44-.94.08-1.66.3-2.08.72-1.07,1.07.43,2.42,2.5,3.61,2.58,1.49,6.09,2.74,6.5,2.89-.35-.07-3.11-.68-5.99-1.62,1.63,3.33,5.04,5.62,8.99,5.62,4.6,0,8.48-3.11,9.64-7.34.13-.47.23-.95.28-1.44.94-.08,1.66-.3,2.08-.72,1.07-1.07-.43-2.42-2.5-3.61Z"/></svg>
+  <div class="pad" style="justify-content:center">
+    <svg class="rv" style="width:190px;height:auto;margin-bottom:70px" viewBox="0 0 26 20"><defs><linearGradient id="LG" x1="13" y1=".55" x2="13" y2="19.57" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#dbcef9"/><stop offset="1" stop-color="#fff"/></linearGradient></defs><path fill="url(#LG)" d="m22.5,6.89c-2.58-1.49-6.09-2.74-6.5-2.89.35.07,3.11.68,5.99,1.62-1.62-3.33-5.04-5.62-8.99-5.62C8.4,0,4.52,3.1,3.36,7.34c-.13.47-.23.95-.28,1.44-.94.08-1.66.3-2.08.72-1.07,1.07.43,2.42,2.5,3.61,2.58,1.49,6.09,2.74,6.5,2.89-.35-.07-3.11-.68-5.99-1.62,1.63,3.33,5.04,5.62,8.99,5.62,4.6,0,8.48-3.11,9.64-7.34.13-.47.23-.95.28-1.44.94-.08,1.66-.3,2.08-.72,1.07-1.07-.43-2.42-2.5-3.61Zm-11.5,10.11c-.55,0-1-.45-1-1s.45-1,1-1,1,.45,1,1-.45,1-1,1Zm4-12c-.55,0-1-.45-1-1s.45-1,1-1,1,.45,1,1-.45,1-1,1Z"/><g fill="#4B17E5"><path d="m12.03,8v4h-.97v-2.4l-.89,2.4h-.79l-.9-2.4v2.4h-.97v-4h1.15l1.12,2.77,1.11-2.77h1.15Z"/><path d="m13.75,11.79c-.31-.17-.56-.42-.75-.73s-.28-.67-.28-1.06.09-.74.28-1.05.43-.55.75-.73.66-.26,1.03-.26.72.09,1.03.26c.31.17.56.42.74.73.18.31.27.66.27,1.05s-.09.74-.27,1.06c-.18.31-.43.56-.74.73-.31.17-.66.26-1.03.26s-.72-.09-1.03-.26Zm1.8-.95c.19-.21.29-.49.29-.84s-.1-.64-.29-.85c-.19-.21-.45-.32-.77-.32s-.58.1-.77.31c-.19.21-.29.49-.29.85s.1.64.29.85c.19.21.45.32.77.32s.57-.11.77-.32Z"/><path d="m18.5,8v4h-.97v-4h.97Z"/></g></svg>
+    <div class="rv d1"><span class="chip">MOI Builders &middot; Session 8</span></div>
+    <h1 class="rv d2" style="margin-top:44px; max-width:1400px">Access policies</h1>
+    <div class="rv d3 sub" style="margin-top:34px; font-size:44px">Fine-grained control over your own account.</div>
+    <div class="rv d4 sub" style="margin-top:64px; font-size:28px; color:var(--snow-low)">Friday 4 September &middot; 4pm IST &middot; live on devnet</div>
+  </div>
+</section>
+
+<section class="slide light">
+  <svg class="corner-logo"><use href="#moiOnLight"/></svg>
+  <div class="pad" style="justify-content:center">
+    <div class="rv"><span class="chip">Start here</span></div>
+    <h2 class="rv d1" style="margin-top:44px; font-size:88px; max-width:1560px">You give an agent authority<br>to act as you. Where does <span class="accent">that</span> live?</h2>
+    <div class="rv d2 sub" style="margin-top:48px; max-width:1400px">Book my flights. Here are my preferences, here is what you may spend. What the agent <em>does</em> becomes transaction logs on the ledger. What it acts <em>under</em> — your preferences, your limits, your grant — is <em>you</em>.</div>
+    <div class="rv d3 sub" style="margin-top:30px; max-width:1400px; color:var(--ink-low)">So the first question is not how to restrict the agent. It is where you exist for it to read.</div>
+  </div>
+  <div class="slide-num">02</div>
+</section>
+
+<section class="slide lav">
+  <svg class="corner-logo"><use href="#moiOnLight"/></svg>
+  <div class="pad">
+    <div class="rv"><span class="chip">How it works today</span></div>
+    <h2 class="rv d1" style="margin-top:36px; font-size:72px">The app — or the agent — keeps its own copy of you.</h2>
+    <div class="rv d2 sub" style="margin-top:26px; max-width:1500px; font-size:30px">On Ethereum a contract owns its storage. Off chain, the same shape: the service owns the row. Either way your preferences and your grants live inside the thing you were using.</div>
+    <div class="cards" style="margin-top:56px">
+      <div class="card rv d3"><div class="k">Scattered</div><div class="v">One copy per service</div><div class="d">Ten agents, ten services — you re-teach your preferences ten times. No single you.</div></div>
+      <div class="card rv d4"><div class="k">Or the agent holds it</div><div class="v">The agent becomes the central point</div><div class="d">Hand it your preferences and they live inside the agent. Move to a different agent and you start from zero.</div></div>
+      <div class="card rv d5"><div class="k">Not yours to revoke</div><div class="v">Their database, their rules</div><div class="d">Taking your authority back means asking them to do it.</div></div>
+    </div>
+  </div>
+  <div class="slide-num">03</div>
+</section>
+
+<section class="slide dark grad">
+  <svg class="corner-logo"><use href="#moiOnDark"/></svg>
+  <svg class="planetoid" style="left:-380px; bottom:-320px; width:1300px; opacity:.1" viewBox="0 0 26 20"><path fill="none" stroke="#BCA6FF" stroke-width=".35" d="m22.5,6.89c-2.58-1.49-6.09-2.74-6.5-2.89.35.07,3.11.68,5.99,1.62C20.37,2.29,16.95,0,13,0,8.4,0,4.52,3.1,3.36,7.34c-.13.47-.23.95-.28,1.44-.94.08-1.66.3-2.08.72-1.07,1.07.43,2.42,2.5,3.61,2.58,1.49,6.09,2.74,6.5,2.89-.35-.07-3.11-.68-5.99-1.62,1.63,3.33,5.04,5.62,8.99,5.62,4.6,0,8.48-3.11,9.64-7.34.13-.47.23-.95.28-1.44.94-.08,1.66-.3,2.08-.72,1.07-1.07-.43-2.42-2.5-3.61Z"/></svg>
+  <div class="pad" style="justify-content:center; align-items:flex-start">
+    <div class="rv sub" style="font-size:34px; color:var(--snow-low)">So MOI moved the data.</div>
+    <h2 class="rv d2" style="margin-top:24px; font-size:76px; font-weight:700">Your state lives on <span class="accent">your account</span>.</h2>
+    <div class="rv d3" style="margin-top:44px"><svg class="dia" viewBox="0 0 1620 470" role="img" aria-label="On Ethereum the program holds every user's state inside itself. On MOI each participant's state sits on their own account, and the program holds no copy of you."><defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker><marker id="arP" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#BCA6FF"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="2" opacity=".85"><text x="40" y="34" font-size="21" font-weight="600" letter-spacing="2.4" fill="currentColor" stroke="none" opacity=".55">ETHEREUM</text><rect x="40" y="66" width="640" height="230" rx="20"/><text x="70" y="108" font-size="26" font-weight="600" fill="currentColor" stroke="none">The program</text><rect x="70" y="132" width="580" height="62" rx="12" opacity=".55"/><text x="96" y="170" font-size="22" fill="currentColor" stroke="none" opacity=".8">your state</text><rect x="70" y="208" width="580" height="62" rx="12" opacity=".55"/><text x="96" y="246" font-size="22" fill="currentColor" stroke="none" opacity=".8">someone else's state</text><line x1="200" y1="400" x2="200" y2="304" marker-end="url(#ar)"/><line x1="520" y1="400" x2="520" y2="304" marker-end="url(#ar)"/><text x="200" y="432" font-size="22" text-anchor="middle" fill="currentColor" stroke="none" opacity=".8">you</text><text x="520" y="432" font-size="22" text-anchor="middle" fill="currentColor" stroke="none" opacity=".8">them</text><line x1="760" y1="30" x2="760" y2="450" stroke-dasharray="5 9" opacity=".3"/><text x="820" y="34" font-size="21" font-weight="600" letter-spacing="2.4" fill="#BCA6FF" stroke="none">MOI</text><rect x="1030" y="66" width="360" height="96" rx="20" stroke="#BCA6FF"/><text x="1210" y="108" font-size="26" font-weight="600" text-anchor="middle" fill="#BCA6FF" stroke="none">The program</text><text x="1210" y="138" font-size="20" text-anchor="middle" fill="currentColor" stroke="none" opacity=".55">no copy of you</text><path d="M1120 162 L980 236" stroke="#BCA6FF" marker-end="url(#arP)"/><path d="M1300 162 L1440 236" stroke="#BCA6FF" marker-end="url(#arP)"/><text x="1210" y="210" font-size="19" text-anchor="middle" fill="#BCA6FF" stroke="none">writes</text><rect x="820" y="244" width="320" height="150" rx="20"/><text x="850" y="288" font-size="24" font-weight="600" fill="currentColor" stroke="none">your account</text><rect x="850" y="308" width="260" height="58" rx="12" opacity=".55"/><text x="872" y="345" font-size="21" fill="currentColor" stroke="none" opacity=".8">your state</text><rect x="1280" y="244" width="320" height="150" rx="20"/><text x="1310" y="288" font-size="24" font-weight="600" fill="currentColor" stroke="none">their account</text><rect x="1310" y="308" width="260" height="58" rx="12" opacity=".55"/><text x="1332" y="345" font-size="21" fill="currentColor" stroke="none" opacity=".8">their state</text></g></svg></div>
+  </div>
+  <div class="slide-num">04</div>
+</section>
+
+<section class="slide lav">
+  <svg class="corner-logo"><use href="#moiOnLight"/></svg>
+  <div class="pad">
+    <div class="rv"><span class="chip">Why that is worth doing</span></div>
+    <h2 class="rv d1" style="margin-top:36px; font-size:68px">One account. Every agent you<br>ever hire reads and writes <span class="accent">there</span>.</h2>
+    <div class="cards" style="margin-top:60px">
+      <div class="card rv d3">
+        <div class="k">One place, and it is yours</div>
+        <div class="v">Not ten copies of you</div>
+        <div class="d">Your preferences and your grants sit on one account you control, instead of scattered across ten services that each own their slice.</div>
+      </div>
+      <div class="card rv d4">
+        <div class="k">Agents compose</div>
+        <div class="v">The next one picks up where the last left off</div>
+        <div class="d">A new agent reads the same state the last one worked from, because they read the same account. Nobody has to build an integration between them.</div>
+      </div>
+      <div class="card rv d5">
+        <div class="k">Swap without losing anything</div>
+        <div class="v">Fire the agent, keep yourself</div>
+        <div class="d">Your state was never the agent's to take. Replace it tomorrow and the new one starts with everything you told the old one.</div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">05</div>
+</section>
+
+<section class="slide light">
+  <svg class="corner-logo"><use href="#moiOnLight"/></svg>
+  <div class="pad" style="justify-content:center">
+    <div class="rv"><span class="chip">The part nobody asks about</span></div>
+    <h2 class="rv d1" style="margin-top:40px; font-size:72px; max-width:1600px">If your data is on your account,<br>programs must be able to <span class="accent">write to accounts they do not own</span>.</h2>
+    <div class="rv d2 sub" style="margin-top:46px; max-width:1500px; font-size:32px">On Ethereum the question never comes up. Your account holds a balance and a nonce. It has no storage a contract can write into. Data lives inside the contract.</div>
+    <div class="rv d3 sub" style="margin-top:26px; max-width:1500px; font-size:32px">So MOI is not relaxing a safety rule. It is creating a capability that did not exist.</div>
+    <div class="rv d4 sub" style="margin-top:40px; max-width:1500px; font-size:34px; color:var(--moi-main); font-weight:500">Open that capability and you immediately owe an answer: who is allowed to, and for what?</div>
+  </div>
+  <div class="slide-num">06</div>
+</section>
+
+<section class="slide lav">
+  <svg class="corner-logo"><use href="#moiOnLight"/></svg>
+  <div class="pad" style="justify-content:center">
+    <div class="rv"><span class="chip">Why not just write a rule</span></div>
+    <h2 class="rv d1" style="margin-top:44px; font-size:88px">The agent holds<br>its <span class="accent">own key</span>.</h2>
+    <div class="rv d2 sub" style="margin-top:44px; max-width:1400px">Put the rule in a program and the agent has to choose to call it. Any limit it looks up is one it can decline to look up. You are not constraining it. You are asking it nicely.</div>
+  </div>
+  <div class="slide-num">07</div>
+</section>
+
+<section class="slide light">
+  <svg class="corner-logo"><use href="#moiOnLight"/></svg>
+  <div class="pad">
+    <div class="rv"><span class="chip">The answer</span></div>
+    <h2 class="rv d1" style="margin-top:40px">One grant, on your account.</h2>
+    <div class="rv d2 sub" style="margin-top:24px; max-width:1400px">The protocol reads it before any foreign write lands. The program asking never touches it.</div>
+    <div class="cards" style="margin-top:72px">
+      <div class="card rv d3"><div class="k">Which program</div><div class="v">The logic allowed to write</div><div class="d">Named by its logic id, not a slot and not a person.</div></div>
+      <div class="card rv d4"><div class="k">What it may do</div><div class="v">Mutate your storage</div><div class="d">The one action live on the network today.</div></div>
+      <div class="card rv d5"><div class="k">Who is behind it</div><div class="v">The origin of the call</div><div class="d">Pin the grant to one agent. Nobody else qualifies.</div></div>
+    </div>
+  </div>
+  <div class="slide-num">08</div>
+</section>
+<section class="slide lav">
+  <svg class="corner-logo"><use href="#moiOnLight"/></svg>
+  <div class="pad">
+    <div class="rv"><span class="chip">The logic</span></div>
+    <h2 class="rv d1" style="margin-top:36px; font-size:64px">Thirty lines. <span class="accent">No permission checks.</span></h2>
+    <div class="code rv d2" style="margin-top:44px; font-size:23px; line-height:1.55; padding:38px 56px">
+<span class="kw">coco</span> Ticker
+
+<span class="kw">state actor</span>:            <span class="c">// each participant's counter lives on THEIR account</span>
+    counter U64
+
+<span class="kw">endpoint dynamic</span> TickMy() -&gt; (counter U64):
+    <span class="kw">mutate</span> c &lt;- Ticker.Sender.counter:
+        c += 1
+
+<span class="kw">endpoint dynamic</span> TickAny(participant Identifier) -&gt; (counter U64):
+    <span class="kw">mutate</span> c &lt;- Ticker.Actor(participant).counter:   <span class="c">// a FOREIGN write</span>
+        c += 1
+
+<span class="c">// abridged — full 30 lines in the repo</span></div>
+    <div class="rv d3 sub" style="margin-top:40px; font-size:30px">No <span style="font-family:ui-monospace,monospace">if sender == owner</span>. No owner field. No guard. All of that lives on the account.</div>
+  </div>
+  <div class="slide-num">09</div>
+</section>
+
+<section class="slide light">
+  <svg class="corner-logo"><use href="#moiOnLight"/></svg>
+  <div class="pad">
+    <div class="rv"><span class="chip">The attempt</span></div>
+    <h2 class="rv d1" style="margin-top:36px; font-size:64px">What the agent actually <span class="accent">sends</span>.</h2>
+    <div class="code rv d2" style="margin-top:44px; font-size:25px">
+<span class="c">// signed by the AGENT's own key — nobody can stop this part</span>
+<span class="kw">const</span> ticker = <span class="kw">await</span> getLogicDriver(TICKER_ID, agent.wallet);
+
+<span class="kw">await</span> ticker.routines.TickAny(OWNER_ID).send({
+  <span class="c">// declares what it will touch — a heads-up, not a permission</span>
+  participants: [{ id: OWNER_ID, lock_type: LockType.MUTATE_LOCK }],
+  fuel_limit: 1500,
+});</div>
+    <div class="rv d3 sub" style="margin-top:38px; font-size:28px">A real one, sent with no policy in place: <span style="font-family:ui-monospace,monospace; font-size:24px">0x9fc1eff1…c9d4cbe1</span> — accepted, mined, charged 86 fuel.</div>
+  </div>
+  <div class="slide-num">10</div>
+</section>
+
+<section class="slide light">
+  <svg class="corner-logo"><use href="#moiOnLight"/></svg>
+  <div class="pad">
+    <div class="rv"><span class="chip">The grant</span></div>
+    <h2 class="rv d1" style="margin-top:36px; font-size:64px">One interaction, signed by <span class="accent">the owner</span>.</h2>
+    <div class="code rv d2" style="margin-top:48px">
+<span class="kw">await new</span> Access(owner.wallet)
+  .storage(TICKER_LOGIC_ID)              <span class="c">// WHICH program may write</span>
+  .allow(AccessAction.STORAGE_MUTATE)    <span class="c">// WHAT it may do</span>
+  .origin(access.callers(AGENT_ID))      <span class="c">// WHO must be behind it</span>
+  .create()
+  .send();</div>
+    <div class="rv d3 sub" style="margin-top:40px; font-size:30px">Your authority, as state on your account. The agent is not asked. It cannot decline. It finds out when it tries.</div>
+  </div>
+  <div class="slide-num">11</div>
+</section>
+
+<section class="slide light">
+  <svg class="corner-logo"><use href="#moiOnLight"/></svg>
+  <div class="pad">
+    <div class="rv"><span class="chip">Where the check happens</span></div>
+    <h2 class="rv d1" style="margin-top:30px; font-size:56px">No <span class="accent">permission</span> check until the write itself.</h2>
+    <div class="rv d2" style="margin-top:38px"><svg class="dia" viewBox="0 0 1620 430" role="img" aria-label="The agent signs and the network mines the interaction with no permission check. The program runs, and when it tries to store into the owner's account the runtime reads the policy on that account: a matching policy lets the write land, anything else reverts."><defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0A0026" opacity=".55"/></marker><marker id="a2p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4B17E5"/></marker></defs><rect x="20" y="120" width="250" height="112" rx="18" fill="none" stroke="#0A0026" stroke-opacity=".3" stroke-width="2"/><text x="145" y="166" font-size="25" font-weight="600" text-anchor="middle" fill="#0A0026" fill-opacity=".85">Agent</text><text x="145" y="198" font-size="19" text-anchor="middle" fill="#0A0026" fill-opacity=".55">signs the call</text><rect x="330" y="120" width="250" height="112" rx="18" fill="none" stroke="#0A0026" stroke-opacity=".3" stroke-width="2"/><text x="455" y="166" font-size="25" font-weight="600" text-anchor="middle" fill="#0A0026" fill-opacity=".85">Network</text><text x="455" y="198" font-size="19" text-anchor="middle" fill="#0A0026" fill-opacity=".55">mines it, charges fuel</text><rect x="640" y="120" width="250" height="112" rx="18" fill="none" stroke="#0A0026" stroke-opacity=".3" stroke-width="2"/><text x="765" y="166" font-size="25" font-weight="600" text-anchor="middle" fill="#0A0026" fill-opacity=".85">Ticker runs</text><text x="765" y="198" font-size="19" text-anchor="middle" fill="#0A0026" fill-opacity=".55">reaches the store</text><line x1="280" y1="176" x2="322" y2="176" stroke="#0A0026" stroke-opacity=".45" stroke-width="2" marker-end="url(#a2)"/><line x1="590" y1="176" x2="632" y2="176" stroke="#0A0026" stroke-opacity=".45" stroke-width="2" marker-end="url(#a2)"/><text x="455" y="58" font-size="19" text-anchor="middle" fill="#0A0026" fill-opacity=".45">no permission check yet</text><path d="M30 100 L30 74 L880 74 L880 100" fill="none" stroke="#0A0026" stroke-opacity=".25" stroke-width="2"/><line x1="900" y1="176" x2="948" y2="176" stroke="#4B17E5" stroke-width="2.5" marker-end="url(#a2p)"/><rect x="958" y="98" width="300" height="156" rx="20" fill="none" stroke="#4B17E5" stroke-width="3"/><text x="1108" y="142" font-size="21" font-weight="600" letter-spacing="2" text-anchor="middle" fill="#4B17E5">THE RUNTIME</text><text x="1108" y="180" font-size="23" text-anchor="middle" fill="#0A0026" fill-opacity=".85">reads the policy</text><text x="1108" y="212" font-size="23" text-anchor="middle" fill="#0A0026" fill-opacity=".85">on the target account</text><rect x="1330" y="60" width="270" height="112" rx="18" fill="none" stroke="#4B17E5" stroke-width="2" stroke-dasharray="6 6"/><text x="1465" y="100" font-size="21" font-weight="600" text-anchor="middle" fill="#4B17E5">your account</text><text x="1465" y="132" font-size="19" text-anchor="middle" fill="#0A0026" fill-opacity=".6">the policy</text><text x="1465" y="156" font-size="19" text-anchor="middle" fill="#0A0026" fill-opacity=".6">the counter</text><line x1="1258" y1="150" x2="1322" y2="122" stroke="#4B17E5" stroke-width="2" stroke-dasharray="5 5"/><path d="M1108 254 L1108 300 L960 300 L960 336" fill="none" stroke="#0A0026" stroke-opacity=".45" stroke-width="2" marker-end="url(#a2)"/><path d="M1108 254 L1108 300 L1290 300 L1290 336" fill="none" stroke="#4B17E5" stroke-width="2.5" marker-end="url(#a2p)"/><rect x="790" y="342" width="340" height="66" rx="16" fill="none" stroke="#0A0026" stroke-opacity=".3" stroke-width="2"/><text x="960" y="384" font-size="22" text-anchor="middle" fill="#0A0026" fill-opacity=".7">no matching policy: reverts</text><rect x="1150" y="342" width="280" height="66" rx="16" fill="#4B17E5"/><text x="1290" y="384" font-size="22" font-weight="500" text-anchor="middle" fill="#fff">matching policy: it lands</text></svg></div>
+    <div class="rv d3 sub" style="margin-top:34px; font-size:26px; max-width:1560px">The interaction is signed, mined and charged either way. The runtime is the thing that refuses, so there is no version of the agent that skips this step.</div>
+  </div>
+  <div class="slide-num">12</div>
+</section>
+
+<section class="slide dark grad">
+  <svg class="corner-logo"><use href="#moiOnDark"/></svg>
+  <div class="pad" style="justify-content:center">
+    <div class="rv"><span class="chip">Live demo</span></div>
+    <h2 class="rv d1" style="margin-top:44px; font-size:84px">Same call. Same key.<br>Three times.</h2>
+    <div class="beats rv d3" style="margin-top:76px">
+      <div class="beat no"><div class="n">1 &middot; No policy</div><div class="r">Refused</div><div class="m">counter unchanged</div></div>
+      <div class="beat yes"><div class="n">2 &middot; Policy granted</div><div class="r">Allowed</div><div class="m">counter +1</div></div>
+      <div class="beat no"><div class="n">3 &middot; Policy revoked</div><div class="r">Refused</div><div class="m">counter unchanged</div></div>
+    </div>
+  </div>
+  <div class="slide-num">13</div>
+</section>
+
+<section class="slide lav">
+  <svg class="corner-logo"><use href="#moiOnLight"/></svg>
+  <div class="pad" style="justify-content:center">
+    <div class="rv"><span class="chip">What the chain says</span></div>
+    <div class="code rv d1" style="margin-top:52px; font-size:31px; padding:56px 64px">
+<span class="c">// receipt status: 1 — mined, charged, reverted</span>
+
+<span class="s">builtin.AccessError:
+actor is not allowed to write
+into other actor's storage</span></div>
+    <div class="rv d2 sub" style="margin-top:44px; max-width:1400px; font-size:32px">Not a script deciding to stop. The runtime refused the write at the instruction, and the interaction is public, on the ledger, and paid for.</div>
+  </div>
+  <div class="slide-num">14</div>
+</section>
+
+<section class="slide light">
+  <svg class="corner-logo"><use href="#moiOnLight"/></svg>
+  <div class="pad" style="justify-content:center">
+    <div class="rv"><span class="chip">Revocation</span></div>
+    <h2 class="rv d1" style="margin-top:44px; font-size:88px">Grant in one interaction.<br><span class="accent">Revoke in one.</span></h2>
+    <div class="rv d2 sub" style="margin-top:44px; max-width:1350px">No redeploy. No key rotation. No asking the agent to behave. The next write simply fails.</div>
+  </div>
+  <div class="slide-num">15</div>
+</section>
+
+<section class="slide lav">
+  <svg class="corner-logo"><use href="#moiOnLight"/></svg>
+  <div class="pad">
+    <div class="rv"><span class="chip">How others enforce</span></div>
+    <h2 class="rv d1" style="margin-top:36px; font-size:60px">Everyone stops arbitrary writes.<br>The ladder is <span class="accent">where the rule lives</span>.</h2>
+    <table class="cmp rv d2" style="margin-top:56px">
+      <tr><th></th><th>Enforced by</th><th>Unit of protection</th></tr>
+      <tr><td>Ethereum</td><td>The contract's own code</td><td>Whatever that code says</td></tr>
+      <tr><td>Solana</td><td>The protocol</td><td>Per program</td></tr>
+      <tr class="hero"><td>MOI</td><td>The protocol</td><td>Per account &mdash; set by you</td></tr>
+    </table>
+  </div>
+  <div class="slide-num">16</div>
+</section>
+
+<section class="slide light">
+  <svg class="corner-logo"><use href="#moiOnLight"/></svg>
+  <div class="pad" style="justify-content:center">
+    <div class="rv"><span class="chip">Honest scope</span></div>
+    <h2 class="rv d1" style="margin-top:44px; font-size:88px">Storage <span class="accent">today</span>.</h2>
+    <div class="pills rv d2" style="margin-top:60px">
+      <div class="pill live">Storage &middot; live</div>
+      <div class="pill res">Asset &middot; reserved</div>
+      <div class="pill res">Logic &middot; reserved</div>
+      <div class="pill res">Key &middot; reserved</div>
+    </div>
+    <div class="rv d3 sub" style="margin-top:56px; max-width:1400px">"This agent may spend up to 500" is the shape of the thing, already in the type system. The mechanism you saw is the part that carries over.</div>
+  </div>
+  <div class="slide-num">17</div>
+</section>
+
+<section class="slide dark grad">
+  <svg class="planetoid" style="right:-300px; bottom:-280px; width:1100px; opacity:.12" viewBox="0 0 26 20"><path fill="none" stroke="#BCA6FF" stroke-width=".35" d="m22.5,6.89c-2.58-1.49-6.09-2.74-6.5-2.89.35.07,3.11.68,5.99,1.62C20.37,2.29,16.95,0,13,0,8.4,0,4.52,3.1,3.36,7.34c-.13.47-.23.95-.28,1.44-.94.08-1.66.3-2.08.72-1.07,1.07.43,2.42,2.5,3.61,2.58,1.49,6.09,2.74,6.5,2.89-.35-.07-3.11-.68-5.99-1.62,1.63,3.33,5.04,5.62,8.99,5.62,4.6,0,8.48-3.11,9.64-7.34.13-.47.23-.95.28-1.44.94-.08,1.66-.3,2.08-.72,1.07-1.07-.43-2.42-2.5-3.61Z"/></svg>
+  <div class="pad" style="justify-content:center">
+    <svg class="rv" style="width:150px;height:auto;margin-bottom:60px" viewBox="0 0 26 20"><defs><linearGradient id="LGC" x1="13" y1=".55" x2="13" y2="19.57" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#dbcef9"/><stop offset="1" stop-color="#fff"/></linearGradient></defs><path fill="url(#LGC)" d="m22.5,6.89c-2.58-1.49-6.09-2.74-6.5-2.89.35.07,3.11.68,5.99,1.62-1.62-3.33-5.04-5.62-8.99-5.62C8.4,0,4.52,3.1,3.36,7.34c-.13.47-.23.95-.28,1.44-.94.08-1.66.3-2.08.72-1.07,1.07.43,2.42,2.5,3.61,2.58,1.49,6.09,2.74,6.5,2.89-.35-.07-3.11-.68-5.99-1.62,1.63,3.33,5.04,5.62,8.99,5.62,4.6,0,8.48-3.11,9.64-7.34.13-.47.23-.95.28-1.44.94-.08,1.66-.3,2.08-.72,1.07-1.07-.43-2.42-2.5-3.61Zm-11.5,10.11c-.55,0-1-.45-1-1s.45-1,1-1,1,.45,1,1-.45,1-1,1Zm4-12c-.55,0-1-.45-1-1s.45-1,1-1,1,.45,1,1-.45,1-1,1Z"/><g fill="#4B17E5"><path d="m12.03,8v4h-.97v-2.4l-.89,2.4h-.79l-.9-2.4v2.4h-.97v-4h1.15l1.12,2.77,1.11-2.77h1.15Z"/><path d="m13.75,11.79c-.31-.17-.56-.42-.75-.73s-.28-.67-.28-1.06.09-.74.28-1.05.43-.55.75-.73.66-.26,1.03-.26.72.09,1.03.26c.31.17.56.42.74.73.18.31.27.66.27,1.05s-.09.74-.27,1.06c-.18.31-.43.56-.74.73-.31.17-.66.26-1.03.26s-.72-.09-1.03-.26Zm1.8-.95c.19-.21.29-.49.29-.84s-.1-.64-.29-.85c-.19-.21-.45-.32-.77-.32s-.58.1-.77.31c-.19.21-.29.49-.29.85s.1.64.29.85c.19.21.45.32.77.32s.57-.11.77-.32Z"/><path d="m18.5,8v4h-.97v-4h.97Z"/></g></svg>
+    <h2 class="rv d1" style="font-size:84px">Run it yourself.</h2>
+    <div class="rv d2 sub" style="margin-top:44px; font-size:34px; line-height:1.7">
+      github.com/moi-foundation/MOI-Webinars &middot; <span class="accent">session-8-policies</span><br>
+      One funded devnet wallet &middot; voyage.moi.technology
+    </div>
+    <div class="rv d3 sub" style="margin-top:70px; font-size:26px; color:var(--snow-low)">MOI &middot; the protocol giving participants computational existence</div>
+  </div>
+</section>
+<nav class="deck-controls" id="dots" aria-label="Slide navigation"></nav>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage');
+  var dots = document.getElementById('dots');
+  var i = 0;
+
+  // ── Presenter view ─────────────────────────────────────────────────────────
+  // Press P to open a second window with the read-along script, synced to the
+  // deck. In Meet, share THIS window; keep the presenter window on your screen.
+  var TITLES = [
+    "Title",
+    "The use case",
+    "Today: the app or the agent owns it",
+    "MOI: you own it",
+    "Why that is worth doing",
+    "WHY we opened it",
+    "Why not fix it in code",
+    "What a policy is",
+    "Ticker - the logic",
+    "The attempt",
+    "The grant",
+    "Where the check happens",
+    "LIVE DEMO",
+    "The receipt",
+    "Revocation",
+    "How others enforce",
+    "Honest scope",
+    "Close",
+  ];
+  var NOTES = [
+    "Welcome, everyone. MOI Builders, session eight. Access policies: fine-grained control over your own account. Everything today runs live on devnet, and at the end you can run all of it yourself with one funded wallet. One sentence before anything else, because every session lands on it: MOI is the protocol, the infrastructure, that gives participants a computational existence. Agents are taking the physical human out of the loop, and MOI keeps the human's preferences and authority in it. Everything today is that sentence made concrete.",
+    "Start with a job you actually give an agent. Book my flights. Here are my preferences, aisle seat, no red-eyes, and here is what you may spend. Now split what just happened in two. What the agent does with that, the bookings, the payments, becomes transaction logs on the ledger, public and permanent, and that trail is exactly where it belongs. But what it acts under, your preferences, your limits, your grant of authority, that is you. So before we talk about restricting anything, the real question is: where do you exist for the agent to read?",
+    "Today, one of two places, and both are wrong. Either the app holds it. On Ethereum a contract owns its storage, off chain the service owns the row, so your preferences are scattered, one copy per service, and you re-teach them to every new one. Or you hand them to the agent and the agent holds them itself, which quietly makes the agent the central point: move to a different agent and you start from zero. And either way, taking your authority back means asking their database nicely.",
+    "So MOI moved the data. Your state lives on your account, not inside the program, not inside the agent, and not in a service's database. That is what participant-centric means: the participant gets a computational existence of their own, because agents removed the physical one and your preferences must not leave with it. It is not a feature bolted on. It is the data model the whole protocol is built on.",
+    "And here is what that buys you, because moving data is only worth doing if something gets better. Three things. One: there is one place, and it is yours. Your preferences and your grants sit on one account you control, instead of ten services each owning their slice of you. Two, and this is the one that matters for agents: they compose. A new agent picks up exactly where the last one left off, because it reads the same participant state. Nobody has to build an integration between two vendors who have never heard of each other. And three: you can swap an agent without losing anything, because your state was never the agent's to take. Fire it tomorrow and the replacement starts with everything you told the old one.",
+    "Now here is the part nobody asks about, and it is the actual reason access policies exist. If your data sits on your account, then any program that needs to update it has to write to an account it does not own. And notice this is not a rule other chains enforce and we relaxed. On Ethereum the question never arises: your account holds a balance and a nonce, and it has no storage a contract can write into. Solana accounts do hold data, but each one is owned by a program, and only that program may write to it. Neither has a notion of a program writing into your account, because neither has data sitting on your account. MOI had to create the capability, because participant-owned data that no program can update is just read-only data. And the moment you open it, you owe an answer to a question nobody else has to ask: who is allowed to write to my account, and for what? Access policies are that answer.",
+    "One tempting answer is to write the rule in a program and route the agent through it. That does not hold, because the agent holds its own key. A rule in a program is a rule it has to choose to call. Any limit it looks up is a limit it can decline to look up. You are not constraining it. You are asking it nicely.",
+    "So the rule goes on your account instead. One grant, answering three questions. Which program may write, named by its logic id. What it may do, which today is mutate your storage. And who has to be behind the call, the origin. Pin that to one agent and the grant belongs to that agent alone. The protocol reads this before any foreign write lands, and the program asking never touches it.",
+    "Here is the program we will use. Ticker. Thirty lines, one counter. Note state actor: each participant's counter lives on their own account. So TickAny is exactly the foreign write we just described, a program changing a number on somebody else's account. And notice what is absent. No if-sender-equals-owner. No owner field. No guard. Not one of these thirty lines is about permission. Hold that thought.",
+    "And here is everything the agent sends at it. Its own key signs, and nobody can prevent that part. Note the participants line: it names the owner's account under a mutate lock. That is a declaration of what the call will touch, not a request for permission \u2014 and we know that for certain, because this exact interaction was accepted, mined, and charged eighty-six fuel with no policy anywhere. The hash on screen is real; you can open it on Voyage. Whether the write inside it lands is decided somewhere the agent cannot reach, which is the next two slides.",
+    "And here is the grant. One interaction, signed by the owner, not the agent. Storage of Ticker. Allow mutate. Origin must be the agent. This is your authority, and it lives as state on your account, the same place everything else about you lives. The agent is not asked, it cannot decline, and it finds out when it tries.",
+    "Before we run it, look at where the check actually sits, because this is the question people ask afterwards. The agent signs. The network mines the interaction and charges fuel. Signature, nonce and fuel affordability are checked up front, but permission is not. Ticker runs. It is only when the program reaches the instruction that stores into the owner's account that the runtime stops, reads the policy sitting on that account, and decides. No policy, the write fails and the whole interaction reverts. Policy, it lands. The word that matters is runtime. Not the SDK, not Ticker, not a library the agent chose to import. There is no version of the agent that skips this step, because the step is not part of the agent's program.",
+    "Demo. Same call, three times, from the same key. Watch the counter.",
+    "Look at the refusal. builtin dot AccessError: actor is not allowed to write into other actor's storage. That interaction was accepted, signed, mined and charged. The agent paid eighty-six fuel to be told no. Refusal here is not an error message, it is a permanent public record.",
+    "And taking it back is one interaction too. No redeploy, no key rotation, no asking the agent to behave. The next write simply fails. If you run agents in production, this is the answer to the question you actually have: how fast can I stop it.",
+    "To be fair to everyone else: all three chains stop arbitrary writes. Ethereum's allowances genuinely bind because the contract owns the balances. Solana's runtime genuinely enforces, per program. The ladder is where the rule lives and how fine it gets. Contract code, per program, per account. MOI is the bottom rung, and you set it.",
+    "The honest part. Storage is live today. Asset, logic and key are declared in the type system, reserved, not live. So the sentence everyone wants, this agent may spend at most five hundred, you cannot write yet. What you saw is the mechanism on the one resource where it works, and the mechanism is the part that carries over.",
+    "Everything is in the repo under session-8-policies. One funded devnet wallet runs the whole thing. Run it, break it, tell us what you find. And the one sentence to leave with: agents automate your actions. MOI gives you, the participant, a computational existence, so your preferences and your authority stay yours. Questions.",
+  ];
+
+  var pw = null, t0 = null;
+  function openPresenter() {
+    pw = window.open('', 'moi-presenter', 'width=980,height=760');
+    if (!pw) return;
+    t0 = t0 || Date.now();
+    var d = pw.document;
+    d.open();
+    d.write('<title>Presenter — MOI Builders 8</title>' +
+      '<style>body{margin:0;background:#0A0026;color:rgba(255,255,255,.85);font-family:Poppins,system-ui,sans-serif;padding:34px 44px;line-height:1.65}' +
+      '#hd{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid rgba(188,166,255,.25);padding-bottom:14px}' +
+      '#num{font-weight:600;letter-spacing:.08em;color:#BCA6FF;font-size:14px;text-transform:uppercase}' +
+      '#clk{font-size:14px;color:rgba(255,255,255,.55)}' +
+      '#ttl{font-size:30px;font-weight:600;margin:18px 0 6px}' +
+      '#nts{font-size:21px;max-width:850px;white-space:pre-wrap}' +
+      '#nxt{margin-top:26px;font-size:14px;color:rgba(255,255,255,.55)}#nxt b{color:#BCA6FF}' +
+      '#hint{position:fixed;bottom:12px;left:44px;font-size:12px;color:rgba(255,255,255,.35)}</style>' +
+      '<div id="hd"><span id="num"></span><span id="clk">00:00</span></div>' +
+      '<div id="ttl"></div><div id="nts"></div><div id="nxt"></div>' +
+      '<div id="hint">Arrow keys work here too and drive the deck.</div>');
+    d.close();
+    d.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') go(i + 1);
+      if (e.key === 'ArrowLeft' || e.key === 'PageUp') go(i - 1);
+    });
+    pw.setInterval(function () {
+      var s = Math.floor((Date.now() - t0) / 1000);
+      var el = pw.document.getElementById('clk');
+      if (el) el.textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    }, 1000);
+    updatePresenter();
+  }
+
+  function updatePresenter() {
+    if (!pw || pw.closed) return;
+    var d = pw.document;
+    d.getElementById('num').textContent = 'Slide ' + (i + 1) + ' / ' + slides.length;
+    d.getElementById('ttl').textContent = TITLES[i] || '';
+    d.getElementById('nts').textContent = NOTES[i] || '';
+    d.getElementById('nxt').innerHTML = i + 1 < slides.length ? 'Next: <b>' + TITLES[i + 1] + '</b>' : 'Last slide.';
+  }
+
+  slides.forEach(function (_, n) {
+    var b = document.createElement('button');
+    b.className = 'dot'; b.setAttribute('aria-label', 'Slide ' + (n + 1));
+    b.addEventListener('click', function () { go(n); });
+    dots.appendChild(b);
+  });
+
+  function go(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function (s, k) { s.classList.toggle('active', k === i); });
+    Array.prototype.forEach.call(dots.children, function (d, k) { d.classList.toggle('on', k === i); });
+    location.hash = i + 1;
+    updatePresenter();
+  }
+
+  function fit() {
+    var s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    stage.style.transform = 'translate(' +
+      (window.innerWidth - 1920 * s) / 2 + 'px,' +
+      (window.innerHeight - 1080 * s) / 2 + 'px) scale(' + s + ')';
+  }
+
+  window.addEventListener('resize', fit);
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') go(i + 1);
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') go(i - 1);
+    if (e.key === 'Home') go(0);
+    if (e.key === 'End') go(slides.length - 1);
+    if (e.key === 'p' || e.key === 'P') openPresenter();
+  });
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('.deck-controls')) return;
+    go(i + (e.clientX > window.innerWidth / 2 ? 1 : -1));
+  });
+
+  fit();
+  go((parseInt(location.hash.slice(1), 10) || 1) - 1);
+})();
+</script>
+</body>
+</html>

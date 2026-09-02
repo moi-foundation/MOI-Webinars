@@ -66,9 +66,11 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  // The agent signs its own calls, so unlike session 7's receive-only seller it genuinely needs
+  // fuel. Two faucet top-ups, not one.
   const agentLives = await existsOnChain(agent);
   record("agent account exists", agentLives,
-    agentLives ? "found" : "not yet — it is created by its first funded interaction");
+    agentLives ? "found" : `not on this chain — fund it too at ${FAUCET_URL}`);
 
   // ── 3. the logic whose storage we govern ─────────────────────────────────────────────────
   record("LOGIC_ID set", !!config.logicIdOrNull,

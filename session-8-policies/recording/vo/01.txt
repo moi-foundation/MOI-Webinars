@@ -1,0 +1,1 @@
+Welcome, everyone â MOI Builders, session eight. Today is one small thing with big consequences: access policies. Fine-grained control over your own account. Everything you will see runs live on devnet, and at the end you can run all of it yourself with one funded wallet.

@@ -1,0 +1,1 @@
+Quick setup. Last session we gave agents wallets â they bought and sold from each other, live. Which means the agent holds its own key. It signs its own calls. It pays its own fuel. And a key does not ask permission: it can sign anything it likes.

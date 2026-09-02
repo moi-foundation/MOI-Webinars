@@ -19,8 +19,8 @@ export const cyan = (s: string) => paint("36", s);
 
 /** Each actor gets a stable colour so the audience can track who is speaking. */
 export const ACTORS = {
-  BUYER: { color: cyan, role: "risk agent" },
-  SELLER: { color: magenta, role: "signal desk" },
+  OWNER: { color: magenta, role: "owns the storage" },
+  AGENT: { color: cyan, role: "wants to write" },
   CHAIN: { color: blue, role: "MOI devnet" },
   SETUP: { color: blue, role: "setup" },
   DEMO: { color: green, role: "orchestrator" },
