@@ -1,3 +1,3 @@
-export * from "./config.js";
-export * from "./chain.js";
-export * from "./log.js";
+export * from "./config.ts";
+export * from "./chain.ts";
+export * from "./log.ts";

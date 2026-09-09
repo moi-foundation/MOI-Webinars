@@ -1,6 +1,7 @@
 ---
 title: "Access Policies on MOI — Fine-Grained Control Over Your Own Account"
 description: "An access policy is a permission record on your own account: which programs may change your data, and who has to be behind the request. The protocol enforces it, so an AI agent holding its own key still cannot route around it."
+date: "2026-09-04"
 author: "Adithya Ganesh"
 authorRole: "Ecosystem, Sarva Labs"
 slug: "moi-access-policies-fine-grained-control"
@@ -18,6 +19,8 @@ On [MOI](https://moi.technology), the protocol checks that record before any wri
 Today those policies cover **storage**. The same mechanism is built to extend to everything else an account holds. This post is about learning it while it is small enough to see all of at once.
 
 We look at it through an AI agent, because that is where it bites hardest. An agent holds its own key, so it can sign anything it likes. A rule it has to *look up* is a rule it can decide not to look up.
+
+There is a larger story this belongs to, and it is the one every MOI Builders session comes back to. Agents are taking the human out of the loop: you stop clicking, the agent clicks for you. MOI is built so that your preferences and your authority do not disappear along with you. Your data lives on your own account, which gives you a computational existence of your own, and access policies are what make that existence writable on your terms.
 
 We built this live at MOI Builders Session 8. Every interaction in this post is real and sitting on [MOI's Voyage devnet](https://voyage.moi.technology), and the code is open in the [MOI-Webinars repo](https://github.com/moi-foundation/MOI-Webinars).
 
@@ -155,7 +158,7 @@ builtin.AccessError: actor is not allowed to write into other actor's storage
 
 "Actor" is MOI's word for a participant, which is to say an account. The first actor in that sentence is the agent, running the call. The other actor is the owner, whose counter it tried to change. Read plainly, the chain is saying: this account may not write to that account's data.
 
-That message came off the chain, not out of our script. The interaction was accepted, signed, mined, and charged 86 fuel — and it simply didn't do anything. The counter didn't move.
+That message came off the chain, not out of our script. The interaction was accepted, signed, mined, and charged 86 fuel, and it simply didn't do anything. The counter didn't move.
 
 ```
 0x9fc1eff18074530385f3ea11d9b1dee5df29805255fde318ffc8322dc9d4cbe1
@@ -250,11 +253,11 @@ There is no version of the agent that skips step 5, because step 5 is not part o
 
 This gap is not ours alone. The industry is running into the same one at scale, described in less specific language.
 
-Gartner expects more than forty percent of agentic AI projects to be canceled by the end of 2027, and names inadequate risk controls alongside cost and unclear value among the causes ([Gartner, June 2025](https://www.gartner.com/en/newsroom/press-releases/2025-06-25-gartner-predicts-over-40-percent-of-agentic-ai-projects-will-be-canceled-by-end-of-2027)). It also expects a large share of enterprises to demote or decommission autonomous agents over governance gaps — the kind usually discovered after something has already gone wrong in production.
+Gartner expects more than forty percent of agentic AI projects to be canceled by the end of 2027, and names inadequate risk controls alongside cost and unclear value among the causes ([Gartner, June 2025](https://www.gartner.com/en/newsroom/press-releases/2025-06-25-gartner-predicts-over-40-percent-of-agentic-ai-projects-will-be-canceled-by-end-of-2027)). It also expects a large share of enterprises to demote or decommission autonomous agents over governance gaps, the kind usually discovered after something has already gone wrong in production.
 
 [Forbes, covering that research](https://www.forbes.com/sites/robertszczerba/2026/07/07/why-40-of-agentic-ai-projects-may-be-canceled-by-2027/), put it as agents crossing from suggestion into action faster than organizations are building the controls to govern that action.
 
-Our version is smaller and more concrete. The control usually exists. It's in the wrong place — inside the thing it's supposed to be controlling. Moving it out is not a new feature so much as a correction, and on MOI the place to move it to is the account itself.
+Our version is smaller and more concrete. The control usually exists. It sits in the wrong place, inside the thing it is supposed to be controlling. Moving it out is not a new feature so much as a correction, and on MOI the place to move it to is the account itself.
 
 ## The honest part: most of this isn't finished
 
@@ -288,7 +291,7 @@ None of that works yet, and the storage demo is not secretly that. But it is the
 
 ## Under the hood
 
-The whole session is a thirty-line logic and four scripts. There's no server, no API key, and no model anywhere.
+The whole session is a thirty-line logic and a handful of small scripts, one per action: the attempt, the grant, the revoke, and a query that reads the policy back. There's no server, no API key, and no model anywhere. On a recent Node, every one of them runs with plain `node scripts/<name>.ts`.
 
 - **[MOI](https://moi.technology)** — the chain. Participant-owned state, access policies, and settlement. Devnet explorer and faucet: [voyage.moi.technology](https://voyage.moi.technology)
 - **[Coco](https://docs.moi.technology)** — MOI's language. `coco compile` builds the manifest; the `state actor:` block is what puts the counter on your account instead of the logic's
@@ -296,9 +299,9 @@ The whole session is a thirty-line logic and four scripts. There's no server, no
 - **[Node.js](https://nodejs.org)**, **[TypeScript](https://www.typescriptlang.org)** and **[tsx](https://www.npmjs.com/package/tsx)** in npm workspaces
 - **[dotenv](https://www.npmjs.com/package/dotenv)** — one funded devnet wallet; the owner creates and fuels the agent from it
 
-Some numbers from the live run on devnet node 0.12.0, in case you're sizing something similar. Publishing a policy cost 100 fuel and deleting one cost the same. Deploying Ticker cost 719, creating the agent account cost 399, the permitted write cost 134, and the refused write cost 86 — refusal is cheaper than success, but it is not free.
+Some numbers from the live run on devnet node 0.12.0, in case you're sizing something similar. Publishing a policy cost 100 fuel and deleting one cost the same. Deploying Ticker cost 719, creating the agent account cost 399, the permitted write cost 134, and the refused write cost 86. Refusal is cheaper than success, but it is not free.
 
-Fuel is not the interesting constraint, though. Account balance is a separate question, and a nastier one: a policy write needs considerably more headroom than an ordinary interaction, and on a thin account it fails with `insufficient funds`. That error reads like a fuel problem and isn't one — we lost an afternoon to it, tuning fuel limits that were never the issue. Fund the owner generously.
+Fuel is not the interesting constraint, though. Account balance is a separate question, and a nastier one: a policy write needs considerably more headroom than an ordinary interaction, and on a thin account it fails with `insufficient funds`. That error reads like a fuel problem and isn't one. We lost an afternoon to it, tuning fuel limits that were never the issue. Fund the owner generously.
 
 One rule runs under all of it: **code gets execution, the protocol gets permission.** Anything a program can decide, a program can be persuaded to decide differently.
 
@@ -311,13 +314,13 @@ A permission record published on your own account that names which logic may wri
 Because an AI agent holds its own signing key, so calling your contract is optional for it. The contract's rules only bind the transactions that go through the contract. A policy on your account binds every write to your storage, including ones from programs you've never heard of.
 
 **How is this different from a token allowance?**
-An allowance is a standing right to pull funds, granted inside an asset contract and enforced by that contract. An access policy sits on your account and is enforced by the protocol. The practical difference is what happens when the program is bypassed — an allowance can't help you, a policy still applies.
+An allowance is a standing right to pull funds, granted inside an asset contract and enforced by that contract. An access policy sits on your account and is enforced by the protocol. The practical difference is what happens when the program is bypassed: an allowance can't help you, and a policy still applies.
 
 **Can I cap how much an agent spends?**
 Not yet. Only storage resources are enforced today. `ASSET` and `LOGIC` are declared in the type system and reserved, so spend caps are the visible next step rather than something you can ship.
 
 **What does the refusal look like?**
-The interaction is mined and charged for, and its receipt comes back with a non-zero status and a `builtin.AccessError`. There's no thrown exception and no rejected submission — you get a permanent, public record that the write was attempted and declined.
+The interaction is mined and charged for, and its receipt comes back with a non-zero status and a `builtin.AccessError`. There's no thrown exception and no rejected submission. You get a permanent, public record that the write was attempted and declined.
 
 **Is the agent a sub-account of the owner?**
 No. It's a separate account with its own key and its own identity. That matters, because a sub-account shares its parent's key, and a key the agent already holds cannot be the thing that limits the agent.
@@ -326,7 +329,7 @@ No. It's a separate account with its own key and its own identity. That matters,
 No, and that's the entire point. It isn't asked before a policy is created, can't refuse one, and can't remove one. It finds out by being refused.
 
 **Can I run this myself?**
-Yes. Clone the [repo](https://github.com/moi-foundation/MOI-Webinars), fund one devnet wallet at the [Voyage faucet](https://voyage.moi.technology), and `npm run demo` runs all three beats. Fund it generously — a thin account fails at the policy step for reasons that look like something else.
+Yes. Clone the [repo](https://github.com/moi-foundation/MOI-Webinars), fund one devnet wallet at the [Voyage faucet](https://voyage.moi.technology), and `npm run demo` runs all three beats. Fund it generously, because a thin account fails at the policy step for reasons that look like something else.
 
 ---
 

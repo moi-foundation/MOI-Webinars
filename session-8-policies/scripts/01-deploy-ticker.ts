@@ -10,7 +10,7 @@ import fs from "node:fs";
 import { resolve } from "node:path";
 import { LogicFactory, RoutineOption } from "js-moi-sdk";
 import { ROOT, config, ownerAccount, banner, detail, ok, say, summary } from "@demo/shared";
-import { updateEnv } from "./env-file.js";
+import { updateEnv } from "./env-file.ts";
 
 const MANIFEST = resolve(ROOT, "ticker-logic", "ticker.json");
 

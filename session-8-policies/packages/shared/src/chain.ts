@@ -9,7 +9,7 @@ import {
   VoyageProvider, Wallet, createParticipantId, ParticipantTagV0, hexToBytes,
   KMOI_ASSET_ID,
 } from "js-moi-sdk";
-import { config } from "./config.js";
+import { config } from "./config.ts";
 
 export const makeProvider = (): VoyageProvider => new VoyageProvider("devnet");
 
