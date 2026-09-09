@@ -89,7 +89,7 @@ facilitator provider, self-hosted facilitator, or self-facilitation capability."
 
 ## 7. MOI has NO CAIP-2 namespace — this is the real blocker
 
-- 55 namespaces registered in `ChainAgnostic/namespaces`. **No `moi`.**
+- 49 namespace directories in `ChainAgnostic/namespaces` (re-counted 9 Sep 2026). **No `moi`.**
 - No PR mentioning moi / sarva / voyage in the last 100, open or closed.
 
 *Checked: GitHub contents + pulls API.*
@@ -116,13 +116,15 @@ finding is closed and the CAIP-2 reference should point at that RPC.
 Every RPC method MOI exposes, across all three namespaces:
 
 ```
-moi.*     AccountKeys, AccountMetaInfo, AccountState, AssetInfoByAssetID, Balance,
-          Call, ContextInfo, Deeds, FuelEstimate, GetFilterChanges, GetLogs,
-          InteractionByHash, InteractionByTesseract, InteractionCount,
-          InteractionReceipt, LogicIDs, LogicManifest, LogicStorage, NewLogFilter,
-          NewTesseractFilter, NewTesseractsByAccountFilter, PendingInteractionCount,
-          RemoveFilter, SendInteractions, SubAccountCount, Subscribe, Syncing, TDU,
-          Tesseract
+moi.*     AccessPolicies, AccessPolicy, AccountKeys, AccountMetaInfo, AccountState,
+          AssetInfoByAssetID, Balance, Call, ContextInfo, Deeds, FuelEstimate,
+          GetFilterChanges, GetLogs, InteractionByHash, InteractionByTesseract,
+          InteractionCount, InteractionReceipt, LogicIDs, LogicManifest,
+          LogicStorage, NewLogFilter, NewTesseractFilter,
+          NewTesseractsByAccountFilter, PendingInteractionCount, PendingIxnsFilter,
+          RemoveFilter, SendInteractions, StorageMetric, StoragePricing,
+          SubAccountCount, Subscribe, Syncing, TDU, Tesseract
+          (42 total with ixpool.* and net.*, per js-moi-sdk 0.9.0-rc2)
 ixpool.*  Content, ContentFrom, Inspect, Status, WaitTime
 net.*     Info, Peers, Version
 ```

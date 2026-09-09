@@ -37,9 +37,11 @@ reference conventions — `eip155`'s chain id or `solana`'s genesis hash — is 
 profile therefore uses a short, well-known network name as the reference, in the manner of the
 `stellar` namespace.
 
-Identifiers are likewise not EVM-shaped. A participant identifier is 32 bytes, encoding a tag, a
-fingerprint of the account's public key, and variant flags. Because it is derived from the key
-rather than allocated by a network, the same identifier can exist on every MOI network — which
+Identifiers are likewise not EVM-shaped. A participant identifier is 32 bytes: a tag byte naming
+the identifier kind and version, a flags byte, a 24-byte fingerprint taken directly from the
+account's compressed public key, and a variant field carrying the sub-account index. Because it
+is derived from the key rather than allocated by a network, the same identifier can exist on
+every MOI network — which
 makes explicit network identification more important, not less, and is what this namespace
 provides. Assets are also protocol-native: a MAS0 asset is created by a protocol operation rather
 than deployed as contract bytecode, and is addressed by its own 32-byte identifier.
@@ -47,10 +49,9 @@ than deployed as contract bytecode, and is addressed by its own 32-byte identifi
 ## Governance
 
 The MOI protocol is designed and developed by [Sarva Labs](https://github.com/sarvalabs). The
-node software and the reference client libraries, including
+reference client libraries, including
 [js-moi-sdk](https://github.com/sarvalabs/js-moi-sdk), are maintained in public repositories
-under that organization, and protocol changes are proposed and reviewed there as issues and pull
-requests. The public Voyage networks, their RPC endpoints and the
+under that organization, where changes are proposed and reviewed as issues and pull requests. The public Voyage networks, their RPC endpoints and the
 [Voyage explorer](https://voyage.moi.technology) are operated under the same stewardship, with
 the MOI Foundation supporting the wider ecosystem.
 

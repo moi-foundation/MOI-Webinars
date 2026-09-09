@@ -45,10 +45,14 @@ whitespace, or separators other than `-`.
 
 #### Well-known networks
 
-| Network | Reference | CAIP-2 identifier |
-| --- | --- | --- |
-| Voyage devnet | `devnet` | `moi:devnet` |
-| Voyage mainnet | `mainnet` | `moi:mainnet` |
+| Network | Reference | CAIP-2 identifier | Status |
+| --- | --- | --- | --- |
+| Voyage devnet | `devnet` | `moi:devnet` | live |
+| MOI mainnet | `mainnet` | `moi:mainnet` | reserved; not yet launched |
+
+At the time of writing, the Voyage devnet is the only live public MOI network. The `mainnet`
+reference is reserved here so that tooling can prepare for it, and MUST NOT be treated as
+resolvable until that network launches.
 
 Private deployments SHOULD choose a reference that is unlikely to collide with the names above.
 
@@ -57,8 +61,9 @@ Private deployments SHOULD choose a reference that is unlikely to collide with t
 > **⚠️ OPEN ITEM — this section cannot be completed as written until MOI exposes a network
 > identifier over JSON-RPC.**
 >
-> At the time of drafting, MOI's RPC surface comprises 36 methods across the `moi.*`, `ixpool.*`
-> and `net.*` namespaces, and **none of them report which network a node belongs to**:
+> At the time of drafting, MOI's RPC surface comprises 42 methods across the `moi.*`, `ixpool.*`
+> and `net.*` namespaces (as enumerated from js-moi-sdk 0.9.0-rc2), and **none of them report
+> which network a node belongs to**:
 >
 > - `net.Version` returns the node's software version (e.g. `"0.12.0"`)
 > - `net.Info` returns the node's own peer identifier (`krama_id`)
@@ -117,7 +122,7 @@ Not applicable. No prior CAIP-2 profile exists for MOI.
 # Voyage devnet
 moi:devnet
 
-# Voyage mainnet
+# The reserved mainnet reference
 moi:mainnet
 
 # A private deployment
