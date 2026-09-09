@@ -15,8 +15,8 @@ Share this folder via Google Drive; review happens there; PRs go out only after 
 | 3 | `PR-3-x402-mechanism-typescript/` | `x402-foundation/x402` | Built. Typechecks against @x402/core, 13 unit tests pass |
 | 4 | `PR-4-x402-other-sdks/` | `x402-foundation/x402` | Recommended skip |
 
-Background documents (context for the reviewer, not for submission):
-`../x402.md` (the plan), `../FINDINGS.md` (verified facts), `../UPSTREAM.md` (per-PR requirements).
+Background documents (context for the reviewer, not for submission): BG1 the plan, BG2 the
+verified findings, BG3 the per-PR requirements.
 
 Dependencies flow 1 → 2 → 3: the spec names the namespace, the mechanism implements the spec.
 
@@ -28,7 +28,8 @@ Verified against devnet and both upstream repos on the day this package was asse
   `net.NetworkInfo`, `net.ChainId`, `moi.Network`, `moi.ChainId`, `moi.NetworkInfo` all return
   method-not-found. The protocol PR from the 9 Sep call has not landed. PR 1 stays blocked on it.
 - **`x402-foundation/x402`**: `specs/schemes/exact/` holds 17 specs, none for MOI. PR 2 is still novel.
-- **`ChainAgnostic/namespaces`**: 50 namespaces, no `moi/`. PR 1 is still open ground.
+- **`ChainAgnostic/namespaces`**: 49 namespace directories, no `moi/`. PR 1 is still open ground.
 - **js-moi-sdk**: latest on npm is now `0.9.0-rc2` (this repo's work was built on 0.8.0).
   Check the 0.9 changelog for network-identity additions before finalizing the CAIP-2 reference.
-- **@x402/core**: latest is `2.25.0`; the mechanism typechecks against `2.23.0` — retest before PR 3.
+- **@x402/core**: latest is `2.25.0`. The mechanism package typechecks against it and its
+  13 unit tests pass.
