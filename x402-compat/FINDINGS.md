@@ -19,7 +19,7 @@ upstream repo — not from memory. Each claim names how it was checked.
 | | v1 | v2 |
 | --- | --- | --- |
 | npm | `x402@1.2.0` | `@x402/core@2.23.0` |
-| Networks | closed enum, 16 EVM/SVM chains | **CAIP-2 identifiers** |
+| Networks | closed enum, 17 EVM/SVM networks | **CAIP-2 identifiers** |
 | Schemes | closed enum, `["exact"]` only | pluggable per-chain mechanisms |
 | Status | deprecated | current |
 
@@ -32,10 +32,11 @@ upstream repo — not from memory. Each claim names how it was checked.
 `typescript/packages/mechanisms/` currently contains:
 
 ```
-aptos, avm, concordium, evm, hedera, keeta, near, stellar, svm, tvm, xrpl
+aptos, avm, cardano, concordium, evm, hedera, keeta, near, stellar, svm, tvm, xrpl
+(12 as of 9 Sep 2026; cardano landed after the first survey)
 ```
 
-Stellar, Aptos, NEAR, XRPL and TVM are all non-EVM. `@x402/stellar` depends on exactly
+Stellar, Aptos, NEAR, XRPL, TVM and Cardano are all non-EVM. `@x402/stellar` depends on exactly
 two things: `@stellar/stellar-sdk` and `@x402/core`.
 
 **MOI is not structurally excluded from anything.**
@@ -81,7 +82,8 @@ here is the standard's own documentation, not an outside opinion.
 
 The spec's own words: the facilitator *"does not hold funds or act as a custodian"* and is
 *"an optional but recommended service."* Production support requires *"a production
-facilitator provider, self-hosted facilitator, or self-facilitation capability."*
+facilitator provider, a self-hosted facilitator, or self-facilitation"*
+(docs.x402.org/core-concepts/network-and-token-support, quoted verbatim).
 
 **A MOI seller that verifies its own payments by reading the chain is self-facilitation.**
 

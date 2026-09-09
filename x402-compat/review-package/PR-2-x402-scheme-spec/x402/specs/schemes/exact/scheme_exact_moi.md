@@ -16,9 +16,10 @@ Two consequences follow, and both simplify operation:
 
 - `settle()` **confirms rather than executes.** The money moved before the server ever saw the
   request. Settlement verifies the transfer on chain and marks it spent.
-- **Fees are not sponsored** (`areFeesSponsored: false`). The buyer paid its own fuel when it
-  submitted the transfer. A facilitator for this scheme holds no keys and signs nothing, which
-  makes in-process self-facilitation the natural deployment.
+- **Fees are not sponsored.** The buyer paid its own fuel when it submitted the transfer. The
+  facilitator advertises `{ "flow": "upfront", "feesSponsored": false }` through `getExtra()`,
+  holds no keys and signs nothing, which makes in-process self-facilitation the natural
+  deployment.
 
 ## Network
 

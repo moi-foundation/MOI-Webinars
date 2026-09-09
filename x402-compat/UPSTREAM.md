@@ -49,8 +49,8 @@ prose and examples, no code.
 match is `scheme_exact_stellar.md`; there are also templates at `specs/scheme_template.md` and
 `specs/scheme_impl_template.md`.
 
-That directory contains specs for algo, canton, cardano, casper, starknet, sui
-and ton — chains with **no mechanism package yet**. Specs land first and can sit alone. PR 1 is
+That directory contains specs for algo, canton, casper, starknet, sui and ton — six chains with
+**no mechanism package yet** (cardano's spec sat alone until its mechanism landed in 2026). Specs land first and can sit alone. PR 1 is
 independent and the cheapest to start.
 
 **Depends on:** the CAIP-2 namespace, since the spec names the network.
@@ -126,12 +126,12 @@ The contributing guide describes it as a follow-up. The repository shows the pra
 
 | SDK | Mechanisms present |
 | --- | --- |
-| TypeScript | aptos, avm, concordium, evm, hedera, keeta, near, stellar, svm, tvm, xrpl |
+| TypeScript | aptos, avm, cardano, concordium, evm, hedera, keeta, near, stellar, svm, tvm, xrpl |
 | Go | `go/mechanisms/` — **evm, svm only** |
 | Python | `python/x402/mechanisms/` — **evm, svm, tvm only** |
 
-Nine of the eleven TypeScript mechanisms have no Go or Python counterpart. Stellar, Aptos, NEAR and
-XRPL are all TypeScript-only.
+Nine of the twelve TypeScript mechanisms have no Go or Python counterpart. Stellar, Aptos, NEAR,
+XRPL and Cardano are all TypeScript-only.
 
 So a MOI mechanism in TypeScript alone puts it in the same position as most of the ecosystem.
 
