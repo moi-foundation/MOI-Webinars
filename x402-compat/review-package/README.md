@@ -29,6 +29,6 @@ Verified against devnet and both upstream repos on the day this package was asse
   method-not-found. The protocol PR from the 9 Sep call has not landed. PR 1 stays blocked on it.
 - **`x402-foundation/x402`**: `specs/schemes/exact/` holds 17 specs, none for MOI. PR 2 is still novel.
 - **`ChainAgnostic/namespaces`**: 50 namespaces, no `moi/`. PR 1 is still open ground.
-- **js-moi-sdk**: latest on npm is now `0.9.0-rc1` (this repo's work was built on 0.8.0).
+- **js-moi-sdk**: latest on npm is now `0.9.0-rc2` (this repo's work was built on 0.8.0).
   Check the 0.9 changelog for network-identity additions before finalizing the CAIP-2 reference.
 - **@x402/core**: latest is `2.25.0`; the mechanism typechecks against `2.23.0` — retest before PR 3.

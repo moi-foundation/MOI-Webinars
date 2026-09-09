@@ -12,12 +12,13 @@ valid/invalid test-case split all match what has been merged recently.
 ## Blocked — three things only the MOI team can answer
 
 **1. Resolution Mechanics.** The draft is written against a *proposed* `net.Network` RPC method
-that does not exist. Every one of MOI's 36 RPC methods was checked; none reports which network a
+that does not exist. Every RPC method was checked (42 as of js-moi-sdk 0.9.0-rc2); none reports which network a
 node is on. Either add such a method, or agree different wording with CASA. **This is the one real
 blocker.**
 
 **2. The reference format.** The draft proposes short names — `moi:devnet`, `moi:mainnet` —
-because MOI has no chain id and, being account-centric, no genesis hash. If the protocol team
+because MOI exposes no chain id over the wire (an unused SDK `Chain` enum exists: 111/112/113)
+and, being account-centric, has no genesis hash. If the protocol team
 prefers something else, the Syntax, Rationale and Test Cases sections all change together.
 
 **3. Author and discussions-to.** Both are `TODO`. CASA requires a real GitHub handle and a

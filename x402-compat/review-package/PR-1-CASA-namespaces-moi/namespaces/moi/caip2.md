@@ -101,7 +101,9 @@ MUST NOT submit interactions to a node it cannot identify.
 
 Three candidate references were considered.
 
-**A numeric chain id**, as `eip155` uses, was rejected because MOI assigns no such value.
+**A numeric chain id**, as `eip155` uses, was rejected because no MOI RPC method or interaction
+field exposes one. The client SDK defines a `Chain` enum (111/112/113) that nothing reads or
+emits; if the planned network-identity RPC surfaces these values, this choice must be revisited.
 
 **A genesis hash**, as `solana` uses, was rejected because MOI is account-centric: tesseracts are
 per-account, so no single genesis artefact exists to hash.

@@ -135,7 +135,9 @@ Tested live against Voyage devnet:
 - `net.Info` → `{"krama_id":"1116Uiu2HAm…"}` — **this node's own peer id**
 - `net.Peers` → a list of peer ids
 
-**Nothing identifies the network.**
+**Nothing identifies the network** over the wire. One adjacent fact: `js-moi-utils` exports an
+unused `enum Chain { TEST_NET = 111, DEV_NET = 112, MAIN_NET = 113 }` — no code path reads it and
+no RPC emits it, but these are plausibly the ids the planned network RPC will surface.
 
 Worse for the usual workaround: `getTesseract` is keyed by **account address**. MOI is
 account-centric, so there is no single global genesis block whose hash could serve as a
