@@ -127,60 +127,89 @@ window and a nonce, and the transfer hash is marked spent on settlement.
 ## Facilitator Settlement Rules (MUST)
 
 Because the flow is `upfront`, these rules run inside `/settle`. A facilitator MUST reject the
-settlement if any rule fails, using the error reason shown.
+settlement if any rule fails. `SettleResponse.errorReason` is a free-form string; this spec does
+not define a vocabulary, and implementations SHOULD namespace their reasons as the Stellar scheme
+does.
 
 ### 1. Shape
 
-`claim`, `signature` and `publicKey` MUST be present. → `invalid_payload`
+`claim`, `signature` and `publicKey` MUST be present.
 
 ### 2. Signature
 
 The ECDSA secp256k1 signature over the canonical claim bytes MUST verify against `publicKey`.
-→ `invalid_signature`
 
 ### 3. Key controls payer
 
 The participant identifier derived from `publicKey` MUST equal `claim.from`. A valid signature
 alone could still merely claim someone else's transfer; this rule defeats a lifted hash.
-→ `invalid_payload`
 
 ### 4. Claim matches quote
 
 `claim.asset` MUST equal `requirements.asset`; `claim.to` MUST equal `requirements.payTo`;
-`claim.value` MUST be at least `requirements.amount`. → `requirements_mismatch`
+`claim.value` MUST be at least `requirements.amount`.
 
 ### 5. Freshness
 
-The current time MUST lie within `[validAfter, validBefore]`. → `payment_expired`
+The current time MUST lie within `[validAfter, validBefore]`.
 
 ### 6. The transfer settled on chain
 
 The facilitator MUST read the transfer back from the chain and MUST NOT trust the payload. The
-receipt alone does not carry the beneficiary or amount, so the read-back takes both objects:
+receipt carries neither the beneficiary nor the amount, so the read-back takes both objects:
+`moi.InteractionByHash(claim.txHash)` for the submitted operation and
+`moi.InteractionReceipt(claim.txHash)` for its result.
 
-1. `moi.InteractionByHash(claim.txHash)` — the submitted interaction.
-2. `moi.InteractionReceipt(claim.txHash)` — its execution result.
+A settled MAS0 transfer on Voyage devnet returns:
 
-The facilitator MUST then check, in order:
+```json
+// moi.InteractionByHash
+{
+  "sender": {
+    "id": "0x00000000bfa45bc0…",
+    "sequence_id": "0x4f",
+    "key_id": "0x0"
+  },
+  "ix_operations": [
+    {
+      "type": 5,                                   // ASSET_INVOKE
+      "payload": {
+        "asset_id": "0x108000004cd973c4…",
+        "callsite": "Transfer",
+        "calldata": "0x0d6f0665…"                  // POLO document
+      }
+    }
+  ]
+}
 
-- `receipt.status` is `0` (success). A refused MAS0 transfer still yields an interaction hash
-  and a mined receipt, so possession of a hash proves nothing by itself. → `transfer_not_found`
-  when the interaction does not exist; `transfer_mismatch` otherwise.
+// moi.InteractionReceipt
+{
+  "status": 0,                                     // interaction-level: 0 is success
+  "fuel_used": "0x12b",
+  "from": "0x00000000bfa45bc0…",
+  "ix_operations": [
+    { "tx_type": "0x5", "status": 0, "data": { "outputs": "0x0d0f", "error": "0x" } }
+  ]
+}
+```
+
+The facilitator MUST reject the settlement unless all of the following hold:
+
+- The interaction and its receipt both resolve for `claim.txHash`.
+- `receipt.status` is `0`. A refused MAS0 transfer still yields an interaction hash and a mined
+  receipt, so possession of a hash proves nothing by itself.
 - `interaction.sender.id` equals `claim.from`.
-- The interaction contains an operation of type `ASSET_INVOKE` whose payload's `asset_id`
+- The interaction contains an operation of `type` `5` (`ASSET_INVOKE`) whose payload's `asset_id`
   equals `requirements.asset` and whose `callsite` is `"Transfer"`. MAS0 has no dedicated
-  transfer opcode; a transfer is an asset-logic call routed by callsite name.
-- The operation's `calldata`, POLO-decoded as `{ beneficiary: bytes, amount: integer }` (the
-  MAS0 Transfer schema), yields a beneficiary equal to `claim.to` and an amount of at least
-  `claim.value`.
-
-Any failed check → `transfer_mismatch`.
+  transfer opcode; a transfer is an asset call routed by callsite name.
+- That operation's `calldata`, POLO-decoded, yields a document with a `beneficiary` equal to
+  `claim.to` and an `amount` of at least `claim.value`.
 
 ### 7. Replay
 
 `claim.txHash` MUST NOT have been redeemed before. On success the facilitator MUST record it in
 a spent-store before returning. The spent-store is the replay boundary and MUST be durable
-across process restarts in production. → `already_spent`
+across process restarts in production.
 
 ## `PAYMENT-RESPONSE` Header Payload
 
@@ -194,8 +223,8 @@ across process restarts in production. → `already_spent`
 }
 ```
 
-On failure, `success` is `false` with `errorReason` from the rule list above and the same
-`transaction` field when a hash was supplied.
+On failure, `success` is `false`, `errorReason` names the rule that failed, and `transaction`
+carries the submitted hash when one was supplied.
 
 ## Duplicate Settlement Mitigation (RECOMMENDED)
 
@@ -239,8 +268,13 @@ directly from the account's compressed public key, and a variant field carrying 
 index. It derives from the key, not from a network, so the same identifier can exist on every
 MOI network — one reason explicit network identification matters for this scheme.
 
-A receipt contains `ix_hash`, an interaction-level `status`, `fuel_used`, the sender, and
-per-operation results (`{ tx_type, status, data }`). Interaction-level status `0` is success.
+A receipt contains `ix_hash`, an interaction-level `status`, `fuel_used`, `from`, and
+per-operation results (`{ tx_type, status, data { outputs, error } }`). Interaction-level status
+`0` is success; `tx_type` comes back as a hex string rather than a number.
+
+Two names differ between the signing schema and the RPC response for the same field: the envelope
+is signed with `sender.sequence`, and `moi.InteractionByHash` returns it as `sender.sequence_id`.
+Implementations reading settled interactions MUST use the RPC spelling.
 
 MAS0 assets carry no on-chain decimals or symbol; all amounts in this scheme are atomic units,
 and no `"$0.10"`-style pricing is defined for MOI.
