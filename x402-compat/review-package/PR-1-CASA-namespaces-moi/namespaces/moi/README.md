@@ -42,9 +42,8 @@ Identifiers are likewise not EVM-shaped. A participant identifier is 32 bytes: a
 the identifier kind and version, a flags byte, a 24-byte fingerprint taken directly from the
 account's compressed public key, and a variant field carrying the sub-account index. Because it
 is derived from the key rather than allocated by a network, the same identifier can exist on
-every MOI network — which
-makes explicit network identification more important, not less, and is what this namespace
-provides. Assets are also protocol-native: a MAS0 asset is created by a protocol operation rather
+every MOI network, which makes explicit network identification more important rather than less,
+and is what this namespace provides. Assets are also protocol-native: a MAS0 asset is created by a protocol operation rather
 than deployed as contract bytecode, and is addressed by its own 32-byte identifier.
 
 ## Governance
