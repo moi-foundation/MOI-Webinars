@@ -89,7 +89,7 @@ The `payload` member of the standard `PaymentPayload` envelope carries:
 ```json
 {
   "publicKey": "02a1…",           // buyer's compressed public key, hex, no 0x prefix
-  "keyId": 0,                     // index of that key on the buyer's account
+  "keyId": 0,                     // which of the account's keys signed; informational
   "signature": "0x…",             // ECDSA secp256k1 over the canonical claim bytes
   "claim": {
     "from":        "0x00000000…", // the paying account
@@ -100,7 +100,7 @@ The `payload` member of the standard `PaymentPayload` envelope carries:
     "resource":    "https://…",   // what was bought; binds the payment to one request
     "validAfter":  "1757000000",  // unix seconds
     "validBefore": "1757000060",
-    "nonce":       "0x…"          // 32 random bytes, hex
+    "nonce":       "0x…"          // 32 random bytes; see rule 8
   }
 }
 ```
@@ -149,11 +149,23 @@ alone could still merely claim someone else's transfer; this rule defeats a lift
 `claim.asset` MUST equal `requirements.asset`; `claim.to` MUST equal `requirements.payTo`;
 `claim.value` MUST be at least `requirements.amount`.
 
-### 5. Freshness
+### 5. Resource binding
 
-The current time MUST lie within `[validAfter, validBefore]`.
+`claim.resource` MUST equal `paymentPayload.resource.url` — the resource the buyer is paying
+for. Without this check the `resource` field is signed but unenforced, and a claim made for one
+resource would settle a request for another on the same seller.
 
-### 6. The transfer settled on chain
+`PaymentPayload.resource` is optional in the protocol types. If it is absent, the facilitator
+MUST obtain the resource identifier from the resource server out of band and compare against
+that; it MUST NOT skip the comparison.
+
+### 6. Freshness
+
+The current time MUST lie within `[validAfter, validBefore]`, and
+`validBefore - validAfter` MUST NOT exceed `requirements.maxTimeoutSeconds`. A buyer that widens
+its own validity window beyond the quoted timeout MUST be rejected.
+
+### 7. The transfer settled on chain
 
 The facilitator MUST read the transfer back from the chain and MUST NOT trust the payload. The
 receipt carries neither the beneficiary nor the amount, so the read-back takes both objects:
@@ -205,11 +217,15 @@ The facilitator MUST reject the settlement unless all of the following hold:
 - That operation's `calldata`, POLO-decoded, yields a document with a `beneficiary` equal to
   `claim.to` and an `amount` of at least `claim.value`.
 
-### 7. Replay
+### 8. Replay
 
 `claim.txHash` MUST NOT have been redeemed before. On success the facilitator MUST record it in
 a spent-store before returning. The spent-store is the replay boundary and MUST be durable
 across process restarts in production.
+
+The transfer hash, not the `nonce`, is what makes a payment single-use: one settled transfer can
+be redeemed once. The `nonce` exists so that two claims over the same transfer are distinguishable
+as messages, and facilitators MAY ignore it.
 
 ## `PAYMENT-RESPONSE` Header Payload
 
@@ -230,7 +246,7 @@ carries the submitted hash when one was supplied.
 
 ### Vulnerability
 
-If the same payload reaches `/settle` concurrently, both executions can pass rule 6 (the
+If the same payload reaches `/settle` concurrently, both executions can pass rule 7 (the
 transfer is genuinely on chain) before either records the hash, and one payment buys twice.
 This is the same race the SVM and NEAR schemes document; on MOI the window is the gap between
 the chain read and the spent-store write.
@@ -241,6 +257,26 @@ The spent-store write MUST be atomic check-and-set (insert-if-absent) rather tha
 has/add steps, and SHOULD be shared across facilitator replicas. Sellers SHOULD treat the
 `resource` binding as a second key: one `(txHash)` marks the payment spent, and the claim's
 `resource` confines what it could ever have bought.
+
+## Security Considerations
+
+**Overpayment is accepted.** Rules 4 and 7 compare with `>=`, so a buyer that sends more than the
+quoted amount still settles. Underpayment is rejected. Sellers wanting exact-amount semantics
+MUST compare for equality instead.
+
+**Clock skew narrows the window.** `validAfter` and `validBefore` are the buyer's own timestamps.
+Skew between buyer and facilitator shortens the usable window and can reject an otherwise valid
+claim; sellers SHOULD quote `maxTimeoutSeconds` with that margin in mind.
+
+**Identifiers are derived, not allocated.** A participant identifier contains a 24-byte slice of
+the account's compressed public key. Rule 3 relies on that derivation: producing a key that
+derives to a chosen account means grinding keypairs against 24 fixed bytes, which is
+computationally infeasible. It also means the same identifier exists on every MOI network, so a
+facilitator MUST confirm it is reading the network named in `requirements.network` and MUST NOT
+infer the network from an endpoint URL.
+
+**The buyer's fuel is not the seller's concern.** A buyer with insufficient fuel fails before
+settlement and never produces a claim; the seller sees no request.
 
 ## Appendix
 
