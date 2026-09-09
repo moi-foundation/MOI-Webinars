@@ -1,11 +1,17 @@
-# The three PRs — exactly what each needs, and where it stands
+# The x402 PRs — exactly what each needs, and where it stands
 
 x402 asks for a new chain to land in up to three pull requests to
 [`x402-foundation/x402`](https://github.com/x402-foundation/x402). They must go in order: the
 specification is reviewed and merged before any implementation is looked at.
 
-**Overall status: PR 1 not started · PR 2 roughly a third done · PR 3 optional and, judging by the
-rest of the ecosystem, probably not needed.**
+**Numbering note.** This file numbers the x402 PRs 1 to 3 as upstream describes them. The review
+package numbers all four submissions including CASA, so its PR 1 is the namespace, its PR 2 is
+the spec described here as PR 1, and its PR 3 is the mechanism described here as PR 2.
+
+**Overall status (9 September 2026): the spec is written and verified against a settled devnet
+transfer; the mechanism package is built, typechecks against `@x402/core` and passes 13 unit
+tests; the other-language SDKs remain a recommended skip. Everything waits on the CASA namespace
+and on Rahul's review.**
 
 ---
 
@@ -40,7 +46,7 @@ One file.
 
 | File | Status |
 | --- | --- |
-| `specs/schemes/exact/scheme_exact_moi.md` | ❌ not written |
+| `specs/schemes/exact/scheme_exact_moi.md` | ✅ written; see the review package |
 
 **What goes in it:** the payload structure, the verification logic and the settlement logic —
 prose and examples, no code.
