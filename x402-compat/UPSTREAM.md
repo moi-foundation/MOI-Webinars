@@ -49,9 +49,9 @@ prose and examples, no code.
 match is `scheme_exact_stellar.md`; there are also templates at `specs/scheme_template.md` and
 `specs/scheme_impl_template.md`.
 
-**Worth knowing:** that directory contains specs for algo, canton, cardano, casper, starknet, sui
-and ton — chains with **no mechanism package yet**. Specs land first and can sit alone. So PR 1 is
-genuinely independent, and it is the cheapest thing to start.
+That directory contains specs for algo, canton, cardano, casper, starknet, sui
+and ton — chains with **no mechanism package yet**. Specs land first and can sit alone. PR 1 is
+independent and the cheapest to start.
 
 **Depends on:** the CAIP-2 namespace, since the spec names the network.
 
@@ -122,7 +122,7 @@ uses.
 
 **In practice this is optional, and most chains skip it.**
 
-The contributing guide describes it as a follow-up, but the repository shows what actually happens:
+The contributing guide describes it as a follow-up. The repository shows the practice:
 
 | SDK | Mechanisms present |
 | --- | --- |
@@ -155,8 +155,8 @@ library first, then the mechanism on top.
 | **AI assistance disclosed** in the PR description | — |
 | Payment and signature logic personally reviewed before submitting | — |
 
-That last one is not boilerplate. Their contributing guide singles out payment and signature code
-as needing human review precisely because it moves real value.
+The last row matters: their contributing guide singles out payment and signature code for human
+review because it moves real value.
 
 ---
 
@@ -171,5 +171,5 @@ registration, the publish workflow, and both other SDKs.
 **Blocked:** anything naming the network (needs CAIP-2) and anything touching a chain (needs a
 funded wallet).
 
-The logic was the interesting third. The remaining two thirds are scaffolding and process, and
-they are the part that takes the time.
+The scheme logic is done. The remaining work is scaffolding and process, and that is where the
+time goes.
