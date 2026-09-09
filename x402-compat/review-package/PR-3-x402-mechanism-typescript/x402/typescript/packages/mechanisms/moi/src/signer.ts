@@ -1,3 +1,4 @@
+import { Wallet } from "js-moi-sdk";
 /**
  * Signer shapes this mechanism needs.
  *
@@ -71,4 +72,30 @@ export interface SettledTransferFacts {
   callsite: string;
   /** True when the interaction-level receipt status is 0. */
   succeeded: boolean;
+}
+
+/**
+ * Build a client signer from a mnemonic.
+ *
+ * The derivation path selects the account: MOI derives a participant identifier from the key
+ * itself, so two paths on one mnemonic are two unrelated accounts as far as the chain is
+ * concerned.
+ *
+ * @param mnemonic - BIP-39 mnemonic.
+ * @param derivationPath - Optional HD path; the SDK default is used when omitted.
+ * @param keyId - Which of the account's keys signs. Defaults to 0.
+ * @returns A signer the client scheme can use.
+ */
+export async function createMoiSigner(
+  mnemonic: string,
+  derivationPath?: string,
+  keyId = 0,
+): Promise<ClientMoiSigner> {
+  const wallet = await Wallet.fromMnemonic(mnemonic, derivationPath);
+  return {
+    address: await wallet.getIdentifier().then(String),
+    publicKey: wallet.publicKey.replace(/^0x/, ""),
+    keyId,
+    wallet: wallet as unknown as ClientMoiSigner["wallet"],
+  };
 }

@@ -11,8 +11,8 @@ Share this folder via Google Drive; review happens there; PRs go out only after 
 | Order | Folder | Target repo | State |
 | --- | --- | --- | --- |
 | 1 | `PR-1-CASA-namespaces-moi/` | `ChainAgnostic/namespaces` | Drafted. Blocked on: author + discussions-to, and the reference-format decision once the protocol chain-id PR lands |
-| 2 | `PR-2-x402-scheme-spec/` | `x402-foundation/x402` | Drafted from the working implementation |
-| 3 | `PR-3-x402-mechanism-typescript/` | `x402-foundation/x402` | ~1/3 built, not in this round |
+| 2 | `PR-2-x402-scheme-spec/` | `x402-foundation/x402` | Written; every rule verified against a settled devnet transfer |
+| 3 | `PR-3-x402-mechanism-typescript/` | `x402-foundation/x402` | Built. Typechecks against @x402/core, 13 unit tests pass |
 | 4 | `PR-4-x402-other-sdks/` | `x402-foundation/x402` | Recommended skip |
 
 Background documents (context for the reviewer, not for submission):
