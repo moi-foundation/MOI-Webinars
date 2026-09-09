@@ -1,0 +1,32 @@
+name: Publish @x402/moi
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    if: github.repository == 'x402-foundation/x402' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: typescript/packages/mechanisms/moi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: Install
+        working-directory: .
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Build
+        working-directory: .
+        run: pnpm -r --filter=@x402/core --filter=@x402/moi run build
+      - name: Publish
+        run: pnpm publish --provenance --access public --no-git-checks

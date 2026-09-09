@@ -1,34 +1,60 @@
-# PR 3 — TypeScript mechanism package (NOT in this review round)
+# PR 3 — TypeScript mechanism package
 
-The working implementation lives in `x402-compat/moi-x402/src/` — client, server, facilitator
-and shared claim/network modules, typechecking against `@x402/core@2.23.0` (npm latest is now 2.25.0 — retest against it before opening the PR). Roughly a third of
-the upstream package requirements are done.
+Built. The package mirrors `@x402/stellar`'s layout and implements the scheme spec.
 
-Still missing before this can be a PR (full detail in `x402-compat/UPSTREAM.md`):
-build and test scaffolding, the test suite, e2e registration, the publish workflow.
+```
+x402/typescript/packages/mechanisms/moi/
+├── package.json  tsconfig.json  tsup.config.ts
+├── vitest.config.ts  vitest.integration.config.ts
+├── eslint.config.js  .prettierrc  .prettierignore
+├── README.md  CHANGELOG.md
+├── src/
+│   ├── constants.ts  types.ts  utils.ts  shared.ts
+│   ├── signer.ts  defaultAssets.ts  index.ts
+│   └── exact/  index.ts + client/ server/ facilitator/
+└── test/  unit/  integrations/
+x402/e2e/config/mechanisms_moi.json
+x402/.github/workflows/publish_npm_scoped_x402_moi.yml
+```
 
-Sequencing: this PR only goes after the spec (PR 2) merges, which itself waits on the CASA
-namespace (PR 1). Nothing here needs review yet; it is included so the package shows the whole
-picture.
+Source typechecks against the real `@x402/core`; 13 unit tests pass; the integration test skips
+without devnet credentials.
 
-Divergences between the current implementation and the finished spec, found by reading both
-against `@x402/core`:
+## What the rebuild fixed
 
-- `getExtra()` emits `flow`; the protocol-reserved key is `paymentFlow`. Core also writes
-  `extra.paymentFlow` onto the wire itself, so the facilitator should not duplicate it.
-- `areFeesSponsored` is a property the implementation invented. `SchemeNetworkFacilitator` has
-  no such member.
-- The client reads the resource from `requirements.extra.resource`, which nothing populates, so
-  the signed `resource` is always `""` and the binding is dead. The server half must copy it in
-  via `enrichPaymentRequiredResponse`, whose context carries the `ResourceInfo`.
-- The client sets `validAfter = now - 5` and `validBefore = now + maxTimeoutSeconds`, a window
-  wider than the seller quoted. Spec rule 6 now forbids this.
-- The facilitator matches the callsite with `/transfer/i`. The spec requires exactly `"Transfer"`.
-- Amounts pass through `Number()`, which loses precision above 2^53.
-- All three classes are named `MoiExactScheme`, colliding across modules.
-- `js-moi-sdk` is pinned at `^0.7.1`; current is `0.9.0-rc2`.
-- No tests exist.
+The earlier draft in `../../moi-x402/` diverged from the spec in nine ways. All are corrected
+here.
 
-Confirmed correct and left alone: `defaultAssetTransferMethod = "default"` is right for MOI. The
-interface documents `"default"` as the value for a scheme with no on-wire choice of transfer
-method, and core strips the key from the wire when it is used.
+- The resource binding was dead. The client read `requirements.extra.resource`, which nothing
+  populated, so every claim signed `resource: ""` and the facilitator never checked it. The
+  server half now copies the URL in through `enrichPaymentRequiredResponse`, the only hook that
+  receives the `ResourceInfo`; the client refuses to build a payload without it; the facilitator
+  compares against `paymentPayload.resource.url` and fails closed when it is absent.
+- The validity window was always wider than quoted: `validAfter = now - 5` with
+  `validBefore = now + maxTimeoutSeconds`. The client now clamps the window and the facilitator
+  rejects any window exceeding the quote.
+- `getExtra()` emitted `flow`. The reserved key is `paymentFlow`, and core writes it onto the
+  wire itself, so the facilitator no longer sets it at all.
+- The callsite was matched with `/transfer/i`, which would accept `TransferFrom`. It is now
+  compared exactly against `Transfer`.
+- Amounts passed through `Number()`, losing precision above 2^53. All quantities are bigint, and
+  `toBigInt` accepts both the hex the RPC returns and the decimal strings payloads carry.
+- Replay used a separate has-then-add. Under this flow two concurrent settlements can both read
+  the same settled transfer before either records it, so the store now exposes one atomic
+  `reserve`.
+- All three classes were named `MoiExactScheme`. They follow the upstream convention as
+  `ExactMoiScheme`, one per role module.
+- `js-moi-sdk` was pinned at `^0.7.1`; the package depends on `^0.9.0-rc2`.
+- There were no tests.
+
+Left as it was, having checked it: `defaultAssetTransferMethod = "default"` is correct. The
+interface documents that value for a scheme with no on-wire choice of transfer method, and core
+strips the key from the wire when it is used. `areFeesSponsored` also stays — it is not a
+`SchemeNetworkFacilitator` member, but `@x402/stellar` declares it as a class property, so it is
+the house convention rather than an invention.
+
+## Sequencing
+
+This PR goes after the scheme spec merges, which itself waits on the CASA namespace. The
+`examples/` entries and a changeset are the remaining pieces, both trivial once the package name
+is fixed upstream.

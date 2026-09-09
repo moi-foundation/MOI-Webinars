@@ -1,0 +1,19 @@
+{
+  "env": {
+    "SERVER_MOI_ADDRESS": { "required": true, "roles": ["server"] },
+    "CLIENT_MOI_PRIVATE_KEY": { "required": true, "roles": ["client"] }
+  },
+  "testnet": {
+    "name": "MOI Voyage Devnet",
+    "caip2": "moi:devnet",
+    "rpcUrlDefault": "https://dev.voyage-rpc.moi.technology/devnet/"
+  },
+  "routes": {
+    "/exact/moi": {
+      "scheme": "exact",
+      "sdks": ["typescript"],
+      "paymentFlow": "upfront",
+      "price": { "asset": "0x108000004cd973c4eb83cdb8870c0de209736270491b7acc99873da100000000", "amount": "1000" }
+    }
+  }
+}
