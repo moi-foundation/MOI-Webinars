@@ -11,7 +11,24 @@ Sequencing: this PR only goes after the spec (PR 2) merges, which itself waits o
 namespace (PR 1). Nothing here needs review yet; it is included so the package shows the whole
 picture.
 
-Two code changes the finished spec now requires of the implementation:
-`getExtra()` must emit the reserved key `paymentFlow` (the current code emits `flow`, which is
-not a protocol key), and the mechanism must declare `assetTransferMethod: "mas0-transfer"` as
-its default per x402 v2 section 6.1.
+Divergences between the current implementation and the finished spec, found by reading both
+against `@x402/core`:
+
+- `getExtra()` emits `flow`; the protocol-reserved key is `paymentFlow`. Core also writes
+  `extra.paymentFlow` onto the wire itself, so the facilitator should not duplicate it.
+- `areFeesSponsored` is a property the implementation invented. `SchemeNetworkFacilitator` has
+  no such member.
+- The client reads the resource from `requirements.extra.resource`, which nothing populates, so
+  the signed `resource` is always `""` and the binding is dead. The server half must copy it in
+  via `enrichPaymentRequiredResponse`, whose context carries the `ResourceInfo`.
+- The client sets `validAfter = now - 5` and `validBefore = now + maxTimeoutSeconds`, a window
+  wider than the seller quoted. Spec rule 6 now forbids this.
+- The facilitator matches the callsite with `/transfer/i`. The spec requires exactly `"Transfer"`.
+- Amounts pass through `Number()`, which loses precision above 2^53.
+- All three classes are named `MoiExactScheme`, colliding across modules.
+- `js-moi-sdk` is pinned at `^0.7.1`; current is `0.9.0-rc2`.
+- No tests exist.
+
+Confirmed correct and left alone: `defaultAssetTransferMethod = "default"` is right for MOI. The
+interface documents `"default"` as the value for a scheme with no on-wire choice of transfer
+method, and core strips the key from the wire when it is used.

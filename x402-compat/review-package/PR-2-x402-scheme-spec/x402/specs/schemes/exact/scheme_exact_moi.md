@@ -41,8 +41,9 @@ Consequences:
 1. **Client** requests a protected resource.
 2. **Resource Server** responds with the payment required signal; the `PaymentRequired` object
    travels in the `PAYMENT-REQUIRED` header. `accepts[].extra` carries
-   `"paymentFlow": "upfront"` (required, since the flow is not `authorization`) and
-   `"assetTransferMethod": "mas0-transfer"`.
+   `"paymentFlow": "upfront"`, which core emits automatically because the resolved flow is not
+   `authorization`, and `"resource"`, which the scheme's server half copies from the request's
+   `ResourceInfo` so the buyer can sign over it.
 3. **Client** submits a MAS0 transfer on the named MOI network: the quoted amount of the quoted
    asset to `payTo`, signed with its own key, paying its own fuel.
 4. **Client** waits for the transfer's receipt, then constructs and signs a payment claim (below)
@@ -65,8 +66,8 @@ Consequences:
   "payTo": "0x00000000…",                 // seller's 32-byte participant identifier, hex
   "maxTimeoutSeconds": 60,
   "extra": {
-    "paymentFlow": "upfront",             // reserved key, REQUIRED for non-authorization flows
-    "assetTransferMethod": "mas0-transfer"
+    "paymentFlow": "upfront",             // reserved key, emitted by core for non-authorization flows
+    "resource": "https://…"               // the resource URL, so the buyer can sign over it
   }
 }
 ```
@@ -79,8 +80,13 @@ Consequences:
 - `amount` — atomic units, decimal string.
 - `payTo` — the seller's participant identifier.
 - `maxTimeoutSeconds` — bounds the claim's `validBefore`.
-- `extra.paymentFlow` — always `"upfront"` for this mechanism (reserved key, section 6.1).
-- `extra.assetTransferMethod` — `"mas0-transfer"`, this mechanism's only and default method.
+- `extra.paymentFlow` — always `"upfront"` for this mechanism. This is a protocol-reserved key
+  and core writes it onto the wire itself once the scheme declares the flow; the scheme does not
+  set it by hand.
+- `extra.resource` — the URL of the resource being purchased, copied from the request's
+  `ResourceInfo`. The buyer signs over it and the facilitator checks it (rule 5).
+- `extra.assetTransferMethod` — absent. MOI offers one way to move a MAS0 asset, so the scheme
+  declares the SDK's `"default"` asset transfer method, and core strips the key from the wire.
 
 ## `PAYMENT-SIGNATURE` Header Payload
 
@@ -151,13 +157,16 @@ alone could still merely claim someone else's transfer; this rule defeats a lift
 
 ### 5. Resource binding
 
-`claim.resource` MUST equal `paymentPayload.resource.url` — the resource the buyer is paying
-for. Without this check the `resource` field is signed but unenforced, and a claim made for one
-resource would settle a request for another on the same seller.
+`claim.resource` MUST equal the resource being purchased. Without this check the `resource` field
+is signed but unenforced, and a claim made for one resource would settle a request for another on
+the same seller.
 
-`PaymentPayload.resource` is optional in the protocol types. If it is absent, the facilitator
-MUST obtain the resource identifier from the resource server out of band and compare against
-that; it MUST NOT skip the comparison.
+The resource reaches both halves by different routes, and the facilitator MUST compare them:
+the seller's scheme copies it into `requirements.extra.resource` (its
+`enrichPaymentRequiredResponse` hook receives the `ResourceInfo`), the buyer signs that value
+into the claim, and core carries the authoritative `ResourceInfo` on `PaymentPayload.resource`.
+The facilitator MUST compare `claim.resource` against `paymentPayload.resource.url`, and MUST
+fail closed rather than skip the comparison if that field is absent.
 
 ### 6. Freshness
 
