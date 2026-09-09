@@ -1,7 +1,7 @@
 ---
 namespace-identifier: moi
 title: MOI Ecosystem
-author: ["TODO Name (@TODO-github-handle)"]
+author: ["Adithya Ganesh (@sarvalabs-adithya)"]
 status: Draft
 type: Informational
 created: 2026-08-08

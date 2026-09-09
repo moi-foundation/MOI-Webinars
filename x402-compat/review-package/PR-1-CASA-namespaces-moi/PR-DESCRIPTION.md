@@ -9,7 +9,7 @@ chain-id RPC, and the reference format will be confirmed against it before this 
 
 Files follow `_template/`, modelled on the accepted `stellar`, `aptos` and `neo` profiles.
 
-- [ ] `author` filled with a real GitHub handle (CASA will chase this person)
+- [x] `author`: Adithya Ganesh (@sarvalabs-adithya) — this person answers CASA's comments
 - [ ] `discussions-to` URL created and monitored
 - [ ] Reference format confirmed against the protocol chain-id PR
 - [ ] Internal review (Rahul) complete

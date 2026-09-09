@@ -1,7 +1,7 @@
 ---
 namespace-identifier: moi-caip2
 title: MOI - Blockchain ID Specification
-author: ["TODO Name (@TODO-github-handle)"]
+author: ["Adithya Ganesh (@sarvalabs-adithya)"]
 discussions-to: https://github.com/ChainAgnostic/namespaces/pull/TODO
 status: Draft
 type: Informational
