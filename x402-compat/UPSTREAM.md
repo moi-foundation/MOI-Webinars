@@ -9,6 +9,31 @@ rest of the ecosystem, probably not needed.**
 
 ---
 
+## Internal gate — review call, 9 September 2026
+
+Before anything goes to an external repository, the whole content package gets reviewed
+internally. That is the process now, not a suggestion.
+
+**How it works:** put every document in a Google Drive folder and share the link with Rahul.
+He reviews there. PRs to CASA or x402-foundation only go out after that review clears.
+
+**What the package has to contain**, because the upstream specs ask for it and the review
+covers it:
+
+- The CAIP-2 namespace document, including the rationale section: what MOI is and how it
+  differs from an EVM or API-based chain, written for a reader who has never seen MOI
+  (~200 words), plus governance (~200 words).
+- The scheme spec draft for `specs/schemes/exact/scheme_exact_moi.md`.
+- The three working docs in this directory: `x402.md`, `FINDINGS.md`, this file.
+
+**One dependency resolved:** the protocol team is creating a PR to return network details on
+RPC calls — a chain id, distinct per network, so devnet answers differently from any other
+network. That closes finding 9 ("MOI cannot currently answer *which network is this?*") and
+unblocks Step 2 of `x402.md` without us building anything. The CAIP-2 reference format should
+be written against whatever that PR exposes.
+
+---
+
 ## PR 1 — Specification only
 
 One file.

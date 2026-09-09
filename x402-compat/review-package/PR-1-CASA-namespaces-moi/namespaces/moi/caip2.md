@@ -67,6 +67,12 @@ Private deployments SHOULD choose a reference that is unlikely to collide with t
 > CAIP-2 profiles are expected to describe how a client verifies the reference against a live
 > node. The text below is written against a proposed method and MUST be confirmed or replaced by
 > the MOI protocol team before submission.
+>
+> **Update, 9 September 2026:** the protocol team has committed to a PR that returns network
+> details — a chain id, distinct per network — on RPC calls. Once its shape is known, this
+> section must be rewritten against the real method, and the reference format below
+> (short names) should be re-decided against the alternative of using that chain id directly.
+> Both the Syntax and Rationale sections change together if the chain id wins.
 
 A client resolves the network of a node by calling the proposed `net.Network` JSON-RPC method:
 

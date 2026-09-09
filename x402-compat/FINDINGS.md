@@ -109,6 +109,10 @@ not the bar.**
 
 ## 9. MOI cannot currently answer "which network is this?" — needs resolving
 
+**Update, 9 Sep 2026:** the protocol team is adding this — a PR to return network
+details (chain id, per network) on RPC calls. Devnet gets its own id. Once it lands, this
+finding is closed and the CAIP-2 reference should point at that RPC.
+
 Every RPC method MOI exposes, across all three namespaces:
 
 ```

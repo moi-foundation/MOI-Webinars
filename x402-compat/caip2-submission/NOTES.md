@@ -1,5 +1,8 @@
 # CAIP-2 submission — what's ready and what isn't
 
+> **Moved:** the `moi/` profile files now live in `../review-package/PR-1-CASA-namespaces-moi/namespaces/moi/`,
+> as part of the per-PR review package. This file stays as the research record.
+
 ## Ready
 
 `moi/README.md` and `moi/caip2.md`, following CASA's `_template` and modelled on the accepted
