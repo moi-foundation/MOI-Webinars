@@ -1,12 +1,12 @@
 ---
 namespace-identifier: moi-caip2
-title: MOI Namespace - Chains
+title: MOI - Blockchain ID Specification
 author: ["TODO Name (@TODO-github-handle)"]
 discussions-to: https://github.com/ChainAgnostic/namespaces/pull/TODO
 status: Draft
-type: Standard
+type: Informational
 created: 2026-08-08
-requires: CAIP-2
+requires: ["CAIP-2"]
 ---
 
 # CAIP-2
@@ -37,7 +37,7 @@ The reference is a lowercase alphanumeric string, optionally containing hyphens,
 characters:
 
 ```
-^[a-z0-9][a-z0-9-]{0,31}$
+^[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?$
 ```
 
 The reference MUST NOT begin or end with a hyphen and MUST NOT contain uppercase characters,
