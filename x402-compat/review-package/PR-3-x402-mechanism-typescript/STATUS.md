@@ -10,3 +10,8 @@ build and test scaffolding, the test suite, e2e registration, the publish workfl
 Sequencing: this PR only goes after the spec (PR 2) merges, which itself waits on the CASA
 namespace (PR 1). Nothing here needs review yet; it is included so the package shows the whole
 picture.
+
+Two code changes the finished spec now requires of the implementation:
+`getExtra()` must emit the reserved key `paymentFlow` (the current code emits `flow`, which is
+not a protocol key), and the mechanism must declare `assetTransferMethod: "mas0-transfer"` as
+its default per x402 v2 section 6.1.
