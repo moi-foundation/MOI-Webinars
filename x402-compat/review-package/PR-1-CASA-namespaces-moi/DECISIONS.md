@@ -65,13 +65,13 @@ network, so it cannot be used.
 
 **Decides:** Adithya.
 
-Currently `TODO`. It does **not** have to be the CASA PR: Neo points at
-`neo-project/proposals/issues/238`, and Stellar points at a CAIP pull request. Any monitored URL
-works.
+Currently `https://github.com/ChainAgnostic/namespaces/pull/TODO` — the CASA PR's own URL, with
+the number filled in once the PR is opened. That is the simplest route and needs nothing set up
+beforehand.
 
-Suggested: open an issue on a public MOI repo titled "CAIP-2 namespace registration" and use its
-URL. That removes this blank before the PR exists, and gives CASA somewhere to send questions that
-is not a person's inbox.
+It does not have to be the CASA PR, though. Neo points at `neo-project/proposals/issues/238` and
+Stellar at a CAIP pull request, so any monitored URL is acceptable. An issue on a public MOI repo
+would give CASA somewhere to send questions that outlives the PR thread, if that is wanted later.
 
 Whoever owns that URL has to actually watch it. The only namespace PR that has ever failed on
 merit failed because its author went quiet for 587 days.
