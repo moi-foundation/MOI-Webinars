@@ -50,9 +50,14 @@ all return method-not-found. Nothing existing substitutes: `net.Info` returns a 
 `net.Version` the node's software version, and `KMOI_ASSET_ID` is a hardcoded SDK constant
 identical on every network.
 
-The section in the document is written against a **proposed** `net.Network` and is marked as such.
-When the real method lands, replace the request and response with the real ones and delete the
-warning block.
+The section states what it requires and nothing more: a method reporting which network a node is
+on, its request and response, and the rule for deriving the reference. Nothing is invented. When
+the method lands, write it in.
+
+One finding worth recording. `commit_info.cluster_id` is network-wide at the latest tesseract —
+two unrelated accounts return the same value — but it differs at tesseract 0, so it tracks the
+current validator cluster and rotates. A CAIP-2 reference has to be stable for the life of the
+network, so it cannot be used.
 
 ---
 
@@ -86,6 +91,17 @@ dropping it removes a row a reviewer might question. Neo avoids the problem enti
 rule rather than a table — which is also what Option B in decision 1 would give us.
 
 ---
+
+## Verified while checking these
+
+`moi.Tesseract` refuses to answer without an account identifier, and `tesseract_number: 0`
+returns a different tesseract per account. There is genuinely no global chain.
+
+The rationale previously claimed no genesis artefact exists at all. That was too strong: a
+genesis-era account's first tesseract carries `timestamp: 0x0` and an empty `cluster_id`, and its
+hash is plausibly stable and network-unique. Using it would tie the identifier to an
+implementation detail, which is a reason to prefer a name — but not the reason the document gave.
+Corrected.
 
 ## What is not undecided
 

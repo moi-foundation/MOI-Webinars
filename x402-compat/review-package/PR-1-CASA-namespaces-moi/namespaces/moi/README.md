@@ -31,12 +31,12 @@ identifiers in this namespace reflect that.
 MOI is account-centric. Each participant account carries its own state and its own ordered
 sequence of tesseracts — per-account state checkpoints — rather than a position in one shared
 chain. State changes travel as interactions, envelopes signed whole by the submitting account
-(ECDSA over secp256k1). Because tesseracts are per-account, no chain-wide genesis artefact exists
-to hash. The protocol currently exposes no chain id: the client SDK defines a numeric `Chain`
-enum (111/112/113), but no RPC method or interaction field reads or emits it. Neither of the two
-most common CAIP-2 reference conventions — `eip155`'s chain id or `solana`'s genesis hash — is
-usable today. The CAIP-2 profile uses a short, well-known network name as the reference, in the
-manner of the `stellar` namespace.
+(ECDSA over secp256k1). Because tesseracts are per-account, there is no chain-wide genesis block
+to hash. The protocol also exposes no chain id on the wire: the client SDK defines a numeric
+`Chain` enum, but no RPC method or interaction field reads or emits it. Neither of the two most
+common CAIP-2 reference conventions — `eip155`'s chain id or `solana`'s genesis hash — is usable
+today, so the CAIP-2 profile uses a short, well-known network name, in the manner of the
+`stellar` namespace.
 
 Identifiers are likewise not EVM-shaped. A participant identifier is 32 bytes: a tag byte naming
 the identifier kind and version, a flags byte, a 24-byte fingerprint taken directly from the

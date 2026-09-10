@@ -2,7 +2,7 @@
 namespace-identifier: moi-caip2
 title: MOI - Blockchain ID Specification
 author: ["Adithya Ganesh (@sarvalabs-adithya)"]
-discussions-to: TODO  # DECISION 3 — any monitored URL; Neo uses an issue on its own repo, Stellar a CAIP PR
+discussions-to: TODO
 status: Draft
 type: Informational
 created: 2026-08-08
@@ -19,8 +19,8 @@ MOI is an account-centric protocol.
 Unlike chains that append blocks to one global ledger, each participant account on MOI holds its
 own sequence of *tesseracts*, and state changes are carried by signed *interactions*.
 
-A consequence of that design is that MOI has no chain-wide genesis block, and therefore no genesis
-hash to identify a network by.
+A consequence of that design is that MOI has no chain-wide genesis block, and so no genesis hash
+of the kind other namespaces use as a reference.
 Networks are instead distinguished by name, in the manner of the [`stellar`][stellar-caip2]
 namespace.
 
@@ -32,10 +32,6 @@ The `namespace` is `moi`.
 The `reference` is the short, lowercase name of a MOI network.
 
 ### Syntax
-
-<!-- DECISION 1 (BLOCKING): this whole section assumes a name reference. If the chain id wins,
-     Semantics, Syntax, the network table, Rationale and Test Cases all change together.
-     See DECISIONS.md for the exact edits. -->
 
 The reference is a lowercase alphanumeric string, optionally containing hyphens, between 1 and 32
 characters:
@@ -54,8 +50,6 @@ whitespace, or separators other than `-`.
 | Voyage devnet | `devnet` | `moi:devnet` | live |
 | MOI mainnet | `mainnet` | `moi:mainnet` | reserved; not yet launched |
 
-<!-- DECISION 4: whether to list mainnet before it launches, or add it at launch. See DECISIONS.md. -->
-
 At the time of writing, the Voyage devnet is the only live public MOI network. The `mainnet`
 reference is reserved here so that tooling can prepare for it, and MUST NOT be treated as
 resolvable until that network launches.
@@ -64,59 +58,30 @@ Private deployments SHOULD choose a reference that is unlikely to collide with t
 
 ### Resolution Mechanics
 
-> **⚠️ OPEN ITEM — this section cannot be completed as written until MOI exposes a network
-> identifier over JSON-RPC.**
->
-> At the time of drafting, MOI's RPC surface comprises 42 methods across the `moi.*`, `ixpool.*`
-> and `net.*` namespaces (as enumerated from js-moi-sdk 0.9.0-rc2), and **none of them report
-> which network a node belongs to**:
->
-> - `net.Version` returns the node's software version (e.g. `"0.12.0"`)
-> - `net.Info` returns the node's own peer identifier (`krama_id`)
-> - `moi.Tesseract` is keyed by account address, so there is no global genesis to read
->
-> CAIP-2 profiles are expected to describe how a client verifies the reference against a live
-> node. The text below is written against a proposed method and MUST be confirmed or replaced by
-> the MOI protocol team before submission.
->
-> **Update, 9 September 2026:** the protocol team has committed to a PR that returns network
-> details — a chain id, distinct per network — on RPC calls. Once its shape is known, this
-> section must be rewritten against the real method, and the reference format below
-> (short names) should be re-decided against the alternative of using that chain id directly.
-> Both the Syntax and Rationale sections change together if the chain id wins.
+*To be completed.* This section requires a JSON-RPC method that reports which network a node
+belongs to, shown as a request and its response, and the rule for turning that value into the
+reference.
 
-A client resolves the network of a node by calling the proposed `net.Network` JSON-RPC method:
-
-```sh
-curl -s -X POST https://dev.voyage-rpc.moi.technology/devnet/ \
-  -H 'Content-Type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"net.Network","params":[]}'
-```
-
-Returning:
-
-```json
-{ "jsonrpc": "2.0", "id": 1, "result": { "network": "devnet" } }
-```
-
-The `network` field is the CAIP-2 reference.
-A client MUST treat a mismatch between the expected and reported reference as a fatal error and
-MUST NOT submit interactions to a node it cannot identify.
+MOI exposes no such method today. Its RPC surface is 42 methods across `moi.*`, `ixpool.*` and
+`net.*`; `net.Version` returns the node's software version, `net.Info` its own peer identifier,
+and `moi.Tesseract` requires an account identifier. A network-identity method is planned, and
+this section will be written against it.
 
 ## Rationale
 
-Three candidate references were considered.
+MOI has no stable, RPC-readable network identifier today, so the reference is a short network
+name pending one.
 
-**A numeric chain id**, as `eip155` uses, was rejected because no MOI RPC method or interaction
-field exposes one. The client SDK defines a `Chain` enum (111/112/113) that nothing reads or
-emits; if the planned network-identity RPC surfaces these values, this choice must be revisited.
+A numeric chain id, as `eip155` uses, is not available on the wire: the client SDK carries an
+unused `Chain` enum, but no RPC method or interaction field reads or emits it. A genesis hash, as
+`solana` uses, has no clean equivalent: tesseracts are per-account, so the nearest artefact is the
+first tesseract of a genesis-era account, which would tie the identifier to an implementation
+detail.
 
-**A genesis hash**, as `solana` uses, was rejected because MOI is account-centric: tesseracts are
-per-account, so no single genesis artefact exists to hash.
-
-**A short network name** was chosen, following `stellar:testnet` / `stellar:pubnet`.
-It is human-legible, stable across protocol upgrades, and does not require a client to fetch
-anything in order to construct an identifier — only to verify one.
+A name is human-legible, stable across protocol upgrades, and lets a client construct an
+identifier without fetching anything — only verify one. If the planned network-identity method
+exposes a stable numeric id, a numeric reference becomes available and this choice should be
+reconsidered before the profile leaves Draft.
 
 ### Backwards Compatibility
 
