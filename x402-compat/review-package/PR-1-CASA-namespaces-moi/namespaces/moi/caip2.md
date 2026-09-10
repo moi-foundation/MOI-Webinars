@@ -2,7 +2,7 @@
 namespace-identifier: moi-caip2
 title: MOI - Blockchain ID Specification
 author: ["Adithya Ganesh (@sarvalabs-adithya)"]
-discussions-to: https://github.com/ChainAgnostic/namespaces/pull/TODO
+discussions-to: TODO  # DECISION 3 — any monitored URL; Neo uses an issue on its own repo, Stellar a CAIP PR
 status: Draft
 type: Informational
 created: 2026-08-08
@@ -33,6 +33,10 @@ The `reference` is the short, lowercase name of a MOI network.
 
 ### Syntax
 
+<!-- DECISION 1 (BLOCKING): this whole section assumes a name reference. If the chain id wins,
+     Semantics, Syntax, the network table, Rationale and Test Cases all change together.
+     See DECISIONS.md for the exact edits. -->
+
 The reference is a lowercase alphanumeric string, optionally containing hyphens, between 1 and 32
 characters:
 
@@ -49,6 +53,8 @@ whitespace, or separators other than `-`.
 | --- | --- | --- | --- |
 | Voyage devnet | `devnet` | `moi:devnet` | live |
 | MOI mainnet | `mainnet` | `moi:mainnet` | reserved; not yet launched |
+
+<!-- DECISION 4: whether to list mainnet before it launches, or add it at launch. See DECISIONS.md. -->
 
 At the time of writing, the Voyage devnet is the only live public MOI network. The `mainnet`
 reference is reserved here so that tooling can prepare for it, and MUST NOT be treated as
