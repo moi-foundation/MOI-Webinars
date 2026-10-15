@@ -1,0 +1,1 @@
+Look at that refusal closely. builtin.AccessError: actor is not allowed to write into other actor's storage. That interaction was accepted, signed, mined, and charged â the agent paid 86 fuel to be told no. Refusal is not an error message here. It is a permanent, public, verifiable record.

@@ -1,0 +1,9 @@
+Here it is running for real. Watch the counter on the right of each line.
+
+Beat one. The agent calls TickAny, naming the owner's account. No policy exists yet. The interaction is accepted, signed, mined, and charged eighty-six fuel. And then this comes back off the chain: builtin dot AccessError. Actor is not allowed to write into other actor's storage. The counter does not move. Twelve, to twelve.
+
+Beat two. The owner sends one interaction: Ticker may mutate my storage, but only when the agent originated the call. The agent is not asked. It cannot decline. Now the identical call, same key, same code. The write lands. Twelve, to thirteen.
+
+Beat three. The owner deletes the policy. One interaction again. And the agent calls a third time, exactly as before. Refused, with the same error.
+
+Three calls. One key. Nothing about the agent changed between them. The only thing that moved was a single record on the owner's account.

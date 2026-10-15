@@ -1,0 +1,131 @@
+{
+  "syntax": 1,
+  "engine": {
+    "kind": "PISA",
+    "flags": [],
+    "version": "0.7.1"
+  },
+  "kind": "logic",
+  "elements": [
+    {
+      "ptr": 0,
+      "kind": "state",
+      "data": {
+        "mode": "actor",
+        "fields": [
+          {
+            "slot": 0,
+            "label": "counter",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "ptr": 1,
+      "deps": [
+        0
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "TickMy",
+        "mode": "dynamic",
+        "kind": "invoke",
+        "accepts": [],
+        "returns": [
+          {
+            "slot": 0,
+            "label": "counter",
+            "type": "u64"
+          }
+        ],
+        "executes": {
+          "asm": [
+            "ORIGIN $0",
+            "ALOAD $1 $0 &0",
+            "GATHER $2 $1",
+            "INCR $2",
+            "YIELD $2 &0",
+            "DISPER $1 $2",
+            "STORE $1"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 2,
+      "deps": [
+        0
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "TickAny",
+        "mode": "dynamic",
+        "kind": "invoke",
+        "accepts": [
+          {
+            "slot": 0,
+            "label": "participant",
+            "type": "identifier"
+          }
+        ],
+        "returns": [
+          {
+            "slot": 0,
+            "label": "counter",
+            "type": "u64"
+          }
+        ],
+        "executes": {
+          "asm": [
+            "OBTAIN $0 &0",
+            "ALOAD $1 $0 &0",
+            "GATHER $2 $1",
+            "INCR $2",
+            "YIELD $2 &0",
+            "DISPER $1 $2",
+            "STORE $1"
+          ]
+        },
+        "catches": []
+      }
+    },
+    {
+      "ptr": 3,
+      "deps": [
+        0
+      ],
+      "kind": "callable",
+      "data": {
+        "name": "CounterOf",
+        "mode": "static",
+        "kind": "invoke",
+        "accepts": [
+          {
+            "slot": 0,
+            "label": "participant",
+            "type": "identifier"
+          }
+        ],
+        "returns": [
+          {
+            "slot": 0,
+            "label": "counter",
+            "type": "u64"
+          }
+        ],
+        "executes": {
+          "asm": [
+            "OBTAIN $0 &0",
+            "ALOAD $1 $0 &0",
+            "GATHER $2 $1",
+            "YIELD $2 &0",
+            "DUMP $1"
+          ]
+        },
+        "catches": []
+      }
+    }
+  ]
+}

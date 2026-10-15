@@ -1,0 +1,1 @@
+To be fair to other chains â everyone stops arbitrary writes. Ethereum's allowances genuinely bind, because the token contract owns the balances. Solana's runtime genuinely enforces, per program. The ladder is where the rule lives and how fine it gets: contract code, per program, per account. MOI is the bottom rung. Per account. Set by you.

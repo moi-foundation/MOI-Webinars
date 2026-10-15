@@ -1,0 +1,1 @@
+Everything is in the repo â session-8-policies. One funded devnet wallet runs the whole thing: preflight, fuel the agent, deploy, demo. Run it, break it, tell us what you find. Questions.

@@ -13,6 +13,8 @@ Hands-on repos for the **MOI Builders** webinar series. Each session is a self-c
 | 5 | NFT Marketplace — MAS1 mint + transfer (CLI + UI) | [`session-5/`](./session-5) |
 | 6 | Context inheritance — one wallet, many agents with on-chain budgets | [`session-6/`](./session-6) |
 | 7 | Agentic Payments **V1** — an agent finds another agent on MOI and pays it (registry identity + native settlement) | [`session-7/`](./session-7) |
+| 8 | Access policies: the same call made three times, refused, allowed, refused, by a policy the owner sets on chain | [`session-8-policies/`](./session-8-policies) |
+| 9 | Agentic Payments part 3: the x402 envelope with MOI settlement (built and planned; not presented) | [`session-9/`](./session-9) |
 
 ## Quick start
 

@@ -1,0 +1,30 @@
+coco Ticker
+
+// A counter that lives in ACTOR STATE — meaning the counter Ticker keeps for Bob physically
+// lives on Bob's account, not on the logic's.
+//
+// That is what makes access control necessary. On Ethereum a contract owns its storage, so
+// writing to a user's balance is writing to your own database. On MOI the state belongs to the
+// participant, so a logic routinely writes to storage it does not own — and the protocol has to
+// decide whether it may.
+state actor:
+    counter U64
+
+// Bumps the SENDER's own counter. Always allowed: you are writing to yourself.
+endpoint dynamic TickMy() -> (counter U64):
+    mutate c <- Ticker.Sender.counter:
+        c += 1
+        counter = c
+
+// Bumps ANOTHER participant's counter. This is a foreign access: the write lands on an account
+// that neither sent the interaction nor is the logic itself. Denied unless that account has
+// published an Access Policy permitting it.
+endpoint dynamic TickAny(participant Identifier) -> (counter U64):
+    mutate c <- Ticker.Actor(participant).counter:
+        c += 1
+        counter = c
+
+// Read a participant's counter without writing anything.
+endpoint static CounterOf(participant Identifier) -> (counter U64):
+    observe c <- Ticker.Actor(participant).counter:
+        counter = c
